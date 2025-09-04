@@ -16,7 +16,6 @@ services:
   backend:
     build: ./backend
     working_dir: /app
-    command: python manage.py runserver 0.0.0.0:8000
     volumes:
       - ./backend:/app
     ports:
@@ -30,9 +29,6 @@ services:
   frontend:
     build: ./frontend
     working_dir: /app
-    command: sh -c "if [ ! -d node_modules ]; then npm install; fi && npm run dev"
-    volumes:
-      - ./frontend:/app
     ports:
       - "3000:3000"
     depends_on:
