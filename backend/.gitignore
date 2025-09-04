@@ -1,0 +1,63 @@
+# env files (can opt-in for committing if needed)
+.env*
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django static and media
+static/
+media/
+
+# Django migrations
+**/migrations/
+!**/migrations/__init__.py
+
+# SQLite database
+*.sqlite3
+
+# Logs
+*.log
+
+# VS Code
+.vscode/
+
+# MacOS
+.DS_Store
+
+# Coverage reports
+htmlcov/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+
+# Test output
+junit-*.xml
+
+# pip
+pip-log.txt
+pip-delete-this-directory.txt
+
+# mypy
+.mypy_cache/
+.dmypy.json
+
+# Pytest
+.pytest_cache/
+
+# Other
+*.swp
+*.swo
+
+# Docker
+*.pid
+
+# Node
+node_modules/
+
+# Ignore sample env
+!.env.sample
