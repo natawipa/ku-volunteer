@@ -1,103 +1,113 @@
-import Image from "next/image";
+import EventCard from "./components/EventCard";
+import EventTypeSection from "./components/EventTypeSection";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
+
+const upcomingEvents = [
+  { title: "Event title", dateStart: "01/01/2025", dateEnd: "02/01/2025", location: "Building A", imgSrc: "/event1.jpg", status: "Open" },
+  { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg", status: "Closed" },
+];
+
+const mostAttentionEvents = [
+  { title: "Event title", dateStart: "01/01/2025", dateEnd: "01/01/2025", location: "Building A", imgSrc: "/event1.jpg" },
+  { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg" },
+];
+
+const eventTypes = [
+  {
+    title: "กิจกรรมมหาวิทยาลัย",
+    color: "bg-gradient-to-r from-blue-100 to-blue-50",
+    events: [{ title: "Event Name", date: "30/08/25", location: "Building A", imgSrc: "/event1.jpg" }],
+  },
+  {
+    title: "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ",
+    color: "bg-gradient-to-r from-yellow-100 to-yellow-50",
+    events: [{ title: "Event Name", date: "30/08/25", location: "Building B", imgSrc: "/event2.jpg" }],
+  },
+  {
+    title: "กิจกรรมเพื่อสังคม",
+    color: "bg-gradient-to-r from-pink-100 to-pink-50",
+    events: [{ title: "Event Name", date: "30/08/25", location: "Building C", imgSrc: "/event3.jpg" }],
+  },
+];
 
 export default function Home() {
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="relative">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px] shadow-md"></div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+      {/* Mountain background */}
+      <img
+        src="/mountain.svg"
+        alt="mountain"
+        className="absolute inset-0 top-0 w-full h-[510px] object-cover pt-11"
+      />
+
+      {/* Foreground content */}
+      <div className="relative p-6">
+        <header className="flex justify-between items-center mb-6">
+          <img
+            src="/small_logo.png"
+            alt="Small Logo"
+            className="w-8 h-16 object-cover"
+          />
+          <nav className="space-x-8">
+            <button className="btn">Document</button>
+            <button className="btn">All Event</button>
+            <button className="btn bg-[#215701] text-white px-4 py-2 rounded">
+              Sign In
+            </button>
+          </nav>
+        </header>
+
+        <div className="flex justify-center mb-6">
+          <img
+            src="/big_logo.png"
+            alt="Big Logo"
+            className="w-22 h-32 object-cover"
+          />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <section className="mb-6 flex justify-center">
+          <div className="flex bg-white items-center rounded-md px-4 py-3 w-150 shadow-md">
+            <MagnifyingGlassIcon className="text-black-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="ค้นหากิจกรรม"
+              className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none"
+            />
+
+            <div className="h-6 w-[1px] bg-gray-200 mx-2"></div>
+            <ChevronDownIcon className="text-black-400 w-5 h-5 ml-2 opacity-50" />
+          </div>
+        </section>
+        
+        <section className="mb-6 py-18">
+          <h2 className="font-extrabold mb-2 text-2xl">Upcoming Event</h2>
+          <div className="flex gap-6 overflow-x-auto">
+            {upcomingEvents.map((event, idx) => (
+              <EventCard key={idx} {...event} />
+            ))}
+          </div>
+        </section>
+
+        <section className="mb-6">
+          <h2 className="font-bold mb-2 text-2xl">Most Attention Event</h2>
+          <div className="flex gap-4 overflow-x-auto">
+            {mostAttentionEvents.map((event, idx) => (
+              <EventCard key={idx} {...event} />
+            ))}
+          </div>
+        </section>
+            
+        <h2 className="font-bold mb-2 text-2xl px-2">Event Types</h2>
+        <div>
+          {eventTypes.map((type, idx) => (
+            <EventTypeSection key={idx} {...type} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
