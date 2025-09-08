@@ -4,30 +4,30 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 const upcomingEvents = [
-  { title: "Event title", dateStart: "01/01/2025", dateEnd: "02/01/2025", location: "Building A", imgSrc: "/event1.jpg", status: "Open" },
-  { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg", status: "Closed" },
+  // { title: "Event title", dateStart: "01/01/2025", dateEnd: "02/01/2025", location: "Building A", imgSrc: "/event1.jpg", status: "Open" },
+  // { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg", status: "Closed" },
 ];
 
 const mostAttentionEvents = [
-  { title: "Event title", dateStart: "01/01/2025", dateEnd: "01/01/2025", location: "Building A", imgSrc: "/event1.jpg" },
-  { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg" },
+  // { title: "Event title", dateStart: "01/01/2025", dateEnd: "01/01/2025", location: "Building A", imgSrc: "/event1.jpg" },
+  // { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg" },
 ];
 
 const eventTypes = [
   {
     title: "กิจกรรมมหาวิทยาลัย",
     color: "bg-gradient-to-r from-blue-100 to-blue-50",
-    events: [{ title: "Event Name", date: "30/08/25", location: "Building A", imgSrc: "/event1.jpg" }],
+    events: [],
   },
   {
     title: "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ",
     color: "bg-gradient-to-r from-yellow-100 to-yellow-50",
-    events: [{ title: "Event Name", date: "30/08/25", location: "Building B", imgSrc: "/event2.jpg" }],
+    events: [],
   },
   {
     title: "กิจกรรมเพื่อสังคม",
     color: "bg-gradient-to-r from-pink-100 to-pink-50",
-    events: [{ title: "Event Name", date: "30/08/25", location: "Building C", imgSrc: "/event3.jpg" }],
+    events: [],
   },
 ];
 
