@@ -1,44 +1,30 @@
+import EventCard from "../components/EventCard";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import { CalendarIcon } from "@heroicons/react/24/outline";
 
 const events = [
-  { title: "Text title", status: "upcoming", img: "/event1.jpg" },
-  { title: "Text title", status: "during", img: "/event2.jpg" },
-  { title: "Text title", status: "complete", img: "/event3.jpg" },
+  {
+    title: "Volunteer Camp",
+    dateStart: "10/09/2025",
+    dateEnd: "12/09/2025",
+    location: "Bangkok",
+    catagory: "หมวดศึกษาศาสตร์",
+    imgSrc: "/event1.jpg",
+    status: "upcoming",
+  },
+  {
+    title: "Coding Hackathon",
+    dateStart: "15/09/2025",
+    dateEnd: "16/09/2025",
+    location: "KU Campus",
+    catagory: "Technology",
+    imgSrc: "/event2.jpg",
+    status: "during",
+  },
 ];
 
-function EventCard({ title, status, img }: any) {
-  const statusColors: Record<string, string> = {
-    upcoming: "bg-red-500",
-    during: "bg-blue-500",
-    complete: "bg-green-600",
-  };
+// ------------------------------------
 
-  return (
-    
-    <div className="rounded-xl overflow-hidden bg-white shadow-md w-56 shrink-0">
-      <div className="relative">
-        <img src={img} alt={title} className="h-32 w-full object-cover" />
-        <span
-          className={`absolute top-2 right-2 text-white text-xs px-2 py-1 rounded ${statusColors[status]}`}
-        >
-          {status}
-        </span>
-      </div>
-      <div className="p-3">
-        <h3 className="font-bold text-sm">{title}</h3>
-        <p className="text-xs text-gray-500">DD/MM/YY - DD/MM/YY</p>
-        <div className="mt-2 flex flex-wrap gap-1 text-xs">
-          <span className="bg-black text-white px-2 py-1 rounded">
-            #หมวดวิชาศาสตร์
-          </span>
-          <span className="bg-orange-500 text-white px-2 py-1 rounded">
-            #หมวดอื่น
-          </span>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function Profile() {
   return (
@@ -77,21 +63,21 @@ export default function Profile() {
             {/* Row 1 */}
             <div className="flex justify-between items-center">
               <span>ID</span>
-              <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
+              <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
                 6610545952
               </b>
             </div>
             {/* Row 2 */}
             <div className="flex justify-between items-center">
               <span>Year</span>
-              <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
+              <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
                 3
               </b>
             </div>
             {/* Row 3 */}
             <div className="flex justify-between items-center">
               <span>Faculty</span>
-              <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
+              <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
                 Engineering
               </b>
             </div>
@@ -127,8 +113,8 @@ export default function Profile() {
           </h3>
           <div className="flex items-center">
             <div className="flex gap-4 overflow-x-auto">
-              {events.map((e, i) => (
-                <EventCard key={i} {...e} />
+              {events.map((event, i) => (
+                <EventCard key={i} {...event} />
               ))}
             </div>
             <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300">
