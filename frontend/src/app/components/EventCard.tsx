@@ -6,15 +6,21 @@ interface EventCardProps {
   dateStart: string;
   dateEnd: string;
   location: string;
-  catagory?: string;
+  catagory?: string[];
   imgSrc: string;
-  status?: string | "upcoming" | "during" | "complete";
+  status?: string;
 }
 
 const statusColors: Record<string, string> = {
   upcoming: "bg-red-700",
   during: "bg-indigo-600",
   complete: "bg-green-600",
+};
+
+const catagoryColors: Record<string, string> = {
+  "กิจกรรมมหาลัย": "bg-[#B3E6FF]",
+  "เพื่อสังคม": "bg-[#FFBDBE]",
+  "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
 };
 
 const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, location, catagory, imgSrc, status }) => {
@@ -47,11 +53,20 @@ const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, locati
       </section>
 
       {/* Category */}
-      <section className="flex items-center justify-between mt-2">
-        <p className="text-sm text-gray-500">{catagory}</p>
-      </section>
+      {catagory && catagory.length > 0 && (
+        <div className="mt-2 flex flex-wrap gap-1 text-xs">
+          {(Array.isArray(catagory) ? catagory : [catagory]).map((c, idx) => (
+            <span
+              key={idx}
+              className={`text-black px-2 py-1 rounded-full ${catagoryColors[c]}`}
+            >
+              #{c}
+            </span>
+          ))}
+        </div>
+      )}
     </div>
   );
-};
+}
 
 export default EventCard;

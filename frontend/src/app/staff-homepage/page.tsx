@@ -1,7 +1,8 @@
-import EventCard from "./components/EventCard";
-import EventTypeSection from "./components/EventTypeSection";
+import EventCard from "../components/EventCard";
+import EventTypeSection from "../components/EventTypeSection";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { UserCircleIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 
 const upcomingEvents = [
@@ -17,20 +18,17 @@ const mostAttentionEvents = [
 const eventTypes = [
   {
     title: "กิจกรรมมหาวิทยาลัย",
-    color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
-    backgroundBrain: "/brainread.svg",
+    color: "bg-gradient-to-r from-blue-100 to-blue-50",
     events: [],
   },
   {
     title: "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ",
-    color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    color: "bg-gradient-to-r from-yellow-100 to-yellow-50",
     events: [],
   },
   {
     title: "กิจกรรมเพื่อสังคม",
-    color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
-    backgroundBrain: "/brainlove.svg",
+    color: "bg-gradient-to-r from-pink-100 to-pink-50",
     events: [],
   },
 ];
@@ -56,14 +54,11 @@ export default function Home() {
             alt="Small Logo"
             className="w-8 h-16 object-cover"
           />
-          <nav className="space-x-8">
-            <button className="btn">Document</button>
-            <button className="btn">All Event</button>
-            <Link href="/staff-homepage" 
-            className="btn bg-[#215701] text-white px-4 py-2 rounded 
-                      hover:shadow-lg hover:shadow-[#215701]/50 hover:shadow-x-0 hover:shadow-y-2
-                      transition-all duration-200">
-              Sign In
+          <nav className="flex items-center space-x-8">
+            <Link href="/document">Document</Link>
+            <Link href="/all-events">All Event</Link>
+            <Link href="/profile">
+              { <UserCircleIcon className="w-10 h-10 color-[#215701]" /> }
             </Link>
           </nav>
         </header>
@@ -111,7 +106,7 @@ export default function Home() {
         <h2 className="font-bold mb-2 text-2xl px-2">Event Types</h2>
         <div>
           {eventTypes.map((type, idx) => (
-            <EventTypeSection key={idx} {...type} backgroundBrain={type.backgroundBrain} />
+            <EventTypeSection key={idx} {...type} />
           ))}
         </div>
       </div>

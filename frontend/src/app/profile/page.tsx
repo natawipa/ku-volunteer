@@ -8,8 +8,8 @@ const events = [
     dateStart: "10/09/2025",
     dateEnd: "12/09/2025",
     location: "Bangkok",
-    catagory: "หมวดศึกษาศาสตร์",
-    imgSrc: "/event1.jpg",
+    catagory: ["กิจกรรมมหาลัย", "เพื่อสังคม"],
+    imgSrc: "/titleExample.jpg",
     status: "upcoming",
   },
   {
@@ -17,8 +17,8 @@ const events = [
     dateStart: "15/09/2025",
     dateEnd: "16/09/2025",
     location: "KU Campus",
-    catagory: "Technology",
-    imgSrc: "/event2.jpg",
+    catagory: "เสริมสร้างสมรรถนะ",
+    imgSrc: "/titleExample2.jpg",
     status: "during",
   },
 ];
