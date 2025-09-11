@@ -4,16 +4,28 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 
-const upcomingEvents = [
-  // { title: "Event title", dateStart: "01/01/2025", dateEnd: "02/01/2025", location: "Building A", imgSrc: "/event1.jpg", status: "Open" },
-  // { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg", status: "Closed" },
+const events = [
+  {
+    title: "Volunteer Camp",
+    dateStart: "10/09/2025",
+    dateEnd: "12/09/2025",
+    location: "Bangkok",
+    catagory: ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
+    imgSrc: "/titleExample.jpg",
+    status: "upcoming",
+  },
+  {
+    title: "Coding Hackathon",
+    dateStart: "15/09/2025",
+    dateEnd: "16/09/2025",
+    location: "KU Campus",
+    catagory: "เสริมสร้างสมรรถนะ",
+    imgSrc: "/titleExample2.jpg",
+    status: "during",
+  },
 ];
 
-const mostAttentionEvents = [
-  // { title: "Event title", dateStart: "01/01/2025", dateEnd: "01/01/2025", location: "Building A", imgSrc: "/event1.jpg" },
-  // { title: "Event title", dateStart: "02/01/2025", dateEnd: "02/01/2025", location: "Building B", imgSrc: "/event2.jpg" },
-];
-
+// ------------------------------------
 const eventTypes = [
   {
     title: "กิจกรรมมหาวิทยาลัย",
@@ -93,7 +105,7 @@ export default function Home() {
         <section className="mb-6 py-18">
           <h2 className="font-extrabold mb-2 text-2xl">Upcoming Event</h2>
           <div className="flex gap-6 overflow-x-auto">
-            {upcomingEvents.map((event, idx) => (
+            {events.map((event, idx) => (
               <EventCard key={idx} {...event} />
             ))}
           </div>
@@ -102,7 +114,7 @@ export default function Home() {
         <section className="mb-6">
           <h2 className="font-bold mb-2 text-2xl">Most Attention Event</h2>
           <div className="flex gap-4 overflow-x-auto">
-            {mostAttentionEvents.map((event, idx) => (
+            {events.map((event, idx) => (
               <EventCard key={idx} {...event} />
             ))}
           </div>
@@ -111,9 +123,10 @@ export default function Home() {
         <h2 className="font-bold mb-2 text-2xl px-2">Event Types</h2>
         <div>
           {eventTypes.map((type, idx) => (
-            <EventTypeSection key={idx} {...type} backgroundBrain={type.backgroundBrain} />
+            <EventTypeSection key={idx} {...type} />
           ))}
-        </div>
+      </div>
+
       </div>
     </div>
   );

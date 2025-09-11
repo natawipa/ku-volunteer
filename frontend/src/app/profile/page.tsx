@@ -8,7 +8,7 @@ const events = [
     dateStart: "10/09/2025",
     dateEnd: "12/09/2025",
     location: "Bangkok",
-    catagory: ["กิจกรรมมหาลัย", "เพื่อสังคม"],
+    catagory: ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
     imgSrc: "/titleExample.jpg",
     status: "upcoming",
   },

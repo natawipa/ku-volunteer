@@ -18,7 +18,7 @@ const statusColors: Record<string, string> = {
 };
 
 const catagoryColors: Record<string, string> = {
-  "กิจกรรมมหาลัย": "bg-[#B3E6FF]",
+  "กิจกรรมมหาวิทยาลัย": "bg-[#B3E6FF]",
   "เพื่อสังคม": "bg-[#FFBDBE]",
   "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
 };
