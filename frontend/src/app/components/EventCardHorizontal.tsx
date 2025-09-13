@@ -1,16 +1,6 @@
 import Image from "next/image";
-import { CalendarIcon, MapPinIcon, UserGroupIcon } from "@heroicons/react/24/outline";
-
-interface EventCardProps {
-  title: string;
-  dateStart: string;
-  dateEnd: string;
-  location: string;
-  catagory?: string[];
-  imgSrc: string;
-  status?: string;
-  capacity?: number; // optional field if you want "accept 30 students"
-}
+import { EventCardProps } from "./EventCard";
+import { CalendarIcon, MapPinIcon, UserGroupIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 const statusColors: Record<string, string> = {
   upcoming: "bg-red-700",
@@ -20,6 +10,7 @@ const statusColors: Record<string, string> = {
 
 const EventCardHorizontal: React.FC<EventCardProps> = ({
   title,
+  post,
   dateStart,
   dateEnd,
   location,
@@ -33,20 +24,25 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
       <Image
         src={imgSrc}
         alt={title}
-        width={150}
-        height={200}
-        className="rounded-md object-cover flex-shrink-100"
+        width={150} 
+        height={120} 
+        className="rounded-lg object-cover"
       />
 
       {/* Content */}
       <div className="flex flex-col flex-1 gap-2 w-[1000px]">
-        {/* Title + status */}
+        {/* Title */}
         <div className="flex justify-between items-center h-8">
           <h3 className="font-semibold text-base">{title}</h3>
         </div>
 
         {/* Info row: Date, Location, Capacity */}
         <div className="flex items-center text-sm text-gray-600 mt-1 gap-10">
+          {/* Post Date */}
+          <div className="flex items-center gap-1 md:">
+            <ClockIcon className="w-4 h-4" />
+            <span>Post at {post}</span>
+          </div>
           {/* Date */}
           <div className="flex items-center gap-1">
             <CalendarIcon className="w-4 h-4" />

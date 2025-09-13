@@ -1,30 +1,14 @@
 import EventCard from "./components/EventCard";
 import EventTypeSection from "./components/EventTypeSection";
 import EventCardHorizontal from "./components/EventCardHorizontal";
-import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { MagnifyingGlassIcon, ArrowRightCircleIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
 
-const events = [
-  {
-    title: "Volunteer Camp",
-    dateStart: "10/09/2025",
-    dateEnd: "12/09/2025",
-    location: "Bangkok",
-    catagory: ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
-    imgSrc: "/titleExample.jpg",
-    status: "upcoming",
-  },
-  {
-    title: "Coding Hackathon",
-    dateStart: "15/09/2025",
-    dateEnd: "16/09/2025",
-    location: "KU Campus",
-    catagory: ["เสริมสร้างสมรรถนะ"],
-    imgSrc: "/titleExample2.jpg",
-    status: "during",
-  },
-];
+// Fetch Data from example.json
+import eventsData from "./example.json";
+
+const events = eventsData.events;
 
 // ------------------------------------
 const eventTypes = [
@@ -52,7 +36,7 @@ export default function Home() {
   return (
     <div className="relative">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px] shadow-md"></div>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]"></div>
 
       {/* Mountain background */}
       <img
@@ -62,30 +46,30 @@ export default function Home() {
       />
 
       {/* Foreground content */}
-      <div className="relative p-6">
-        <header className="flex justify-between items-center mb-6">
+      <div className="relative p-6"> 
+        <header className="flex justify-between items-center ">
           <img
-            src="/small_logo.png"
+            src="/Logo_Kasetsart.svg"
             alt="Small Logo"
             className="w-8 h-16 object-cover"
           />
           <nav className="space-x-8">
-            <button className="btn">Document</button>
-            <button className="btn">All Event</button>
+            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
+            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
             <Link href="/staff-homepage" 
             className="btn bg-[#215701] text-white px-4 py-2 rounded 
-                      hover:shadow-lg hover:shadow-[#215701]/50 hover:shadow-x-0 hover:shadow-y-2
+                      hover:bg-[#00361C]
                       transition-all duration-200">
               Sign In
             </Link>
           </nav>
         </header>
 
-        <div className="flex justify-center mb-6">
+        <div className="flex justify-center">
           <img
-            src="/big_logo.png"
+            src="/Logo_Kasetsart.svg"
             alt="Big Logo"
-            className="w-22 h-32 object-cover"
+            className="w-30 h-45 object-cover"
           />
         </div>
 
@@ -103,9 +87,11 @@ export default function Home() {
           </div>
         </section>
         
-        <section className="mb-6 py-18">
+        {/* -------------------------- */}
+        
+        <section className="mb-6 mt-18">
           <h2 className="font-extrabold mb-2 text-2xl">Upcoming Event</h2>
-          <div className="flex gap-6 overflow-x-auto">
+          <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-2 pt-2">
             {events.map((event, idx) => (
               <EventCard key={idx} {...event} />
             ))}
@@ -114,14 +100,14 @@ export default function Home() {
 
         <section className="mb-6">
           <h2 className="font-bold mb-2 text-2xl">Most Attention Event</h2>
-          <div className="flex gap-4 overflow-x-auto">
+          <div className="flex gap-4 overflow-x-auto overflow-y-hidden pb-2 pt-2">
             {events.map((event, idx) => (
               <EventCard key={idx} {...event} />
             ))}
           </div>
         </section>
             
-        <h2 className="font-bold mb-2 text-2xl px-2">Event Types</h2>
+        <h2 className="font-bold mb-6 text-2xl py-2">Event Types</h2>
         <div>
           {eventTypes.map((type, idx) => (
             <EventTypeSection key={idx} {...type} />

@@ -1,14 +1,17 @@
 import Image from "next/image";
 import { CalendarIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
-interface EventCardProps {
+export interface EventCardProps {
   title: string;
+  post: string;
   dateStart: string;
   dateEnd: string;
   location: string;
   catagory?: string[];
   imgSrc: string;
   status?: string;
+  capacity: number;
 }
 
 const statusColors: Record<string, string> = {
@@ -25,19 +28,21 @@ const catagoryColors: Record<string, string> = {
 
 const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, location, catagory, imgSrc, status }) => {
   return (
-    <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0">
-      <Image 
-        src={imgSrc} 
-        alt={title} 
-        width={240} 
-        height={140} 
-        className="rounded-lg object-cover" 
+    <Link href={`/events/${title}`}>
+      <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">
+        <Image
+          src={imgSrc}
+          alt={title}
+          width={100}
+        height={120} 
+        className="rounded-lg object-cover"
+        style={{ width: '100%', height: '120px' }} 
         />
 
         {/* Status Badge */}
       {status && (
         <span
-          className={`absolute font-bold top-2 right-2 text-white text-xs px-2 py-1 rounded-tl-[5px] rounded-tr-[5px] rounded-bl-[20px] rounded-br-[5px] ${statusColors[status]}`}
+          className={`absolute font-bold top-4 right-4 text-white text-sm px-2 py-1 rounded-tl-[5px] rounded-tr-[5px] rounded-bl-[20px] rounded-br-[5px] ${statusColors[status]}`}
         >
           {status}
         </span>
@@ -66,6 +71,7 @@ const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, locati
         </div>
       )}
     </div>
+    </Link>
   );
 }
 

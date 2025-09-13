@@ -1,15 +1,6 @@
-import EventCard from "./EventCard";
 import EventCardHorizontal from "./EventCardHorizontal";
-
-interface EventCardProps {
-  title: string;
-  dateStart: string;
-  dateEnd: string;
-  location: string;
-  catagory?: string[];
-  imgSrc: string;
-  status?: string;
-}
+import { EventCardProps } from "./EventCard";
+import Link from "next/link";
 
 interface EventTypeSectionProps {
   title: string;
@@ -25,11 +16,12 @@ const EventTypeSection: React.FC<EventTypeSectionProps> = ({
   events,
 }) => {
   return (
-    <div className={`shadow-lg p-4 mb-10 rounded-lg relative ${color}`}>
-      {/* Background brain image */}
-      {backgroundBrain && (
-        <div
-          className="absolute right-0 bottom-0 bg-no-repeat bg-contain opacity-50 pointer-events-none"
+    <Link href={`/events/${title}`}>
+      <div className={`shadow-lg p-4 mb-10 rounded-lg relative ${color} overflow-hidden hover:scale-102 transition-transform duration-200`}>
+        {/* Background brain image */}
+        {backgroundBrain && (
+          <div
+            className="absolute right-0 bottom-0 bg-no-repeat bg-contain opacity-50 pointer-events-none"
           style={{
             backgroundImage: `url(${backgroundBrain})`,
             width: "200px",
@@ -50,11 +42,11 @@ const EventTypeSection: React.FC<EventTypeSectionProps> = ({
         {events.length === 0 ? (
           <p className="text-sm text-gray-500">No events yet</p>
         ) : (
-          events.map((event, idx) => (
-          <EventCardHorizontal key={idx} {...event} capacity={20}/>))
+          <EventCardHorizontal key={0} {...events[0]} capacity={events[0].capacity} />
         )}
       </div>
     </div>
+    </Link>
   );
 };
 

@@ -49,7 +49,7 @@ export default function Home() {
       <div className="relative p-6">
         <header className="flex justify-between items-center">
           <img
-            src="/Logo_Staff.svg"
+            src="/Logo_Student.svg"
             alt="Small Logo"
             className="w-8 h-16 object-cover"
           />
@@ -73,7 +73,7 @@ export default function Home() {
 
         <div className="flex justify-center">
           <img
-            src="/Logo_Staff.svg"
+            src="/Logo_Student.svg"
             alt="Big Logo"
             className="w-30 h-45 object-cover"
           />
@@ -96,7 +96,7 @@ export default function Home() {
         {/* -------------------------- */}
 
         <section className="mb-6 mt-18">
-          <h2 className="font-extrabold mb-2 text-2xl">My Organized Event</h2>
+          <h2 className="font-extrabold mb-2 text-2xl">My Enrolled Event</h2>
           <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-2 pt-2">
             {events.map((event, idx) => (
               <EventCard key={idx} {...event} />

@@ -2,26 +2,10 @@ import EventCard from "../components/EventCard";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 
-const events = [
-  {
-    title: "Volunteer Camp",
-    dateStart: "10/09/2025",
-    dateEnd: "12/09/2025",
-    location: "Bangkok",
-    catagory: ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
-    imgSrc: "/titleExample.jpg",
-    status: "upcoming",
-  },
-  {
-    title: "Coding Hackathon",
-    dateStart: "15/09/2025",
-    dateEnd: "16/09/2025",
-    location: "KU Campus",
-    catagory: "เสริมสร้างสมรรถนะ",
-    imgSrc: "/titleExample2.jpg",
-    status: "during",
-  },
-];
+// Fetch Data from example.json
+import eventsData from "../example.json";
+
+const events = eventsData.events;
 
 // ------------------------------------
 
@@ -90,6 +74,8 @@ export default function Profile() {
             </div>
           </div>
         </div>
+
+        
 
         {/* My Event */}
         <section className="mb-6">
