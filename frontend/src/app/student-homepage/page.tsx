@@ -1,6 +1,6 @@
 import EventCard from "../components/EventCard";
 import EventTypeSection from "../components/EventTypeSection";
-import EventCardHorizontal from "../components/EventCardHorizontal";
+import SearchFilter from "../components/SearchCard";
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -87,6 +87,7 @@ export default function Home() {
               placeholder="ค้นหากิจกรรม"
               className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none"
             />
+
 
             <div className="h-6 w-[1px] bg-gray-200 mx-2"></div>
             <ChevronDownIcon className="text-black-400 w-5 h-5 ml-2 opacity-50" />
