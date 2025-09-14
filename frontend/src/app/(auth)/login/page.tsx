@@ -10,22 +10,16 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
     console.log('Login  with:', { email, password });
   };
 
   const handleGoogleSignIn = () => {
-    // Handle Google sign in logic
   };
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
-      
-      {/* logo top left */}
       <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
-      {/* wave */}
       <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
-      {/* card */}
       <Card title="Log in">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>

@@ -20,7 +20,6 @@ const RolePage: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // register page by role
     setErrors({});
     if (role === '') {
       setErrors({ role: 'โปรดเลือกตำแหน่ง' });
@@ -39,16 +38,10 @@ const RolePage: React.FC = () => {
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
-      
-      {/* logo top left */}
       <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
-      {/* wave */}
       <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
-      {/* card */}
       <Card title="Role">
         <form onSubmit={handleSubmit}>
-            
-            {/* Role */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 หน้าที่

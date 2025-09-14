@@ -34,11 +34,6 @@ body {
   font-family: var(--font-nunito);
 }
 
-/* Thai text */
 :lang(th) {
   font-family: var(--font-mitr);
 }
-
-/* body {
-  	margin: 0; line-height: normal;
-} */

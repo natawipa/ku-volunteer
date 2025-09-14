@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-  lang = 'en', // can be dynamic per page
+  lang = 'en',
 }: {
   children: React.ReactNode;
   lang?: string;
@@ -26,20 +26,3 @@ export default function RootLayout({
     </html>
   );
 }
-
-
-
-
-// export default function RootLayout({
-//   children,
-// }: {
-//   children: React.ReactNode
-// }) {
-//   return (
-//     <html lang="th">
-//       <body className={`${nunito.variable} ${mitr.variable} font-nunito antialiased`}>
-//         {children}
-//       </body>
-//     </html>
-//   )
-// }

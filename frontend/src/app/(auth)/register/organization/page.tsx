@@ -22,7 +22,6 @@ export const validationSchema = z
 
 .refine((data) => data.password === data.confirm, {
     message: "รหัสผ่านไม่ตรงกัน",
-    // display error at confirm box
     path: ["confirm"],
 });
 
@@ -32,7 +31,7 @@ const OrganizeRegisterPage: React.FC = () => {
     register,
     handleSubmit,
     setValue,
-    formState: { errors }, // check error
+    formState: { errors },
   } = useForm({
         resolver: zodResolver(validationSchema) 
     });
@@ -50,29 +49,23 @@ const OrganizeRegisterPage: React.FC = () => {
     const TitleOptions = ["นาย", "นาง", "นางสาว"];
 
     const handleOrganizeSelect = (roleOption: string) => {
-      setSelectedOrganize(roleOption);  // update  state
-      setValue('organize', roleOption, { shouldValidate: true });  // Update form state
+      setSelectedOrganize(roleOption);
+      setValue('organize', roleOption, { shouldValidate: true });
       setIsOrganizeDropdownOpen(false);
     };
 
     const handleTitleSelect = (roleOption: string) => {
-      setSelectedTitle(roleOption);  // update  state
-      setValue('title', roleOption, { shouldValidate: true });  // Update form state
+      setSelectedTitle(roleOption);
+      setValue('title', roleOption, { shouldValidate: true });
       setIsTitleDropdownOpen(false);
     };
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
-      
-      {/* logo top left */}
       <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
-      {/* wave */}
       <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
-      {/* card */}
       <Card title="Organization Register">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* <form className="space-y-6"> */}
-
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             คำนำหน้า
@@ -110,7 +103,6 @@ const OrganizeRegisterPage: React.FC = () => {
         )}
       </div>
 
-
         <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
@@ -139,8 +131,6 @@ const OrganizeRegisterPage: React.FC = () => {
               />
             </div>
           </div>
-
-          {/* Position Row*/}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="faculty" className="block text-sm font-medium text-gray-700 mb-2">
@@ -192,8 +182,6 @@ const OrganizeRegisterPage: React.FC = () => {
             )}
           </div>
           </div>
-
-          {/* Email */}
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
               อีเมล
@@ -207,8 +195,6 @@ const OrganizeRegisterPage: React.FC = () => {
               {...register ('email')} />
               { errors.email && <p className="text-red-400 text-sm">{errors.email.message as string} </p>}
           </div>
-
-          {/* Password */}
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
               รหัสผ่าน
@@ -222,8 +208,6 @@ const OrganizeRegisterPage: React.FC = () => {
               {...register ('password')} />
               { errors.password && <p className="text-red-400 text-sm">{errors.password.message as string} </p>}
           </div>
-
-          {/* Confirm Password */}
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
               ยืนยันรหัสผ่าน
