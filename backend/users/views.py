@@ -44,6 +44,19 @@ class UserDetailView(generics.RetrieveAPIView):
         self.permission_denied(self.request, message="You do not have permission to view this user.")
 
 
+class UserUpdateView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_object(self):
+        obj = super().get_object()
+        user = self.request.user
+        if obj.id == user.id or user.role == "admin":
+            return obj
+        self.permission_denied(self.request, message="You do not have permission to update this user.")
+
+
 class UserDeleteView(generics.DestroyAPIView):
     queryset = User.objects.all()
     serializer_class = UserSerializer
