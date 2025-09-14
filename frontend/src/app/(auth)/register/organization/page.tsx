@@ -15,10 +15,8 @@ export const validationSchema = z
             .min(8, { message: "รหัสผ่านต้องมีอย่างน้อย 8 ตัว" })
             .regex(/[A-Z]/, { message: "รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว" })
             .regex(/[!#$%^&*()+=\-[\]{};':"\\|,.<>/?]/, { message: "รหัสผ่านต้องมีอักษรพิเศษอย่างน้อย 1 ตัว" }),
-        confirm: z.string().min(8, { message: "โปรดกรอกข้อมูล" }),   
-        year: z.coerce.number()
-            .min(1, { message: "โปรดกรอกข้อมูล" })
-            .max(6, { message: "ชั้นปีต้องไม่เกิน 6" }),
+        confirm: z.string().min(1, { message: "โปรดกรอกข้อมูล" }),
+        organize: z.string().min(1, { message: "โปรดเลือกหน่วยงาน" }),
         title: z.string().min(1, { message: "โปรดเลือกคำนำหน้า" }),
 })
 
@@ -28,7 +26,7 @@ export const validationSchema = z
     path: ["confirm"],
 });
 
-const StudentRegisterPage: React.FC = () => {
+const OrganizeRegisterPage: React.FC = () => {
 
   const {
     register,
@@ -36,16 +34,26 @@ const StudentRegisterPage: React.FC = () => {
     setValue,
     formState: { errors }, // check error
   } = useForm({
-        resolver: zodResolver(validationSchema) // ผูก useform กับ react hook form
+        resolver: zodResolver(validationSchema) 
     });
 
-    const onSubmit = (data: FieldValues) => { // when submit reak funtiton
+    const onSubmit = (data: FieldValues) => { 
         console.log('Submitted:', data);
     }
+
+    const [isOrganizeDropdownOpen, setIsOrganizeDropdownOpen] = useState(false);
+    const [selectedOrganize, setSelectedOrganize] = useState('');
+    const organizRoles = [ "มหาวิทยาลัยเกษตรศาสตร์", "หน่วยงานภายนอก"];
 
     const [isTitleDropdownOpen, setIsTitleDropdownOpen] = useState(false);
     const [selectedTitle, setSelectedTitle] = useState('');
     const TitleOptions = ["นาย", "นาง", "นางสาว"];
+
+    const handleOrganizeSelect = (roleOption: string) => {
+      setSelectedOrganize(roleOption);  // update  state
+      setValue('organize', roleOption, { shouldValidate: true });  // Update form state
+      setIsOrganizeDropdownOpen(false);
+    };
 
     const handleTitleSelect = (roleOption: string) => {
       setSelectedTitle(roleOption);  // update  state
@@ -61,11 +69,12 @@ const StudentRegisterPage: React.FC = () => {
       {/* wave */}
       <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
       {/* card */}
-      <Card title="Student Register">
+      <Card title="Organization Register">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         {/* <form className="space-y-6"> */}
 
-        <label className="block text-sm font-medium text-gray-700 mb-2">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
             คำนำหน้า
           </label>
           <div className="relative">
@@ -99,6 +108,8 @@ const StudentRegisterPage: React.FC = () => {
         {errors.title && (
           <p className="mt-1 text-sm text-red-400">{errors.title.message as string}</p>
         )}
+      </div>
+
 
         <div className="grid grid-cols-2 gap-4">
             <div>
@@ -109,7 +120,7 @@ const StudentRegisterPage: React.FC = () => {
                 id="firstName"
                 name="firstName"
                 type="text"
-                placeholder="First Name"
+                placeholder="e.x. สมหญิง"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
                 required
               />
@@ -122,61 +133,64 @@ const StudentRegisterPage: React.FC = () => {
                 id="lastName"
                 name="lastName"
                 type="text"
-                placeholder="Last Name"
+                placeholder="e.x. มั่นใจ"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
                 required
               />
             </div>
           </div>
 
-          {/* Faculty and Major Row */}
+          {/* Position Row*/}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="faculty" className="block text-sm font-medium text-gray-700 mb-2">
-                คณะ
+                ตำแหน่ง
               </label>
               <input
-                id="faculty"
-                name="faculty"
+                id="position"
+                name="position"
                 type="text"
-                placeholder="Faculty"
+                placeholder="e.x. อาจารย์"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
                 required
               />
             </div>
             <div>
-              <label htmlFor="major" className="block text-sm font-medium text-gray-700 mb-2">
-                สาขา
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                หน่วยงาน
               </label>
-              <input
-                id="major"
-                name="major"
-                type="text"
-                placeholder="Major"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            {/* Year */}
-            <div>
-              <label
-                htmlFor="year"
-                className="block text-sm font-medium text-gray-700 mb-2 "
+              <div className="relative">
+              <button
+                type="button"
+                onClick={() => setIsOrganizeDropdownOpen(!isOrganizeDropdownOpen)}
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white flex items-center justify-between text-sm text-gray-700"
               >
-                ชั้นปี
-              </label>
-              <input
-                id="year"
-                type="number"
-                placeholder="Year"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
-                {...register ('year')} />
-                { errors.year && <p className="text-red-400 text-sm">{errors.year.message as string} </p>}
+                <span className={selectedOrganize ? "text-gray-900" : "text-gray-400"}>
+                  {selectedOrganize || "Select organization"}
+                </span>
+                <ChevronDown className="w-5 h-5 text-gray-400" />
+              </button>
+              <input type="hidden" {...register('organize')} />
+
+              {isOrganizeDropdownOpen && (
+                <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-20">
+                  {organizRoles.map((roleOption) => (
+                    <button
+                      key={roleOption}
+                      type="button"
+                      onClick={() => handleOrganizeSelect(roleOption)}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                    >
+                      {roleOption}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
+            {errors.organize && (
+              <p className="mt-1 text-sm text-red-400">{errors.organize.message as string}</p>
+            )}
+          </div>
           </div>
 
           {/* Email */}
@@ -215,7 +229,7 @@ const StudentRegisterPage: React.FC = () => {
               ยืนยันรหัสผ่าน
             </label>
             <input
-              id="confirmPassword"
+              id="confirm"
               type="password"
               placeholder="Confirm Password"
               className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
@@ -246,5 +260,5 @@ const StudentRegisterPage: React.FC = () => {
   );
 };
 
-export default StudentRegisterPage;
+export default OrganizeRegisterPage;
 
