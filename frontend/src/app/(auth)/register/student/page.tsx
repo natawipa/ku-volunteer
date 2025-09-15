@@ -20,6 +20,7 @@ export const validationSchema = z
             .min(1, { message: "โปรดกรอกข้อมูล" })
             .max(6, { message: "ชั้นปีต้องไม่เกิน 6" }),
         title: z.string().min(1, { message: "โปรดเลือกคำนำหน้า" }),
+        studentID: z.string().min(10, { message: "รหัสนิสิตต้องมีตัวเลข 10 ตัว" }).max(10, { message: "รหัสนิสิตต้องมีตัวเลข 10 ตัว" }),
 })
 
 .refine((data) => data.password === data.confirm, {
@@ -58,6 +59,19 @@ const StudentRegisterPage: React.FC = () => {
       <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
       <Card title="Student Register">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div>
+          <label htmlFor="studentID" className="block text-sm font-medium text-gray-700 mb-2">
+            รหัสนิสิต
+          </label>
+          <input
+            id="studentID"
+            type="text"
+            placeholder="e.x. 6610xxxxxx"
+            className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
+            {...register("studentID")}
+          />
+            { errors.studentID && <p className="text-red-400 text-sm">{errors.studentID.message as string} </p>}
+        </div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
             คำนำหน้า
           </label>
