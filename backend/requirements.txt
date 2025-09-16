@@ -6,3 +6,5 @@ psycopg2-binary==2.9.10
 PyJWT==2.10.1
 python-dotenv==1.1.1
 sqlparse==0.5.3
+
+social-auth-app-django
