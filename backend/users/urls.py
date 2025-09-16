@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import UserRegisterView, UserListView, UserDetailView, UserUpdateView, UserDeleteView, google_jwt_redirect
+from .views import UserRegisterView, UserListView, UserDetailView, UserUpdateView, UserDeleteView
 
 urlpatterns = [
     path("register/", UserRegisterView.as_view(), name="user-register"),
