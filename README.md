@@ -1,4 +1,4 @@
-# ku-volunteer
+# KU Volunteer
 KU Volunteer is a web application for Kasetsart University students to discover, apply for, and track volunteer activities while enabling staff to manage and verify participation. It consists of a Django backend and a Next.js frontend, with optional Google OAuth login and JWT-based API authentication.
 ---
 
@@ -9,15 +9,7 @@ KU Volunteer is a web application for Kasetsart University students to discover,
 - 📊 **Project Management:** [Jira Board](https://ku-team-f030w3d7.atlassian.net/jira/software/projects/KV/boards/35/backlog)
 - 🎨 **UI/UX Design:** [Figma Design](https://www.figma.com/design/xlDIr7uXlz8cMf5fttJkrg/KU-Volunteer?node-id=0-1&p=f&t=nzDc8F16H0CUbju9-0)
 - 📚 **GitHub Repository:** [KU-Volunteer](https://github.com/natawipa/ku-volunteer)
-
 ---
-# KU Volunteer
-
-Simple overview of use/purpose.
-
-## Description
-
-KU Volunteer is a web application for Kasetsart University students to discover, apply for, and track volunteer activities while enabling staff to manage and verify participation. It consists of a Django backend and a Next.js frontend, with optional Google OAuth login and JWT-based API authentication.
 
 ## Getting Started
 
@@ -30,6 +22,7 @@ KU Volunteer is a web application for Kasetsart University students to discover,
 1. Clone the repository
 2. Start the stack
 ```
+cd ku-volunteer
 docker compose up -d
 ```
 3. Apply migrations (first time)
@@ -63,16 +56,7 @@ Backend: http://localhost:8000
 Common issues:
 - Database errors like relation "users_user" does not exist → run migrations as above.
 - Google OAuth redirect_uri_mismatch → ensure Google Console has Authorized redirect URI:
-	`http://localhost:8000/api/auth/google/callback`
-
-## Authors
-
-- Natawipa Poonyakariyakorn — maintainer
-
-## Version History
-
-- 0.2 — Authentication flow updates and fixes
-- 0.1 — Initial setup
+	`http://localhost:8000/api/auth/google/callback/`
 
 ## License
 

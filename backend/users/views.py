@@ -72,10 +72,7 @@ class UserDeleteView(generics.DestroyAPIView):
 
 @login_required
 def google_jwt_redirect(request):
-    """
-    Issue JWT tokens for the authenticated (social) user and redirect to frontend.
-    Frontend will receive tokens as query params: /auth/callback?access=...&refresh=...
-    """
+    """Issue JWT for authenticated user and redirect (or return JSON in test mode)."""
     user = request.user
     refresh = RefreshToken.for_user(user)
     # Optional testing mode: return JSON instead of redirect when ?json=1
@@ -91,10 +88,7 @@ def google_jwt_redirect(request):
 
 
 def google_login(request):
-    """
-    Redirect to social-auth begin endpoint while forcing a custom redirect_uri
-    so Google will call back to /api/auth/google/callback (Option B).
-    """
+    """Redirect to social-auth begin while forcing custom redirect_uri to our callback."""
     # Use configured redirect URI if available; fall back to building one.
     redirect_uri = getattr(
         settings,
