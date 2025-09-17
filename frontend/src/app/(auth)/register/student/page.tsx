@@ -16,9 +16,6 @@ export const validationSchema = z
             .regex(/[A-Z]/, { message: "รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว" })
             .regex(/[!#$%^&*()+=\-[\]{};':"\\|,.<>/?]/, { message: "รหัสผ่านต้องมีอักษรพิเศษอย่างน้อย 1 ตัว" }),
         confirm: z.string().min(8, { message: "โปรดกรอกข้อมูล" }),   
-        year: z.coerce.number()
-            .min(1, { message: "โปรดกรอกข้อมูล" })
-            .max(6, { message: "ชั้นปีต้องไม่เกิน 6" }),
         title: z.string().min(1, { message: "โปรดเลือกคำนำหน้า" }),
         studentID: z.string().min(10, { message: "รหัสนิสิตต้องมีตัวเลข 10 ตัว" }).max(10, { message: "รหัสนิสิตต้องมีตัวเลข 10 ตัว" }),
 })
@@ -176,10 +173,10 @@ const StudentRegisterPage: React.FC = () => {
                 id="year"
                 type="number"
                 placeholder="Year"
+                min="1"
+                max="6"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
-                {...register ('year')} />
-                { errors.year && <p className="text-red-400 text-sm">{errors.year.message as string} </p>}
+                required/>
             </div>
           </div>
           <div>
