@@ -2,7 +2,7 @@ from django.conf import settings
 from django.shortcuts import redirect
 from .models import User
 
-# Check that user email is exist indtabase
+# Check that user email exist in database
 # If not, redirect to frontend register page
 # If yes, allow to continue the pipeline
 def require_existing_user(strategy, details, backend, user=None, *args, **kwargs):

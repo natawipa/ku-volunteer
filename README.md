@@ -1,5 +1,5 @@
 # ku-volunteer
-A web application for Kasetsart University students to find, apply for, and track volunteer opportunities. The system helps students fulfill their required volunteer hours by category while allowing staff to manage activities and verify participation.
+KU Volunteer is a web application for Kasetsart University students to discover, apply for, and track volunteer activities while enabling staff to manage and verify participation. It consists of a Django backend and a Next.js frontend, with optional Google OAuth login and JWT-based API authentication.
 ---
 
 ## 📌 Project Links
@@ -11,3 +11,74 @@ A web application for Kasetsart University students to find, apply for, and trac
 - 📚 **GitHub Repository:** [KU-Volunteer](https://github.com/natawipa/ku-volunteer)
 
 ---
+# KU Volunteer
+
+Simple overview of use/purpose.
+
+## Description
+
+KU Volunteer is a web application for Kasetsart University students to discover, apply for, and track volunteer activities while enabling staff to manage and verify participation. It consists of a Django backend and a Next.js frontend, with optional Google OAuth login and JWT-based API authentication.
+
+## Getting Started
+
+### Dependencies
+- Docker Desktop (recommended) or
+- Python 3.11, Node.js 20, PostgreSQL 16
+- macOS, Linux, or Windows 10+
+
+### Installing (Docker)
+1. Clone the repository
+2. Start the stack
+```
+docker compose up -d
+```
+3. Apply migrations (first time)
+```
+docker compose exec backend python manage.py makemigrations users
+docker compose exec backend python manage.py migrate
+```
+4. (Optional) Create admin and open admin site
+```
+docker compose exec backend python manage.py createsuperuser
+```
+Admin: http://localhost:8000/admin/
+
+### Executing program (local without Docker)
+
+Backend (Django)
+- Create/activate virtualenv
+	- macOS/Linux: `source .venv/bin/activate`
+	- Windows: `.venv\\Scripts\\Activate.ps1`
+- Install deps: `pip install -r backend/requirements.txt`
+- Run server from `backend/`: `python manage.py runserver`
+
+Frontend (Next.js)
+- From `frontend/`: `npm install` then `npm run dev`
+
+Frontend: http://localhost:3000
+Backend: http://localhost:8000
+
+## Help
+
+Common issues:
+- Database errors like relation "users_user" does not exist → run migrations as above.
+- Google OAuth redirect_uri_mismatch → ensure Google Console has Authorized redirect URI:
+	`http://localhost:8000/api/auth/google/callback`
+
+## Authors
+
+- Natawipa Poonyakariyakorn — maintainer
+
+## Version History
+
+- 0.2 — Authentication flow updates and fixes
+- 0.1 — Initial setup
+
+## License
+
+This project is licensed under the MIT License — see the `LICENSE` file for details.
+
+## Acknowledgments
+
+- Inspired by volunteer/activity platforms in higher education
+- Thanks to the maintainers of Django, DRF, Next.js, and social-auth
