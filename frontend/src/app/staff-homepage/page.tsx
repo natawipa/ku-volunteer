@@ -43,6 +43,8 @@ export default function Home() {
       <Image
         src="/mountain.svg"
         alt="mountain"
+        width={1920}
+        height={510}
         className="absolute inset-0 top-0 w-full h-[510px] object-cover pt-11"
       />
 
@@ -52,7 +54,9 @@ export default function Home() {
           <Image
             src="/Logo_Staff.svg"
             alt="Small Logo"
-            className="w-8 h-16 object-cover"
+            width={64}
+            height={64}
+            className="object-cover"
           />
           <nav className="flex items-center space-x-8">
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
@@ -76,7 +80,9 @@ export default function Home() {
           <Image
             src="/Logo_Staff.svg"
             alt="Big Logo"
-            className="w-30 h-45 object-cover"
+            width={180}
+            height={180}
+            className="object-cover"
           />
         </div>
 

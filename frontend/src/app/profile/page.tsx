@@ -19,6 +19,8 @@ export default function Profile() {
         <Image
           src="/mountain.svg"
           alt="mountain"
+          width={1920}
+          height={510}
           className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90  "
         />
       </div>
@@ -33,7 +35,9 @@ export default function Profile() {
           <Image
             src="/avatar.jpg"
             alt="profile"
-            className="w-30 h-30 p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
+            width={120}
+            height={120}
+            className="p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
           />
           <div>
             <h2 className="font-extrabold text-lg bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6]">Mr. Somchai Ramrian</h2>
