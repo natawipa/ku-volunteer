@@ -20,7 +20,7 @@ const statusColors: Record<string, string> = {
   complete: "bg-green-600",
 };
 
-const catagoryColors: Record<string, string> = {
+const categoryColors: Record<string, string> = {
   "กิจกรรมมหาวิทยาลัย": "bg-[#B3E6FF]",
   "เพื่อสังคม": "bg-[#FFBDBE]",
   "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
@@ -63,7 +63,7 @@ const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, catego
           {(Array.isArray(category) ? category : [category]).map((c, idx) => (
             <span
               key={idx}
-              className={`text-black px-2 py-1 rounded-full ${catagoryColors[c]}`}
+              className={`text-black px-2 py-1 rounded-full ${categoryColors[c]}`}
             >
               #{c}
             </span>
