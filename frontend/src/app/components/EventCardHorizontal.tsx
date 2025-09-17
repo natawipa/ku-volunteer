@@ -2,12 +2,6 @@ import Image from "next/image";
 import { EventCardProps } from "./EventCard";
 import { CalendarIcon, MapPinIcon, UserGroupIcon, ClockIcon } from "@heroicons/react/24/outline";
 
-// const statusColors: Record<string, string> = {
-//   upcoming: "bg-red-700",
-//   during: "bg-indigo-600",
-//   complete: "bg-green-600",
-// };
-
 const EventCardHorizontal: React.FC<EventCardProps> = ({
   title,
   post,

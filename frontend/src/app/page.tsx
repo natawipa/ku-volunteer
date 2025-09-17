@@ -1,7 +1,6 @@
 "use client";
 import EventCard from "./components/EventCard";
 import EventTypeSection from "./components/EventTypeSection";
-// import EventCardHorizontal from "./components/EventCardHorizontal";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";

@@ -23,21 +23,7 @@ export default function SearchFilter() {
     const saved = JSON.parse(localStorage.getItem("searchHistory") || "[]");
     setHistory(saved);
   }, []);
-
-  // const handleSearch = () => {
-  //   if (!query.trim()) return;
-  //   const newHistory = [query, ...history.filter(h => h !== query)].slice(0, 10);
-  //   setHistory(newHistory);
-  //   localStorage.setItem("searchHistory", JSON.stringify(newHistory));
-  //   setQuery("");
-  // };
-
-  // const filteredCards = cards.filter(card =>
-  //   (history.length === 0 || history.includes(card.title)) &&
-  //   (category === "All" || card.category === category) &&
-  //   (date === "" || card.date === date)
-  // );
-
+  
   return (
     <div className="bg-white shadow-md rounded-lg p-4 space-y-4">
 

@@ -1,7 +1,9 @@
+"use client";
 import EventCard from "../components/EventCard";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
-// import { CalendarIcon } from "@heroicons/react/24/outline";
+import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 // Fetch Data from example.json
 import eventsData from "../example.json";
@@ -12,6 +14,8 @@ const events = eventsData.events;
 
 
 export default function Profile() {
+  const router = useRouter();
+
   return (
     <div className="relative">
       {/* Background gradient */}
@@ -27,6 +31,18 @@ export default function Profile() {
 
       {/* content */}
       <div className="relative p-6">
+
+      {/* Back button */}
+        <button
+          onClick={() => router.back()}
+          className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
+          hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
+        >
+          <ChevronLeftIcon className="w-5 h-5" />
+          Back
+        </button>
+
+
         {/* Profile card */}
         <div className="flex flex-col sm:flex-row items-center p-8 
                   space-y-4 sm:space-y-0 sm:space-x-8 
