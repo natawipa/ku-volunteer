@@ -21,19 +21,19 @@ const eventTypes = [
     title: "กิจกรรมมหาวิทยาลัย",
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
     backgroundBrain: "/brainread.svg",
-    events: events.filter(e => e.catagory?.includes("กิจกรรมมหาวิทยาลัย")),
+    events: events.filter(e => e.category?.includes("กิจกรรมมหาวิทยาลัย")),
   },
   {
     title: "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ",
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
     backgroundBrain: "/brainthink.svg",
-    events: events.filter(e => e.catagory?.includes("เสริมสร้างสมรรถนะ")),
+    events: events.filter(e => e.category?.includes("เสริมสร้างสมรรถนะ")),
   },
   {
     title: "กิจกรรมเพื่อสังคม",
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
     backgroundBrain: "/brainlove.svg",
-    events: events.filter(e => e.catagory?.includes("เพื่อสังคม")),
+    events: events.filter(e => e.category?.includes("เพื่อสังคม")),
   },
 ];
 

@@ -8,7 +8,7 @@ export interface EventCardProps {
   dateStart: string;
   dateEnd: string;
   location: string;
-  catagory?: string[];
+  category?: string[];
   imgSrc: string;
   status?: string;
   capacity: number;
@@ -26,7 +26,7 @@ const catagoryColors: Record<string, string> = {
   "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
 };
 
-const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, catagory, imgSrc, status }) => {
+const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, category, imgSrc, status }) => {
   return (
     <Link href={`/events/${title}`}>
       <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">
@@ -58,9 +58,9 @@ const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, catago
       </section>
 
       {/* Category */}
-      {catagory && catagory.length > 0 && (
+      {category && category.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1 text-xs">
-          {(Array.isArray(catagory) ? catagory : [catagory]).map((c, idx) => (
+          {(Array.isArray(category) ? category : [category]).map((c, idx) => (
             <span
               key={idx}
               className={`text-black px-2 py-1 rounded-full ${catagoryColors[c]}`}

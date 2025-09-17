@@ -6,7 +6,7 @@
       "dateEnd": "12/09/2025",
       "post": "10/09/2025",
       "location": "Bangkok",
-      "catagory": ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
+      "category": ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
       "imgSrc": "/titleExample.jpg",
       "capacity": 30,
       "status": "upcoming"
@@ -17,7 +17,7 @@
       "dateEnd": "16/09/2025",
       "post": "15/09/2025",
       "location": "KU Campus",
-      "catagory": ["เสริมสร้างสมรรถนะ"],
+      "category": ["เสริมสร้างสมรรถนะ"],
       "imgSrc": "/titleExample2.jpg",
       "capacity": 25,
       "status": "during"
@@ -28,7 +28,7 @@
       "dateEnd": "21/10/2025",
       "post": "20/10/2025",
       "location": "KU Campus",
-      "catagory": ["เพื่อสังคม"],
+      "category": ["เพื่อสังคม"],
       "imgSrc": "/titleExample3.jpg",
       "capacity": 10,
       "status": "complete"
