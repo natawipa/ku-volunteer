@@ -5,6 +5,7 @@ KU Volunteer is a web application for Kasetsart University students to discover,
 ## 📌 Project Links
 - 🎬 **Sprint Review Videos**
   - Sprint 1: [Watch on YouTube](https://www.youtube.com/watch?v=TEeooISUzhA)
+  - Sprint 2: [Watch on Youtube](https://youtu.be/Qx_UI-_u6G8)
 - 📋 **Project Proposal:** [Google Docs](https://docs.google.com/document/d/1dSgomn033W_DnCxLYvI9i7PCp6DdOQVSv9pmEwO-aZQ/edit?usp=sharing)
 - 📊 **Project Management:** [Jira Board](https://ku-team-f030w3d7.atlassian.net/jira/software/projects/KV/boards/35/backlog)
 - 🎨 **UI/UX Design:** [Figma Design](https://www.figma.com/design/xlDIr7uXlz8cMf5fttJkrg/KU-Volunteer?node-id=0-1&p=f&t=nzDc8F16H0CUbju9-0)
