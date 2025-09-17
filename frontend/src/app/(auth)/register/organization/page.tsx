@@ -8,7 +8,7 @@ import { useForm, FieldValues } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Card from '../../../(auth)/components/Card';
 
-export const validationSchema = z
+const validationSchema = z
     .object({
         email: z.string().email({ message: "อีเมลไม่ถูกต้อง" }),
         password: z.string()
