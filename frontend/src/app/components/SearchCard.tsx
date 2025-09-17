@@ -1,20 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
 
-interface Card {
-  title: string;
-  category: string;
-  date: string; // format: YYYY-MM-DD
-}
+// interface Card {
+//   title: string;
+//   category: string;
+//   date: string; // format: YYYY-MM-DD
+// }
 
-const cards: Card[] = [
-  { title: "plant for dad", category: "กิจกรรมมหาวิทยาลัย", date: "2025-09-14" },
-  { title: "read for blind", category: "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ", date: "2025-09-20" },
-  { title: "help orphanage", category: "กิจกรรมเพื่อสังคม", date: "2025-10-01" },
-];
+// const cards: Card[] = [
+//   { title: "plant for dad", category: "กิจกรรมมหาวิทยาลัย", date: "2025-09-14" },
+//   { title: "read for blind", category: "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ", date: "2025-09-20" },
+//   { title: "help orphanage", category: "กิจกรรมเพื่อสังคม", date: "2025-10-01" },
+// ];
 
 export default function SearchFilter() {
-  const [query, setQuery] = useState("");
+  const [ , setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
   const [category, setCategory] = useState("All");
   const [date, setDate] = useState("");
@@ -24,19 +24,19 @@ export default function SearchFilter() {
     setHistory(saved);
   }, []);
 
-  const handleSearch = () => {
-    if (!query.trim()) return;
-    const newHistory = [query, ...history.filter(h => h !== query)].slice(0, 10);
-    setHistory(newHistory);
-    localStorage.setItem("searchHistory", JSON.stringify(newHistory));
-    setQuery("");
-  };
+  // const handleSearch = () => {
+  //   if (!query.trim()) return;
+  //   const newHistory = [query, ...history.filter(h => h !== query)].slice(0, 10);
+  //   setHistory(newHistory);
+  //   localStorage.setItem("searchHistory", JSON.stringify(newHistory));
+  //   setQuery("");
+  // };
 
-  const filteredCards = cards.filter(card =>
-    (history.length === 0 || history.includes(card.title)) &&
-    (category === "All" || card.category === category) &&
-    (date === "" || card.date === date)
-  );
+  // const filteredCards = cards.filter(card =>
+  //   (history.length === 0 || history.includes(card.title)) &&
+  //   (category === "All" || card.category === category) &&
+  //   (date === "" || card.date === date)
+  // );
 
   return (
     <div className="bg-white shadow-md rounded-lg p-4 space-y-4">

@@ -1,6 +1,7 @@
 import EventCard from "../components/EventCard";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
-import { CalendarIcon } from "@heroicons/react/24/outline";
+// import { CalendarIcon } from "@heroicons/react/24/outline";
+import Image from "next/image";
 
 // Fetch Data from example.json
 import eventsData from "../example.json";
@@ -15,7 +16,7 @@ export default function Profile() {
     <div className="relative">
       {/* Background gradient */}
       <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white" >
-        <img
+        <Image
           src="/mountain.svg"
           alt="mountain"
           className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90  "
@@ -29,7 +30,7 @@ export default function Profile() {
                   space-y-4 sm:space-y-0 sm:space-x-8 
                   ml-0 sm:ml-4 md:ml-8 lg:ml-16 
                   transition-all duration-300">
-          <img
+          <Image
             src="/avatar.jpg"
             alt="profile"
             className="w-30 h-30 p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"

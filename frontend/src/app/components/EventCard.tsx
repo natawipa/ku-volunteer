@@ -26,7 +26,7 @@ const catagoryColors: Record<string, string> = {
   "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
 };
 
-const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, location, catagory, imgSrc, status }) => {
+const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, catagory, imgSrc, status }) => {
   return (
     <Link href={`/events/${title}`}>
       <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">

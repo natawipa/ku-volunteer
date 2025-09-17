@@ -1,10 +1,11 @@
 "use client";
 import EventCard from "./components/EventCard";
 import EventTypeSection from "./components/EventTypeSection";
-import EventCardHorizontal from "./components/EventCardHorizontal";
-import { MagnifyingGlassIcon, ArrowRightCircleIcon } from "@heroicons/react/24/outline";
+// import EventCardHorizontal from "./components/EventCardHorizontal";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
+import Image from "next/image";
 
 // Fetch Data from example.json
 import eventsData from "./example.json";
@@ -57,7 +58,7 @@ export default function Home() {
       <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]"></div>
 
       {/* Mountain background */}
-      <img
+      <Image
         src="/mountain.svg"
         alt="mountain"
         className="absolute inset-0 top-0 w-full h-[510px] object-cover pt-11"
@@ -66,7 +67,7 @@ export default function Home() {
       {/* Foreground content */}
       <div className="relative p-6"> 
         <header className="flex justify-between items-center ">
-          <img
+          <Image
             src="/Logo_Kasetsart.svg"
             alt="Small Logo"
             className="w-8 h-16 object-cover"
@@ -84,7 +85,7 @@ export default function Home() {
         </header>
 
         <div className="flex justify-center">
-          <img
+          <Image
             src="/Logo_Kasetsart.svg"
             alt="Big Logo"
             className="w-30 h-45 object-cover"

@@ -4,6 +4,7 @@ import Link from "next/link";
 
 interface EventTypeSectionProps {
   title: string;
+  titleEng?: string;
   color: string;
   backgroundBrain?: string;
   events: EventCardProps[];
@@ -11,12 +12,13 @@ interface EventTypeSectionProps {
 
 const EventTypeSection: React.FC<EventTypeSectionProps> = ({
   title,
+  titleEng = title === "กิจกรรมมหาวิทยาลัย" ? "university" : title === "กิจกรรมเพื่อการเสริมสร้างสมรรถนะ" ? "skill-building" : "social",
   color,
   backgroundBrain,
   events,
 }) => {
   return (
-    <Link href={`/events/${title}`}>
+    <Link href={`/event-type/${titleEng}`}>
       <div className={`shadow-lg p-4 mb-10 rounded-lg relative ${color} overflow-hidden hover:scale-102 transition-transform duration-200`}>
         {/* Background brain image */}
         {backgroundBrain && (
@@ -31,21 +33,22 @@ const EventTypeSection: React.FC<EventTypeSectionProps> = ({
         />
       )}
 
-      {/* Section title */}
-      <h2 className="font-medium mb-2 relative z-10 text-xl">
-        {title} <span className="text-gray-600">&gt;</span>
-      </h2>
+        {/* Section title */}
+        <h2 className="font-medium mb-2 relative z-10 text-xl">
+          {title} <span className="text-gray-600">&gt;</span>
+        </h2>
 
-      {/* Events list */}
-      <p className="font-regular mb-2 relative z-10 text-medium">Recent Event:</p>
-      <div className="flex gap-4 overflow-x-auto relative z-10 pb-2">
-        {events.length === 0 ? (
-          <p className="text-sm text-gray-500">No events yet</p>
-        ) : (
-          <EventCardHorizontal key={0} {...events[0]} capacity={events[0].capacity} />
-        )}
+        {/* Events list */}
+        <p className="font-regular mb-2 relative z-10 text-medium">Recent Event:</p>
+        
+        <div className="flex gap-4 overflow-x-auto relative z-10 pb-2">
+          {events.length === 0 ? (
+            <p className="text-sm text-gray-500">No events yet</p>
+          ) : (
+            <EventCardHorizontal key={0} {...events[0]} capacity={events[0].capacity} />
+          )}
+        </div>
       </div>
-    </div>
     </Link>
   );
 };
