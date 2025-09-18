@@ -18,12 +18,12 @@
 }
 
 @theme {
-  --color-mutegreen: #DAE9DC;
-}
+    --color-mutegreen: #DAE9DC;
+  }
 
 * {
   font-family: 'Nunito', 'Mitr';
-}
+  }
 
 :root {
   --font-mitr: 'Mitr', sans-serif;

@@ -1,0 +1,37 @@
+{
+  "events": [
+    {
+      "title": "Volunteer Camp",
+      "dateStart": "10/09/2025",
+      "dateEnd": "12/09/2025",
+      "post": "10/09/2025",
+      "location": "Bangkok",
+      "category": ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
+      "imgSrc": "/titleExample.jpg",
+      "capacity": 30,
+      "status": "upcoming"
+    },
+    {
+      "title": "Coding Hackathon",
+      "dateStart": "15/09/2025",
+      "dateEnd": "16/09/2025",
+      "post": "15/09/2025",
+      "location": "KU Campus",
+      "category": ["เสริมสร้างสมรรถนะ"],
+      "imgSrc": "/titleExample2.jpg",
+      "capacity": 25,
+      "status": "during"
+    },
+    {
+      "title": "Code Party",
+      "dateStart": "20/10/2025",
+      "dateEnd": "21/10/2025",
+      "post": "20/10/2025",
+      "location": "KU Campus",
+      "category": ["เพื่อสังคม"],
+      "imgSrc": "/titleExample3.jpg",
+      "capacity": 10,
+      "status": "complete"
+    }
+  ]
+}
