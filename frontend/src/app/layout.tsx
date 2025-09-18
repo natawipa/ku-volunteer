@@ -13,14 +13,6 @@ export const metadata: Metadata = {
   description: "Kasetsart University Volunteer Platform",
 };
 
-
-export default function RootLayout({
-  children,
-
-}: {
-  children: React.ReactNode;
-
-}) {
 export default function RootLayout({
   children,
 
