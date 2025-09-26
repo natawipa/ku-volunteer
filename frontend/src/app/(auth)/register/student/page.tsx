@@ -10,18 +10,21 @@ import Card from '../../../(auth)/components/Card';
 
 const validationSchema = z
     .object({
-        email: z.string().email({ message: "อีเมลไม่ถูกต้อง" }),
+        email: z.string().email({ message: "Invalid email address" }),
         password: z.string()
-            .min(8, { message: "รหัสผ่านต้องมีอย่างน้อย 8 ตัว" })
-            .regex(/[A-Z]/, { message: "รหัสผ่านต้องมีตัวพิมพ์ใหญ่อย่างน้อย 1 ตัว" })
-            .regex(/[!#$%^&*()+=\-[\]{};':"\\|,.<>/?]/, { message: "รหัสผ่านต้องมีอักษรพิเศษอย่างน้อย 1 ตัว" }),
-        confirm: z.string().min(8, { message: "โปรดกรอกข้อมูล" }),   
-        title: z.string().min(1, { message: "โปรดเลือกคำนำหน้า" }),
-        studentID: z.string().min(10, { message: "รหัสนิสิตต้องมีตัวเลข 10 ตัว" }).max(10, { message: "รหัสนิสิตต้องมีตัวเลข 10 ตัว" }),
+            .min(8, { message: "Password must be at least 8 characters" })
+            .regex(/[A-Z]/, { message: "Password must contain at least 1 uppercase letter" })
+            .regex(/[!#$%^&*()+=\-[\]{};':"\\|,.<>/?]/, { message: "Password must contain at least 1 special character" }),
+        confirm: z.string().min(8, { message: "Please enter confirmation password" }),   
+        title: z.string().min(1, { message: "Please select a title" }),
+        firstName: z.string().min(1, { message: "First name is required" }),
+        lastName: z.string().min(1, { message: "Last name is required" }),
+        studentID: z.string().min(10, { message: "Student ID must be 10 digits" }).max(10, { message: "Student ID must be 10 digits" }),
+        year: z.number().min(1, { message: "Year must be between 1-6" }).max(6, { message: "Year must be between 1-6" }),
 })
 
 .refine((data) => data.password === data.confirm, {
-    message: "รหัสผ่านไม่ตรงกัน",
+    message: "Passwords do not match",
     path: ["confirm"],
 });
 
@@ -36,13 +39,46 @@ const StudentRegisterPage: React.FC = () => {
         resolver: zodResolver(validationSchema)
     });
 
-    const onSubmit = (data: FieldValues) => {
+    const onSubmit = async (data: FieldValues) => {
         console.log('Submitted:', data);
+        
+        try {
+            const response = await fetch('http://localhost:8000/api/users/register/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    email: data.email,
+                    password: data.password,
+                    title: data.title,
+                    first_name: data.firstName,
+                    last_name: data.lastName,
+                    role: 'student',
+                    student_id_external: data.studentID,
+                    year: parseInt(data.year)
+                }),
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Registration successful:', result);
+                alert('Registration successful!');
+                // Redirect or handle success
+            } else {
+                const error = await response.json();
+                console.error('Registration failed:', error);
+                alert('Registration failed: ' + JSON.stringify(error));
+            }
+        } catch (error) {
+            console.error('Network error:', error);
+            alert('Network error occurred');
+        }
     }
 
     const [isTitleDropdownOpen, setIsTitleDropdownOpen] = useState(false);
     const [selectedTitle, setSelectedTitle] = useState('');
-    const TitleOptions = ["นาย", "นาง", "นางสาว"];
+    const TitleOptions = ["Mr.", "Mrs.", "Ms."];
 
     const handleTitleSelect = (roleOption: string) => {
       setSelectedTitle(roleOption);
@@ -58,7 +94,7 @@ const StudentRegisterPage: React.FC = () => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
         <div>
           <label htmlFor="studentID" className="block text-sm font-medium text-gray-700 mb-2">
-            รหัสนิสิต
+            Student ID
           </label>
           <input
             id="studentID"
@@ -70,7 +106,7 @@ const StudentRegisterPage: React.FC = () => {
             { errors.studentID && <p className="text-red-400 text-sm">{errors.studentID.message as string} </p>}
         </div>
         <label className="block text-sm font-medium text-gray-700 mb-2">
-            คำนำหน้า
+            Title
           </label>
           <div className="relative">
           <button
@@ -107,57 +143,29 @@ const StudentRegisterPage: React.FC = () => {
         <div className="grid grid-cols-2 gap-4">
             <div>
               <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-2">
-                ชื่อ
+                First Name
               </label>
               <input
                 id="firstName"
-                name="firstName"
                 type="text"
                 placeholder="First Name"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
+                {...register("firstName")}
               />
+              {errors.firstName && <p className="text-red-400 text-sm">{errors.firstName.message as string}</p>}
             </div>
             <div>
               <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-2">
-                นามสกุล
+                Last Name
               </label>
               <input
                 id="lastName"
-                name="lastName"
                 type="text"
                 placeholder="Last Name"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
+                {...register("lastName")}
               />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label htmlFor="faculty" className="block text-sm font-medium text-gray-700 mb-2">
-                คณะ
-              </label>
-              <input
-                id="faculty"
-                name="faculty"
-                type="text"
-                placeholder="Faculty"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="major" className="block text-sm font-medium text-gray-700 mb-2">
-                สาขา
-              </label>
-              <input
-                id="major"
-                name="major"
-                type="text"
-                placeholder="Major"
-                className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required
-              />
+              {errors.lastName && <p className="text-red-400 text-sm">{errors.lastName.message as string}</p>}
             </div>
           </div>
 
@@ -167,7 +175,7 @@ const StudentRegisterPage: React.FC = () => {
                 htmlFor="year"
                 className="block text-sm font-medium text-gray-700 mb-2 "
               >
-                ชั้นปี
+                Year
               </label>
               <input
                 id="year"
@@ -176,12 +184,14 @@ const StudentRegisterPage: React.FC = () => {
                 min="1"
                 max="6"
                 className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition-all duration-200 placeholder-gray-400"
-                required/>
+                {...register("year", { valueAsNumber: true })}
+              />
+              {errors.year && <p className="text-red-400 text-sm">{errors.year.message as string}</p>}
             </div>
           </div>
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-              อีเมล
+              Email
             </label>
             <input
               id="email"
@@ -194,7 +204,7 @@ const StudentRegisterPage: React.FC = () => {
           </div>
           <div>
             <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">
-              รหัสผ่าน
+              Password
             </label>
             <input
               id="password"
@@ -207,7 +217,7 @@ const StudentRegisterPage: React.FC = () => {
           </div>
           <div>
             <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
-              ยืนยันรหัสผ่าน
+              Confirm Password
             </label>
             <input
               id="confirmPassword"

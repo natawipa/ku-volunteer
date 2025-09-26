@@ -25,16 +25,16 @@ class User(AbstractBaseUser, PermissionsMixin):
         ("student", "Student"),
         ("organizer", "Organizer"),
         ("admin", "Admin"),
-        ("staff", "Staff"),
     ]
 
     email = models.EmailField(unique=True)
+    title = models.CharField(max_length=20, blank=True, null=True)
     first_name = models.CharField(max_length=100, blank=True, null=True)
     last_name = models.CharField(max_length=100, blank=True, null=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="student")
 
-    # required by Django
-    is_active = models.BooleanField(default=True)  # (not in DBML, but Django needs this)
+    # Django-required fields
+    is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
 
     created_at = models.DateTimeField(default=timezone.now)
@@ -52,7 +52,16 @@ class User(AbstractBaseUser, PermissionsMixin):
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     student_id_external = models.CharField(max_length=50, blank=True, null=True)
-    graduation_year = models.IntegerField(blank=True, null=True)
+    year = models.IntegerField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.email} - {self.student_id_external}"
+
+
+class OrganizerProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="organizer_profile")
+    position = models.CharField(max_length=100, blank=True, null=True)
+    organization_name = models.CharField(max_length=255, blank=True, null=True)
+
+    def __str__(self):
+        return f"{self.user.email} - {self.organization_name}"

@@ -1,5 +1,6 @@
 asgiref==3.9.1
 Django==5.2.5
+django-cors-headers==4.6.0
 djangorestframework==3.16.1
 djangorestframework-simplejwt==5.2.2
 psycopg2-binary==2.9.10
