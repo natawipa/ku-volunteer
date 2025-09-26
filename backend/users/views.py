@@ -1,4 +1,4 @@
-from rest_framework import generics
+from rest_framework import generics, status
 from rest_framework.permissions import BasePermission, IsAuthenticated, AllowAny
 from .models import User
 from .serializers import UserSerializer, UserRegisterSerializer
@@ -10,6 +10,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from urllib.parse import urlencode
 from django.contrib.auth import authenticate
+from django.http import JsonResponse
 
 
 class IsStudent(BasePermission):
@@ -81,9 +82,10 @@ class LoginView(APIView):
         if not email or not password:
             return Response({'error': 'Email and password are required'}, status=400)
         
-        user = authenticate(email=email, password=password)
+        # Authenticate using email and password
+        user = authenticate(request, username=email, password=password)
         
-        if user:
+        if user and user.is_active:
             refresh = RefreshToken.for_user(user)
             return Response({
                 'access': str(refresh.access_token),
@@ -101,7 +103,7 @@ def google_jwt_redirect(request):
     refresh = RefreshToken.for_user(user)
     # Optional testing mode: return JSON instead of redirect when ?json=1
     if request.GET.get('json') == '1':
-        return Response({
+        return JsonResponse({
             'access': str(refresh.access_token),
             'refresh': str(refresh),
             'user': UserSerializer(user).data,
