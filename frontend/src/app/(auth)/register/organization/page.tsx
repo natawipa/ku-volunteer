@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import Card from '../../../(auth)/components/Card';
 import { FormField } from '../../../(auth)/components/FormField';
@@ -8,9 +8,7 @@ import { Dropdown } from '../../../(auth)/components/Dropdown';
 import { TITLE_OPTIONS, ORGANIZATION_OPTIONS, TitleOption, OrganizationOption } from './types';
 import { useOrganizationRegistration } from './useOrganizationRegistration';
 
-
-
-const OrganizeRegisterPage: React.FC = () => {
+const OrganizationRegisterContent: React.FC = () => {
   const {
     register,
     setValue,
@@ -56,7 +54,7 @@ const OrganizeRegisterPage: React.FC = () => {
               onChange={handleTitleSelect}
               options={TITLE_OPTIONS}
               placeholder="Select Title"
-              label="คำนำหน้า"
+              label="Select Title"
               error={errors.title?.message}
             />
             <input type="hidden" {...register('title')} />
@@ -65,7 +63,7 @@ const OrganizeRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="firstName"
-              label="ชื่อ"
+              label="First Name"
               type="text"
               placeholder="e.g. Somying"
               register={register("firstName")}
@@ -73,7 +71,7 @@ const OrganizeRegisterPage: React.FC = () => {
             />
             <FormField
               id="lastName"
-              label="นามสกุล"
+              label="Last Name"
               type="text"
               placeholder="e.g. Munjai"
               register={register("lastName")}
@@ -88,7 +86,7 @@ const OrganizeRegisterPage: React.FC = () => {
                 onChange={handleOrganizeSelect}
                 options={ORGANIZATION_OPTIONS}
                 placeholder="Select Organization Type"
-                label="ประเภทหน่วยงาน"
+                label="Select Organization Type"
                 error={errors.organize?.message}
               />
               <input type="hidden" {...register('organize')} />
@@ -97,7 +95,7 @@ const OrganizeRegisterPage: React.FC = () => {
 
           <FormField
             id="organizationName"
-            label="ชื่อหน่วยงาน"
+            label="Organization Name"
             type="text"
             placeholder="e.g. Faculty of Engineering"
             register={register("organizationName")}
@@ -106,7 +104,7 @@ const OrganizeRegisterPage: React.FC = () => {
 
           <FormField
             id="email"
-            label="อีเมล"
+            label="Email"
             type="email"
             placeholder="username@gmail.com"
             required
@@ -116,7 +114,7 @@ const OrganizeRegisterPage: React.FC = () => {
 
           <FormField
             id="password"
-            label="รหัสผ่าน"
+            label="Password"
             type="password"
             placeholder="Password"
             required
@@ -126,7 +124,7 @@ const OrganizeRegisterPage: React.FC = () => {
 
           <FormField
             id="confirm"
-            label="ยืนยันรหัสผ่าน"
+            label="Confirm Password"
             type="password"
             placeholder="Confirm Password"
             required
@@ -158,5 +156,23 @@ const OrganizeRegisterPage: React.FC = () => {
   );
 };
 
-export default OrganizeRegisterPage;
+const OrganizationRegisterPage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
+        <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
+        <Card title="Organization Register">
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+        </Card>
+      </div>
+    }>
+      <OrganizationRegisterContent />
+    </Suspense>
+  );
+};
+
+export default OrganizationRegisterPage;
 

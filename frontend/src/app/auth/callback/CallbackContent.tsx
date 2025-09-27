@@ -11,6 +11,7 @@ export default function CallbackContent() {
   useEffect(() => {
     const access = searchParams.get('access');
     const refresh = searchParams.get('refresh');
+    const role = searchParams.get('role');
     
     if (access && refresh) {
       // Store tokens in localStorage
@@ -19,9 +20,15 @@ export default function CallbackContent() {
       
       setStatus('success');
       
-      // Redirect to dashboard or home page after a short delay
+      // Redirect based on user role after a short delay
       setTimeout(() => {
-        router.push('/student-homepage'); // Adjust this route as needed
+        if (role === 'student') {
+          router.push('/student-homepage');
+        } else if (role === 'organizer') {
+          router.push('/staff-homepage');
+        } else {
+          router.push('/'); // Default redirect for admin or unknown roles
+        }
       }, 2000);
     } else {
       setStatus('error');

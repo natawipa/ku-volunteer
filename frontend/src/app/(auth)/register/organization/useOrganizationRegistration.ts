@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useSearchParams } from 'next/navigation';
 import { OrganizationFormData } from './types';
 import { organizationValidationSchema } from './validation';
 import { OrganizationRegistrationService } from './api';
@@ -9,10 +10,19 @@ export function useOrganizationRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const searchParams = useSearchParams();
 
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationValidationSchema),
   });
+
+  useEffect(() => {
+    // Get email from URL parameters if coming from OAuth
+    const emailParam = searchParams.get('email');
+    if (emailParam) {
+      form.setValue('email', emailParam, { shouldValidate: true });
+    }
+  }, [searchParams, form]);
 
   const onSubmit = async (data: OrganizationFormData) => {
     setIsSubmitting(true);

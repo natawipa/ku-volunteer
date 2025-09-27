@@ -16,15 +16,15 @@ def require_existing_user(strategy, details, backend, user=None, *args, **kwargs
 
     email = (details or {}).get("email")
     if not email:
-        # No email provided by provider; treat as new and send to register without email
-        return strategy.redirect(f"{get_client_url()}/register")
+        # No email provided by provider; treat as new and send to role selection
+        return strategy.redirect(f"{get_client_url()}/role")
 
     try:
         existing = User.objects.get(email=email)
         return {"user": existing}
     except User.DoesNotExist:
-        # Send them to register page with prefilled email
-        return strategy.redirect(f"{get_client_url()}/register?email={email}")
+        # Send them to role selection page with prefilled email
+        return strategy.redirect(f"{get_client_url()}/role?email={email}")
 
 
 def get_client_url():

@@ -109,7 +109,9 @@ def google_jwt_redirect(request):
             'user': UserSerializer(user).data,
         })
     client = getattr(settings, 'CLIENT_URL_DEV', 'http://localhost:3000')
-    url = f"{client}/auth/callback?access={refresh.access_token}&refresh={refresh}"
+    # Include user data in the callback URL for role-based redirection
+    user_data = UserSerializer(user).data
+    url = f"{client}/auth/callback?access={refresh.access_token}&refresh={refresh}&role={user_data['role']}"
     return redirect(url)
 
 

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
 import Card from '../../../(auth)/components/Card';
 import { FormField } from '../../../(auth)/components/FormField';
@@ -8,9 +8,7 @@ import { Dropdown } from '../../../(auth)/components/Dropdown';
 import { TITLE_OPTIONS, TitleOption } from './types';
 import { useStudentRegistration } from './useStudentRegistration';
 
-
-
-const StudentRegisterPage: React.FC = () => {
+const StudentRegisterContent: React.FC = () => {
   const {
     register,
     setValue,
@@ -59,7 +57,7 @@ const StudentRegisterPage: React.FC = () => {
               onChange={handleTitleSelect}
               options={TITLE_OPTIONS}
               placeholder="Select Title"
-              label="คำนำหน้า"
+              label="Select Title"
               error={errors.title?.message}
             />
             <input type="hidden" {...register('title')} />
@@ -68,7 +66,7 @@ const StudentRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="firstName"
-              label="ชื่อ"
+              label="First Name"
               type="text"
               placeholder="First Name"
               register={register("firstName")}
@@ -76,7 +74,7 @@ const StudentRegisterPage: React.FC = () => {
             />
             <FormField
               id="lastName"
-              label="นามสกุล"
+              label="Last Name"
               type="text"
               placeholder="Last Name"
               register={register("lastName")}
@@ -87,7 +85,7 @@ const StudentRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="faculty"
-              label="คณะ"
+              label="Faculty"
               type="text"
               placeholder="e.g. Engineering"
               register={register("faculty")}
@@ -95,7 +93,7 @@ const StudentRegisterPage: React.FC = () => {
             />
             <FormField
               id="major"
-              label="สาขา"
+              label="Major"
               type="text"
               placeholder="e.g. Computer Engineering"
               register={register("major")}
@@ -106,7 +104,7 @@ const StudentRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="year"
-              label="ชั้นปี"
+              label="Year"
               type="number"
               placeholder="Year"
               min="1"
@@ -118,7 +116,7 @@ const StudentRegisterPage: React.FC = () => {
 
           <FormField
             id="email"
-            label="อีเมล"
+            label="Email"
             type="email"
             placeholder="username@gmail.com"
             required
@@ -128,7 +126,7 @@ const StudentRegisterPage: React.FC = () => {
 
           <FormField
             id="password"
-            label="รหัสผ่าน"
+            label="Password"
             type="password"
             placeholder="Password"
             required
@@ -138,7 +136,7 @@ const StudentRegisterPage: React.FC = () => {
 
           <FormField
             id="confirmPassword"
-            label="ยืนยันรหัสผ่าน"
+            label="Confirm Password"
             type="password"
             placeholder="Confirm Password"
             required
@@ -167,6 +165,24 @@ const StudentRegisterPage: React.FC = () => {
         </form>
       </Card>
     </div>
+  );
+};
+
+const StudentRegisterPage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
+        <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
+        <Card title="Student Register">
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+        </Card>
+      </div>
+    }>
+      <StudentRegisterContent />
+    </Suspense>
   );
 };
 

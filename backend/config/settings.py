@@ -90,7 +90,7 @@ LOGOUT_REDIRECT_URL = '/'
 CLIENT_URL_DEV = os.getenv('CLIENT_URL_DEV', 'http://localhost:3000')
 # After successful social login, issue JWT then redirect to frontend
 SOCIAL_AUTH_LOGIN_REDIRECT_URL = '/api/users/auth/google/jwt-redirect/'
-SOCIAL_AUTH_NEW_USER_REDIRECT_URL = f"{CLIENT_URL_DEV}/register"
+SOCIAL_AUTH_NEW_USER_REDIRECT_URL = '/api/users/auth/google/jwt-redirect/'
 SOCIAL_AUTH_LOGIN_ERROR_URL = f"{CLIENT_URL_DEV}/auth/error"
 
 # Request profile and email from Google
