@@ -42,7 +42,7 @@ const LoginPage: React.FC = () => {
       } else {
         setError(data.error || 'Login failed');
       }
-    } catch (error) {
+    } catch {
       setError('Network error. Please check your connection.');
     } finally {
       setLoading(false);
