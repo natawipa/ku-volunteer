@@ -30,12 +30,12 @@ class CustomUserAdmin(UserAdmin):
 
 @admin.register(StudentProfile)
 class StudentProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'student_id_external', 'year']
+    list_display = ['user', 'student_id_external', 'year', 'faculty', 'major']
     search_fields = ['user__email', 'student_id_external']
     list_filter = ['year']
 
 
 @admin.register(OrganizerProfile)
 class OrganizerProfileAdmin(admin.ModelAdmin):
-    list_display = ['user', 'organization_name', 'position']
+    list_display = ['user', 'organization_type', 'organization_name']
     search_fields = ['user__email', 'organization_name']

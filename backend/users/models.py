@@ -53,15 +53,27 @@ class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     student_id_external = models.CharField(max_length=50, blank=True, null=True)
     year = models.IntegerField(blank=True, null=True)
+    faculty = models.CharField(max_length=100, blank=True, null=True)
+    major = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
         return f"{self.user.email} - {self.student_id_external}"
 
 
 class OrganizerProfile(models.Model):
+    ORGANIZATION_TYPE_CHOICES = [
+        ("internal", "Kasetsart University"),
+        ("external", "External Organization"),
+    ]
+    
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="organizer_profile")
-    position = models.CharField(max_length=100, blank=True, null=True)
+    organization_type = models.CharField(
+        max_length=20, 
+        choices=ORGANIZATION_TYPE_CHOICES, 
+        blank=True, 
+        null=True
+    )
     organization_name = models.CharField(max_length=255, blank=True, null=True)
 
     def __str__(self):
-        return f"{self.user.email} - {self.organization_name}"
+        return f"{self.user.email} - {self.organization_name} ({self.get_organization_type_display()})"
