@@ -16,14 +16,19 @@ const RolePageContent: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState('');
+  const [oauthSession, setOAuthSession] = useState('');
 
   const [errors, setErrors] = useState<FormErrors>({});
 
   useEffect(() => {
-    // Get email from URL parameters if coming from OAuth
+    // Get email and oauth session from URL parameters if coming from OAuth
     const emailParam = searchParams.get('email');
+    const oauthSessionParam = searchParams.get('oauth_session');
     if (emailParam) {
       setEmail(emailParam);
+    }
+    if (oauthSessionParam) {
+      setOAuthSession(oauthSessionParam);
     }
   }, [searchParams]);
 
@@ -34,10 +39,18 @@ const RolePageContent: React.FC = () => {
     if (role === '') {
       setErrors({ role: 'โปรดเลือกตำแหน่ง' });
     } else if (role === 'หน่วยงาน') {
-      const url = email ? `/register/organization?email=${encodeURIComponent(email)}` : '/register/organization';
+      let url = '/register/organization';
+      const params = new URLSearchParams();
+      if (email) params.append('email', email);
+      if (oauthSession) params.append('oauth_session', oauthSession);
+      if (params.toString()) url += `?${params.toString()}`;
       router.push(url);
     } else if (role === 'นิสิต') {
-      const url = email ? `/register/student?email=${encodeURIComponent(email)}` : '/register/student';
+      let url = '/register/student';
+      const params = new URLSearchParams();
+      if (email) params.append('email', email);
+      if (oauthSession) params.append('oauth_session', oauthSession);
+      if (params.toString()) url += `?${params.toString()}`;
       router.push(url);
     }
 

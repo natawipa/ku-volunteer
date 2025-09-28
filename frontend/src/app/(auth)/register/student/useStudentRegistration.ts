@@ -11,16 +11,21 @@ export function useStudentRegistration() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
   const searchParams = useSearchParams();
+  const [oauthSession, setOAuthSession] = useState<string>('');
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentValidationSchema),
   });
 
   useEffect(() => {
-    // Get email from URL parameters if coming from OAuth
+    // Get email and oauth session from URL parameters if coming from OAuth
     const emailParam = searchParams.get('email');
+    const oauthSessionParam = searchParams.get('oauth_session');
     if (emailParam) {
       form.setValue('email', emailParam, { shouldValidate: true });
+    }
+    if (oauthSessionParam) {
+      setOAuthSession(oauthSessionParam);
     }
   }, [searchParams, form]);
 
@@ -32,12 +37,23 @@ export function useStudentRegistration() {
     console.log('Submitting:', data);
 
     try {
-      const result = await StudentRegistrationService.register(data);
+      let result;
+      if (oauthSession) {
+        // Use OAuth registration endpoint
+        result = await StudentRegistrationService.registerWithOAuth(data, oauthSession);
+      } else {
+        // Use regular registration endpoint
+        result = await StudentRegistrationService.register(data);
+      }
 
       if (result.success) {
         console.log('Registration successful:', result.data);
         setSubmitSuccess(true);
-        // You can add navigation logic here
+        
+        // If OAuth registration, redirect to callback URL
+        if (oauthSession && result.redirect_url) {
+          window.location.href = result.redirect_url;
+        }
       } else {
         console.error('Registration failed:', result.message);
         setSubmitError(result.message || 'Registration failed');

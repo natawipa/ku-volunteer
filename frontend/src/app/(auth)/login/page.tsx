@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Card from '../../(auth)/components/Card';
 
 const LoginPage: React.FC = () => {
@@ -9,6 +10,7 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -27,19 +29,26 @@ const LoginPage: React.FC = () => {
       const data = await response.json();
 
       if (response.ok) {
+        console.log('Login response:', data);
+        
         // Store tokens
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
         
         // Redirect based on user role
+        console.log('User role:', data.user.role);
         if (data.user.role === 'student') {
-          window.location.href = '/student-homepage';
+          console.log('Redirecting to student homepage');
+          router.push('/student-homepage');
         } else if (data.user.role === 'organizer') {
-          window.location.href = '/staff-homepage';
+          console.log('Redirecting to staff homepage');
+          router.push('/staff-homepage');
         } else {
-          window.location.href = '/'; // Default redirect for admin
+          console.log('Redirecting to main page');
+          router.push('/'); // Default redirect for admin
         }
       } else {
+        console.error('Login failed:', data);
         setError(data.error || 'Login failed');
       }
     } catch {

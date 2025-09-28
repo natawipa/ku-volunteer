@@ -198,6 +198,14 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = "users.User"
 
+# Cache configuration
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+        'LOCATION': 'oauth-sessions',
+    }
+}
+
 # CORS settings
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",

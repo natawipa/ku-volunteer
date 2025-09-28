@@ -13,6 +13,8 @@ export default function CallbackContent() {
     const refresh = searchParams.get('refresh');
     const role = searchParams.get('role');
     
+    console.log('OAuth callback params:', { access: !!access, refresh: !!refresh, role });
+    
     if (access && refresh) {
       // Store tokens in localStorage
       localStorage.setItem('access_token', access);
@@ -22,15 +24,20 @@ export default function CallbackContent() {
       
       // Redirect based on user role after a short delay
       setTimeout(() => {
+        console.log('OAuth redirecting based on role:', role);
         if (role === 'student') {
+          console.log('Redirecting to student homepage');
           router.push('/student-homepage');
         } else if (role === 'organizer') {
+          console.log('Redirecting to staff homepage');
           router.push('/staff-homepage');
         } else {
+          console.log('Redirecting to main page');
           router.push('/'); // Default redirect for admin or unknown roles
         }
       }, 2000);
     } else {
+      console.error('OAuth callback missing parameters');
       setStatus('error');
     }
   }, [searchParams, router]);

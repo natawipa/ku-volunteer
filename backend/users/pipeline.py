@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.shortcuts import redirect
+from django.core.cache import cache
 from .models import User
+import uuid
 
 # Check that user email exist in database
 # If not, redirect to frontend register page
@@ -23,8 +25,17 @@ def require_existing_user(strategy, details, backend, user=None, *args, **kwargs
         existing = User.objects.get(email=email)
         return {"user": existing}
     except User.DoesNotExist:
-        # Send them to role selection page with prefilled email
-        return strategy.redirect(f"{get_client_url()}/role?email={email}")
+        # Store OAuth session data temporarily for registration completion
+        session_key = str(uuid.uuid4())
+        cache.set(f"oauth_session_{session_key}", {
+            'email': email,
+            'details': details,
+            'backend': backend.name,
+            'strategy': strategy.__class__.__name__
+        }, timeout=1800)  # 30 minutes
+        
+        # Send them to role selection page with session key and prefilled email
+        return strategy.redirect(f"{get_client_url()}/role?email={email}&oauth_session={session_key}")
 
 
 def get_client_url():
