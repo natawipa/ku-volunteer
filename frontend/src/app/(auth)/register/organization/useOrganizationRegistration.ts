@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { OrganizationFormData } from './types';
 import { organizationValidationSchema } from './validation';
 import { OrganizationRegistrationService } from './api';
@@ -9,6 +10,7 @@ export function useOrganizationRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const router = useRouter();
 
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationValidationSchema),
@@ -27,6 +29,7 @@ export function useOrganizationRegistration() {
       if (result.success) {
         console.log('Registration successful:', result.data);
         setSubmitSuccess(true);
+        router.push('/login');
         // Please add navigation logic here
       } else {
         console.error('Registration failed:', result.message);

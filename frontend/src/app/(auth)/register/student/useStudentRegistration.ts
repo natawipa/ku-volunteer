@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
 import { StudentFormData } from './types';
 import { studentValidationSchema } from './validation';
 import { StudentRegistrationService } from './api';
@@ -9,6 +10,7 @@ export function useStudentRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const router = useRouter();
 
   const form = useForm<StudentFormData>({
     resolver: zodResolver(studentValidationSchema),
@@ -27,7 +29,7 @@ export function useStudentRegistration() {
       if (result.success) {
         console.log('Registration successful:', result.data);
         setSubmitSuccess(true);
-        // You can add navigation logic here
+        router.push('/login');
       } else {
         console.error('Registration failed:', result.message);
         setSubmitError(result.message || 'Registration failed');
