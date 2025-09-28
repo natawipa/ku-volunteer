@@ -13,8 +13,15 @@ def require_existing_user(strategy, details, backend, user=None, *args, **kwargs
     Allows existing users (matched by email) to proceed and be associated.
     """
     if user:
-        # Already authenticated or found by previous pipeline step
-        return {"user": user}
+        # If there's an authenticated session (e.g., logged into Django admin),
+        # only allow association when the emails match. This avoids accidentally
+        # attaching a social account to the currently logged-in admin account.
+        incoming_email = (details or {}).get("email")
+        if incoming_email and user.email and incoming_email.lower() == user.email.lower():
+            return {"user": user}
+        # Emails don't match -> stop the pipeline and send a clear error.
+        # Ask the user to log out first, then try again.
+        return strategy.redirect(f"{get_client_url()}/auth/error?reason=account_mismatch")
 
     email = (details or {}).get("email")
     if not email:
@@ -36,6 +43,26 @@ def require_existing_user(strategy, details, backend, user=None, *args, **kwargs
         
         # Send them to role selection page with session key and prefilled email
         return strategy.redirect(f"{get_client_url()}/role?email={email}&oauth_session={session_key}")
+
+
+def ensure_user_role(strategy, details, backend, user=None, *args, **kwargs):
+    """
+    Ensure that users created through OAuth have the correct default role.
+    This fixes the issue where OAuth users might get admin role instead of student role.
+    """
+    if user and not hasattr(user, '_created'):
+        # This is an existing user, don't modify their role
+        return {"user": user}
+    
+    if user and hasattr(user, '_created') and user._created:
+        # This is a newly created user, ensure they have the student role (default)
+        if not user.role or user.role == 'admin':
+            user.role = 'student'
+            user.is_staff = False
+            user.is_superuser = False
+            user.save()
+    
+    return {"user": user}
 
 
 def get_client_url():

@@ -8,6 +8,16 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError("Email is required")
         email = self.normalize_email(email)
+        
+        # Ensure role is set to student by default unless explicitly specified
+        if 'role' not in extra_fields:
+            extra_fields['role'] = 'student'
+        
+        # Ensure non-admin users don't get admin privileges
+        if extra_fields.get('role') != 'admin':
+            extra_fields.setdefault('is_staff', False)
+            extra_fields.setdefault('is_superuser', False)
+        
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)

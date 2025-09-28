@@ -49,10 +49,44 @@ export function useStudentRegistration() {
       if (result.success) {
         console.log('Registration successful:', result.data);
         setSubmitSuccess(true);
-        
-        // If OAuth registration, redirect to callback URL
+
+        // If OAuth registration, backend already issued tokens and provided a callback URL
         if (oauthSession && result.redirect_url) {
           window.location.href = result.redirect_url;
+          return;
+        }
+
+        // Manual registration flow: auto-login, store tokens, and redirect by role
+        try {
+          const loginRes = await fetch('http://localhost:8000/api/users/login/', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: data.email, password: data.password }),
+          });
+
+          const loginData = await loginRes.json();
+          if (loginRes.ok) {
+            // Store tokens
+            localStorage.setItem('access_token', loginData.access);
+            localStorage.setItem('refresh_token', loginData.refresh);
+
+            // Redirect based on role (student for this flow)
+            const role = loginData?.user?.role || 'student';
+            if (role === 'student') {
+              window.location.href = '/student-homepage';
+            } else if (role === 'organizer') {
+              window.location.href = '/staff-homepage';
+            } else {
+              window.location.href = '/';
+            }
+          } else {
+            console.error('Auto-login failed after registration:', loginData);
+            // Fallback: send to login page
+            window.location.href = '/login';
+          }
+        } catch (e) {
+          console.error('Auto-login error:', e);
+          window.location.href = '/login';
         }
       } else {
         console.error('Registration failed:', result.message);
