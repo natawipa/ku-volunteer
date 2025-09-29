@@ -54,3 +54,5 @@ const EventTypeSection: React.FC<EventTypeSectionProps> = ({
 };
 
 export default EventTypeSection;
+
+

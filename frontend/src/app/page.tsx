@@ -1,6 +1,6 @@
 "use client";
-import EventCard from "./components/EventCard";
-import EventTypeSection from "./components/EventTypeSection";
+import EventCard from "./homepage/components/EventCard";
+import EventTypeSection from "./homepage/components/EventTypeSection";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
@@ -8,7 +8,7 @@ import Image from "next/image";
 
 // Fetch Data from example.json
 import eventsData from "./example.json";
-import SearchCard from "./components/SearchCard";
+import SearchCard from "./homepage/components/SearchCard";
 
 import { useRef, useState, useEffect} from "react";
 
@@ -39,7 +39,21 @@ const eventTypes = [
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
 
+  // Handle scroll to add shadow to header
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 100) {
+        setIsScrolled(true);
+      } else {
+        setIsScrolled(false);
+      }
+    };
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+ 
   // Close when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -67,7 +81,7 @@ export default function Home() {
 
       {/* Foreground content */}
       <div className="relative p-6"> 
-        <header className="flex justify-between items-center ">
+        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
           <Image
             src="/Logo_Kasetsart.svg"
             alt="Small Logo"
@@ -78,7 +92,7 @@ export default function Home() {
           <nav className="space-x-8">
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
             <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-            <Link href="/staff-homepage" 
+            <Link href="/login" 
             className="btn bg-[#215701] text-white px-4 py-2 rounded 
                       hover:bg-[#00361C]
                       transition-all duration-200">
@@ -97,9 +111,21 @@ export default function Home() {
           />
         </div>
 
-        <section className="mb-6 flex justify-center">
-          <div className="relative w-150" ref={wrapperRef}>
-
+        <section
+          className={`transition-all duration-300 z-40 ${
+            isScrolled
+              ? "sticky top-14 w-full px-4"   // sticks below navbar
+              : "relative flex justify-center"
+          }`}
+        >
+          <div
+            ref={wrapperRef}
+            className={`transition-all duration-300 ${
+              isScrolled
+                ? "max-w-md mx-auto scale-90" // smaller when scrolled
+                : "relative w-150"
+            }`}
+          >
 
             <div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md"
               onClick={() => setIsOpen(true)} // toggle on click

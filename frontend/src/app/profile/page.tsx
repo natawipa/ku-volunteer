@@ -1,5 +1,5 @@
 "use client";
-import EventCard from "../components/EventCard";
+import EventCard from "../homepage/components/EventCard";
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
@@ -100,7 +100,7 @@ export default function Profile() {
 
         {/* My Event */}
         <section className="mb-6">
-          <h3 className="font-bold text-xl mb-2">My Event</h3>
+          <h3 className="font-bold text-xl mb-2">My Enrolled Event</h3>
           <div className="flex items-center">
             <div className="flex gap-4 overflow-x-auto">
               {events.map((e, i) => (

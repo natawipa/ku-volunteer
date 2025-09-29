@@ -7,7 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 // Fetch Data from example.json
-import eventsData from "../example.json";
+import eventsData from "../../example.json";
 
 const events = eventsData.events;
 
