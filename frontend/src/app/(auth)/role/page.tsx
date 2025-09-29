@@ -37,15 +37,15 @@ const RolePageContent: React.FC = () => {
     
     setErrors({});
     if (role === '') {
-      setErrors({ role: 'โปรดเลือกตำแหน่ง' });
-    } else if (role === 'หน่วยงาน') {
+      setErrors({ role: 'Select role' });
+    } else if (role === 'organization') {
       let url = '/register/organization';
       const params = new URLSearchParams();
       if (email) params.append('email', email);
       if (oauthSession) params.append('oauth_session', oauthSession);
       if (params.toString()) url += `?${params.toString()}`;
       router.push(url);
-    } else if (role === 'นิสิต') {
+    } else if (role === 'student') {
       let url = '/register/student';
       const params = new URLSearchParams();
       if (email) params.append('email', email);
@@ -57,8 +57,8 @@ const RolePageContent: React.FC = () => {
   };
 
   const roles = [
-    'นิสิต',
-    'หน่วยงาน'
+    'student',
+    'organization',
   ];
 
   return (
@@ -79,10 +79,10 @@ const RolePageContent: React.FC = () => {
         <form onSubmit={handleSubmit}>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                หน้าที่
+                Role
               </label>
               <label className="block text-sm font-small font-extralight text-gray-500 mb-2">
-                โปรดเลือกหน้าที่ของคุณ
+                Select your Role
               </label>
               <div className="relative mb-4.5">
                 <button

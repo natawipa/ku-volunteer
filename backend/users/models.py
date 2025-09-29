@@ -61,7 +61,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 
 class StudentProfile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
-    student_id_external = models.CharField(max_length=50, blank=True, null=True)
+    student_id_external = models.CharField(max_length=50, blank=True, null=True, unique=True)
     year = models.IntegerField(blank=True, null=True)
     faculty = models.CharField(max_length=100, blank=True, null=True)
     major = models.CharField(max_length=100, blank=True, null=True)

@@ -44,7 +44,7 @@ const StudentRegisterContent: React.FC = () => {
         <form onSubmit={onSubmit} className="space-y-6">
           <FormField
             id="studentID"
-            label="รหัสนิสิต"
+            label="Student ID"
             type="text"
             placeholder="e.x. 6610xxxxxx"
             register={register("studentID")}
