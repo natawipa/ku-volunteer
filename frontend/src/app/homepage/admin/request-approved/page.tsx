@@ -1,0 +1,69 @@
+"use client";
+import SearchCard from "@/app/homepage/components/SearchCard";
+import { MagnifyingGlassIcon, ChevronDownIcon} from "@heroicons/react/24/outline";
+import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import Link from "next/link";
+import Image from "next/image";
+
+import { useRef, useState, useEffect} from "react";
+
+// Fetch Data from example.json
+// import eventsData from "../../example.json";
+
+// const events = eventsData.events;
+
+export default function Home() {
+    const [isOpen, setIsOpen] = useState(false);
+    const wrapperRef = useRef<HTMLDivElement>(null);
+    const [isScrolled, setIsScrolled] = useState(false);
+
+    return (
+      <div className="relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
+  
+        {/* Mountain background */}
+        <Image
+          src="/mountain.svg"
+          alt="mountain"
+          width={920}
+          height={410}
+          className="w-full h-[200px] absolute inset-0 top-0 object-cover"
+        />
+  
+        {/* Foreground content */}
+        <div className="relative p-6"> 
+          <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
+            <Image
+              src="/Logo_Kasetsart.svg"
+              alt="Small Logo"
+              width={64}
+              height={64}
+              className="object-cover"
+            />
+            <nav className="flex items-center space-x-8">
+              <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
+              <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
+              <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+                      hover:bg-[#00361C]
+                      transition-all duration-200">
+              <div className="flex items-center">
+              <PlusIcon className="w-4 h-4 mr-2" />
+              <span className="mr-1">New</span>
+              </div>
+            </Link>
+              <Link href="/profile">
+              { <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" /> }
+              </Link>
+            </nav>
+          </header>
+        {/* -------------------------- */} 
+
+        <div className="flex justify-center mt-6 mb-16">
+            <h2 className="text-2xl font-semibold mt-16 md:mt-24 lg:mt-24">Event Name</h2>
+        </div>
+
+    </div>
+    </div>
+    );
+}
