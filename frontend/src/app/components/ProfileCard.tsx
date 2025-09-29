@@ -4,7 +4,11 @@ import { LogOut } from "lucide-react";
 import { UserCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 
-export default function ProfileCard() {
+type ProfileCardProps = {
+  role: "student-homepage" | "organization-homepage";
+};
+
+export default function ProfileCard({ role }: ProfileCardProps) {
     const [isOpen, setIsOpen] = useState(false);
     const wrapperRef = useRef<HTMLDivElement>(null);
 
@@ -18,6 +22,8 @@ export default function ProfileCard() {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
+
+    const profileLink = role === "student-homepage" ? "/student-profile" : "/organization-profile";
 
      return (
     <div className="relative" ref={wrapperRef}>
@@ -38,7 +44,7 @@ export default function ProfileCard() {
 
         {/* View Profile */}
           <Link
-            href="/student-profile"
+            href={profileLink}
             onClick={() => setIsOpen(false)}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-50"
           >

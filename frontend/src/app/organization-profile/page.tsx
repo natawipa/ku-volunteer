@@ -56,80 +56,67 @@ export default function Profile() {
             className="p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
           />
           <div>
-            <h2 className="font-extrabold text-lg bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6]">Mr. Somchai Ramrian</h2>
+            <h2 className="font-extrabold text-lg bg-white rounded-lg px-6 py-1 outline outline-2 outline-emerald-200 shadow-md">Mr. Somchai Ramrian</h2>
           </div>
         </div>
 
         {/* Profile Information */}
-        <div className="flex flex-col w-full max-w-4xl mx-auto mb-8 p-6 
-                bg-gradient-to-b from-[#D7EBCA]/50 to-[#EDFFCC]/50 
-                rounded-3xl shadow-md">
+        <div className="flex flex-col w-full max-w-4xl mx-auto mb-8 p-6 outline outline-2 outline-emerald-200
+                rounded-2xl shadow-[0px_4px_5px_0px_rgba(0,0,0,0.25)]">
           <div className="font-extrabold ml-8 mr-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-4 text-sm">
             {/* Row 1 */}
-            <div className="flex justify-between items-center">
-              <span>ID</span>
-              <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                6610545952
-              </b>
+            <div className="flex justify-between items-start break-words">
+                <span>Username</span>
+                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
+                    somchai.r
+                </b>
             </div>
+
             {/* Row 2 */}
-            <div className="flex justify-between items-center">
-              <span>Year</span>
-              <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                3
-              </b>
+            <div className="flex justify-between items-start break-words">
+                <span>Email</span>
+                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
+                    somchai.r@ku.th
+                </b>
             </div>
+
             {/* Row 3 */}
-            <div className="flex justify-between items-center">
-              <span>Faculty</span>
-              <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                Engineering
-              </b>
-            </div>
-            {/* Row 4 */}
-            <div className="flex justify-between items-center">
-              <span>Major</span>
+            <div className="flex justify-between items-start break-words">
+              <span>First name</span>
               <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                Software and Knowledge
+                Somchai
               </b>
             </div>
-          </div>
+
+            {/* Row 4 */}
+            <div className="flex justify-between items-start break-words">
+              <span>Last name</span>
+              <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
+                Ramrian
+              </b>
+            </div>
+
+            {/* Row 5 */}
+            <div className="flex justify-between items-start">
+              <span>Organization Type</span>
+              <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8 break-words">
+                Kasetsart University
+              </b>
+            </div>
+
+            {/* Row 6 */}
+            <div className="flex justify-between items-start">
+              <span>Organization name</span>
+              <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8 break-words">
+                Faculty of Engineering
+              </b>
+            </div>
+        </div>
         </div>
 
-        {/* ------------------------------- */}
-
-        {/* My Event */}
-        <section className="mb-6">
-          <h3 className="font-bold text-xl mb-2">My Event</h3>
-          <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto">
-              {events.map((e, i) => (
-                <EventCard key={i} {...e} />
-              ))}
-            </div>
-            <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300">
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
-          </div>
-        </section>
-
-        {/* Favorite Event */}
-        <section>
-          <h3 className="font-bold text-xl mb-2">
-            Favorite Event <span>⭐</span>
-          </h3>
-          <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto">
-              {events.map((event, i) => (
-                <EventCard key={i} {...event} />
-              ))}
-            </div>
-            <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300">
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
-          </div>
-        </section>
-      </div>
+        {/* -------------- */}
+        
+        </div>
     </div>
   );
-}
+}   
