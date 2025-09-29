@@ -7,6 +7,7 @@ import { FormField } from '../../../(auth)/components/FormField';
 import { Dropdown } from '../../../(auth)/components/Dropdown';
 import { TITLE_OPTIONS, TitleOption } from './types';
 import { useStudentRegistration } from './useStudentRegistration';
+import RedirectPage from '@/components/RedirectPage';
 
 const StudentRegisterContent: React.FC = () => {
   const {
@@ -16,6 +17,8 @@ const StudentRegisterContent: React.FC = () => {
     isSubmitting,
     submitError,
     submitSuccess,
+    showRedirectPage,
+    oauthSession,
     formState: { errors },
   } = useStudentRegistration();
 
@@ -25,6 +28,22 @@ const StudentRegisterContent: React.FC = () => {
     setSelectedTitle(title);
     setValue('title', title, { shouldValidate: true });
   };
+
+  // Show redirect page if registration is successful
+  if (showRedirectPage) {
+    const title = oauthSession ? 'Registration Complete!' : 'Registration Successful!';
+    const subtitle = oauthSession ? 'Taking you to your dashboard...' : 'Redirecting to login page...';
+    const redirectUrl = oauthSession ? '/student-homepage' : '/login';
+    
+    return (
+      <RedirectPage
+        title={title}
+        subtitle={subtitle}
+        redirectUrl={redirectUrl}
+        delay={3000}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
@@ -38,7 +57,7 @@ const StudentRegisterContent: React.FC = () => {
         )}
         {submitSuccess && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-600 text-sm">Registration successful!</p>
+            <p className="text-green-600 text-sm">Registration successful! Redirecting to login page...</p>
           </div>
         )}
         <form onSubmit={onSubmit} className="space-y-6">

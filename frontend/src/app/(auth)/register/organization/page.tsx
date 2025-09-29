@@ -5,8 +5,9 @@ import Link from 'next/link';
 import Card from '../../../(auth)/components/Card';
 import { FormField } from '../../../(auth)/components/FormField';
 import { Dropdown } from '../../../(auth)/components/Dropdown';
-import { TITLE_OPTIONS, ORGANIZATION_OPTIONS, TitleOption, OrganizationOption } from './types';
+import { TITLE_OPTIONS, TitleOption, ORGANIZATION_OPTIONS, OrganizationOption } from './types';
 import { useOrganizationRegistration } from './useOrganizationRegistration';
+import RedirectPage from '@/components/RedirectPage';
 
 const OrganizationRegisterContent: React.FC = () => {
   const {
@@ -16,6 +17,8 @@ const OrganizationRegisterContent: React.FC = () => {
     isSubmitting,
     submitError,
     submitSuccess,
+    showRedirectPage,
+    oauthSession,
     formState: { errors },
   } = useOrganizationRegistration();
 
@@ -32,6 +35,22 @@ const OrganizationRegisterContent: React.FC = () => {
     setValue('organize', organize, { shouldValidate: true });
   };
 
+  // Show redirect page if registration is successful
+  if (showRedirectPage) {
+    const title = oauthSession ? 'Registration Complete!' : 'Registration Successful!';
+    const subtitle = oauthSession ? 'Taking you to your dashboard...' : 'Redirecting to login page...';
+    const redirectUrl = oauthSession ? '/staff-homepage' : '/login';
+    
+    return (
+      <RedirectPage
+        title={title}
+        subtitle={subtitle}
+        redirectUrl={redirectUrl}
+        delay={3000}
+      />
+    );
+  }
+
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
@@ -44,7 +63,7 @@ const OrganizationRegisterContent: React.FC = () => {
         )}
         {submitSuccess && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-600 text-sm">Registration successful!</p>
+            <p className="text-green-600 text-sm">Registration successful! Redirecting to login page...</p>
           </div>
         )}
         <form onSubmit={onSubmit} className="space-y-6">

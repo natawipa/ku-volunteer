@@ -30,7 +30,8 @@ export default function Profile() {
         } else {
           setError(result.error || 'Failed to load profile');
         }
-      } catch (error) {
+      } catch (err) {
+        console.error('Network error:', err);
         setError('Network error occurred');
       } finally {
         setLoading(false);

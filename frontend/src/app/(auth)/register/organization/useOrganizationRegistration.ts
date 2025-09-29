@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { OrganizationFormData } from './types';
 import { organizationValidationSchema } from './validation';
 import { OrganizationRegistrationService } from './api';
@@ -10,8 +10,10 @@ export function useOrganizationRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
+  const [showRedirectPage, setShowRedirectPage] = useState(false);
   const searchParams = useSearchParams();
   const [oauthSession, setOAuthSession] = useState<string>('');
+  const router = useRouter();
 
   const form = useForm<OrganizationFormData>({
     resolver: zodResolver(organizationValidationSchema),
@@ -52,39 +54,18 @@ export function useOrganizationRegistration() {
 
         // If OAuth registration, backend already issued tokens and provided a callback URL
         if (oauthSession && result.redirect_url) {
-          window.location.href = result.redirect_url;
+          setShowRedirectPage(true);
+          setTimeout(() => {
+            window.location.href = result.redirect_url!;
+          }, 3000);
           return;
         }
 
-        // Manual registration: auto-login and redirect based on role
-        try {
-          const loginRes = await fetch('http://localhost:8000/api/users/login/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: data.email, password: data.password }),
-          });
-
-          const loginData = await loginRes.json();
-          if (loginRes.ok) {
-            localStorage.setItem('access_token', loginData.access);
-            localStorage.setItem('refresh_token', loginData.refresh);
-
-            const role = loginData?.user?.role || 'organizer';
-            if (role === 'organizer') {
-              window.location.href = '/staff-homepage';
-            } else if (role === 'student') {
-              window.location.href = '/student-homepage';
-            } else {
-              window.location.href = '/';
-            }
-          } else {
-            console.error('Auto-login failed after registration:', loginData);
-            window.location.href = '/login';
-          }
-        } catch (e) {
-          console.error('Auto-login error:', e);
-          window.location.href = '/login';
-        }
+        // Manual registration: show redirect page then go to login
+        setShowRedirectPage(true);
+        setTimeout(() => {
+          router.push('/login');
+        }, 4000);
       } else {
         console.error('Registration failed:', result.message);
         setSubmitError(result.message || 'Registration failed');
@@ -103,5 +84,7 @@ export function useOrganizationRegistration() {
     isSubmitting,
     submitError,
     submitSuccess,
+    showRedirectPage,
+    oauthSession,
   };
 }
