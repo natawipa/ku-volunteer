@@ -1,6 +1,7 @@
 import EventCard from "../components/EventCard";
 import EventTypeSection from "../components/EventTypeSection";
 // import EventCardHorizontal from "../components/EventCardHorizontal";
+import ProfileCard from "../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
@@ -70,9 +71,7 @@ export default function Home() {
               </div>
             </Link>
 
-            <Link href="/profile">
-              { <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" /> }
-            </Link>
+            <ProfileCard />
           </nav>
         </header>
 
