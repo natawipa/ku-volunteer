@@ -249,12 +249,22 @@ export const stringUtils = {
 export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number
-): ((...args: Parameters<T>) => void) => {
-  let timeoutId: NodeJS.Timeout;
-  return (...args: Parameters<T>) => {
-    clearTimeout(timeoutId);
+): {
+  call: (...args: Parameters<T>) => void;
+  cancel: () => void;
+} => {
+  let timeoutId: NodeJS.Timeout | undefined;
+  const debounced = (...args: Parameters<T>) => {
+    if (timeoutId) clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);
   };
+  const cancel = () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = undefined;
+    }
+  };
+  return { call: debounced, cancel };
 };
 
 // Error handler utility
