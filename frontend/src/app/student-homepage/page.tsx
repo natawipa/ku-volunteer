@@ -93,7 +93,7 @@ export default function Home() {
             <nav className="flex items-center space-x-8">
               <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
               <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-              <ProfileCard />
+              <ProfileCard role="student-homepage"/>
             </nav>
           </header>
   
