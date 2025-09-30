@@ -15,12 +15,64 @@ class OrganizerProfileSerializer(serializers.ModelSerializer):
 
 
 class UserSerializer(serializers.ModelSerializer):
-    profile = StudentProfileSerializer(required=False)
-    organizer_profile = OrganizerProfileSerializer(required=False)
+    profile = StudentProfileSerializer(required=False, read_only=True)
+    organizer_profile = OrganizerProfileSerializer(required=False, read_only=True)
+    
+    year = serializers.IntegerField(required=False, write_only=True)
+    faculty = serializers.CharField(required=False, write_only=True)
+    major = serializers.CharField(required=False, write_only=True)
+    organization_type = serializers.CharField(required=False, write_only=True)
+    organization_name = serializers.CharField(required=False, write_only=True)
 
     class Meta:
         model = User
-        fields = ["id", "email", "title", "first_name", "last_name", "role", "created_at", "updated_at", "profile", "organizer_profile"]
+        fields = ["id", "email", "title", "first_name", "last_name", "role", "created_at", "updated_at", 
+                 "profile", "organizer_profile", "year", "faculty", "major", "organization_type", "organization_name"]
+
+    def update(self, instance, validated_data):
+        year = validated_data.pop('year', None)
+        faculty = validated_data.pop('faculty', None)
+        major = validated_data.pop('major', None)
+        organization_type = validated_data.pop('organization_type', None)
+        organization_name = validated_data.pop('organization_name', None)
+        
+        instance = super().update(instance, validated_data)
+        
+        # Update student profile
+        if instance.role == 'student' and hasattr(instance, 'profile'):
+            profile = instance.profile
+            if year is not None:
+                profile.year = year
+            if faculty is not None:
+                profile.faculty = faculty
+            if major is not None:
+                profile.major = major
+            profile.save()
+        
+        # Update organizer profile
+        elif instance.role == 'organizer' and hasattr(instance, 'organizer_profile'):
+            organizer_profile = instance.organizer_profile
+            if organization_type is not None:
+                organizer_profile.organization_type = organization_type
+            if organization_name is not None:
+                organizer_profile.organization_name = organization_name
+            organizer_profile.save()
+        
+        return instance
+
+    def create(self, validated_data):
+        profile_data = validated_data.pop('profile', None)
+        organizer_profile_data = validated_data.pop('organizer_profile', None)
+        
+        user = User.objects.create(**validated_data)
+        
+        if profile_data:
+            StudentProfile.objects.create(user=user, **profile_data)
+        
+        if organizer_profile_data:
+            OrganizerProfile.objects.create(user=user, **organizer_profile_data)
+        
+        return user
 
 
 class UserRegisterSerializer(serializers.ModelSerializer):

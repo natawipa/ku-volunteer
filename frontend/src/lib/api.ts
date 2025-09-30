@@ -33,6 +33,24 @@ export interface ApiResponse<T> {
   error?: string;
 }
 
+export interface StudentProfileUpdate {
+  student_id_external?: string; 
+  year?: number;
+  faculty?: string;
+  major?: string;
+}
+
+export interface UserUpdate {
+  id?: number;
+  email?: string;
+  title?: string;
+  first_name?: string;
+  last_name?: string;
+  role?: 'student' | 'organizer' | 'admin';
+  profile?: StudentProfileUpdate;
+  organizer_profile?: OrganizerProfile;
+}
+
 class ApiService {
   private getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem('access_token');
@@ -40,6 +58,61 @@ class ApiService {
       'Content-Type': 'application/json',
       'Authorization': token ? `Bearer ${token}` : '',
     };
+  }
+
+  async login(email: string, password: string): Promise<ApiResponse<{access: string, refresh: string, user: User}>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/login/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Store tokens in localStorage
+        if (data.access) localStorage.setItem('access_token', data.access);
+        if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
+        return { success: true, data };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || 'Login failed' };
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
+  async register(userData: {
+    email: string;
+    password: string;
+    confirm: string;
+    title?: string;
+    first_name: string;
+    last_name: string;
+    role: 'student' | 'organizer';
+    // Student fields
+    student_id_external?: string;
+    year?: number;
+    faculty?: string;
+    major?: string;
+    // Organizer fields
+    organize?: string;
+    organization_name?: string;
+  }): Promise<ApiResponse<User>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/register/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData),
+      });
+
+      return await this.handleResponse<User>(response);
+    } catch (error) {
+      console.error('Register error:', error);
+      return { success: false, error: 'Network error' };
+    }
   }
 
   private async handleResponse<T>(response: Response): Promise<ApiResponse<T>> {
@@ -122,19 +195,69 @@ class ApiService {
 
   async updateUser(userId: number, userData: Partial<User>): Promise<ApiResponse<User>> {
     try {
-      const response = await fetch(`${API_BASE_URL}/users/${userId}/update/`, {
+      console.log('🔄 updateUser called with:', { userId, userData });
+      
+      const url = `${API_BASE_URL}/users/${userId}/update/`;
+      console.log('📡 Making request to:', url);
+      
+      const headers = this.getAuthHeaders();
+      console.log('🔐 Headers:', headers);
+      
+      const response = await fetch(url, {
         method: 'PATCH',
-        headers: this.getAuthHeaders(),
+        headers: headers,
         body: JSON.stringify(userData),
       });
-
-      return await this.handleResponse<User>(response);
+  
+      console.log('📡 Response status:', response.status);
+      console.log('📡 Response ok:', response.ok);
+  
+      // Get the raw response text
+      const responseText = await response.text();
+      console.log('📡 Raw response:', responseText);
+  
+      let responseData;
+      try {
+        responseData = responseText ? JSON.parse(responseText) : {};
+      } catch {
+        console.error('❌ Failed to parse response as JSON:', responseText);
+        return { 
+          success: false, 
+          error: `Server returned invalid JSON: ${responseText}` 
+        };
+      }
+  
+      if (response.ok) {
+        console.log('✅ Update successful!');
+        return { success: true, data: responseData };
+      } else {
+        console.error('❌ Update failed:', responseData);
+        
+        let errorMessage = 'Request failed';
+        if (responseData.detail) {
+          errorMessage = responseData.detail;
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (typeof responseData === 'object') {
+          errorMessage = JSON.stringify(responseData);
+        } else if (typeof responseData === 'string') {
+          errorMessage = responseText;
+        }
+        
+        return { success: false, error: errorMessage };
+      }
     } catch (error) {
+      console.error('💥 NETWORK ERROR in updateUser:', error);
+      console.error('💥 Error name:', error instanceof Error ? error.name : 'Unknown');
+      console.error('💥 Error message:', error instanceof Error ? error.message : 'Unknown');
+      
       if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
-        // Retry with refreshed token
         return this.updateUser(userId, userData);
       }
-      return { success: false, error: 'Failed to update user profile' };
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Network error occurred' 
+      };
     }
   }
 }

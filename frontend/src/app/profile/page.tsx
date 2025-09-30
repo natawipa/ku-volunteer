@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiService, type User } from "../../lib/api";
+import Link from "next/link";
 
 // Fetch Data from example.json
 import eventsData from "../example.json";
@@ -141,7 +142,11 @@ export default function Profile() {
           Back
         </button>
 
-
+      {/* Update Profile */}
+        <Link href="/profile/edit" className="absolute right-6 top-6 flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6] hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md">
+            Update Profile
+        </Link>
+        
         {/* Profile card */}
         <div className="flex flex-col sm:flex-row items-center p-8 
                   space-y-4 sm:space-y-0 sm:space-x-8 
