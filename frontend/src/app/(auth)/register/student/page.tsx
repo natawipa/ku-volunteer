@@ -1,13 +1,13 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Card from '../../../(auth)/components/Card';
 import { FormField } from '../../../(auth)/components/FormField';
 import { Dropdown } from '../../../(auth)/components/Dropdown';
 import { TITLE_OPTIONS, TitleOption } from './types';
 import { useStudentRegistration } from './useStudentRegistration';
-import RedirectPage from '@/components/RedirectPage';
 
 const StudentRegisterContent: React.FC = () => {
   const {
@@ -21,6 +21,7 @@ const StudentRegisterContent: React.FC = () => {
     oauthSession,
     formState: { errors },
   } = useStudentRegistration();
+  const router = useRouter();
 
   const [selectedTitle, setSelectedTitle] = useState<TitleOption | ''>('');
 
@@ -29,21 +30,13 @@ const StudentRegisterContent: React.FC = () => {
     setValue('title', title, { shouldValidate: true });
   };
 
-  // Show redirect page if registration is successful
-  if (showRedirectPage) {
-    const title = oauthSession ? 'Registration Complete!' : 'Registration Successful!';
-    const subtitle = oauthSession ? 'Taking you to your dashboard...' : 'Redirecting to login page...';
-    const redirectUrl = oauthSession ? '/student-homepage' : '/login';
-    
-    return (
-      <RedirectPage
-        title={title}
-        subtitle={subtitle}
-        redirectUrl={redirectUrl}
-        delay={3000}
-      />
-    );
-  }
+  // Handle redirect after successful registration
+  useEffect(() => {
+    if (showRedirectPage) {
+      const redirectUrl = oauthSession ? '/student-homepage' : '/login';
+      router.push(redirectUrl);
+    }
+  }, [showRedirectPage, oauthSession, router]);
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
