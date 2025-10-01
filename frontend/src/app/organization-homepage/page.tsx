@@ -1,8 +1,8 @@
 import EventCard from "../components/EventCard";
 import EventTypeSection from "../components/EventTypeSection";
 // import EventCardHorizontal from "../components/EventCardHorizontal";
+import ProfileCard from "../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -69,10 +69,7 @@ export default function Home() {
               <span className="mr-1">New</span>
               </div>
             </Link>
-
-            <Link href="/profile">
-              { <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" /> }
-            </Link>
+            <ProfileCard role="organization-homepage" />
           </nav>
         </header>
 
@@ -103,7 +100,7 @@ export default function Home() {
         {/* -------------------------- */}
 
         <section className="mb-6 mt-18">
-          <h2 className="font-extrabold mb-2 text-2xl">My Organized Event</h2>
+          <h2 className="font-extrabold mb-2 text-2xl">My Organization Event</h2>
           <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-2 pt-2">
             {events.map((event, idx) => (
               <EventCard key={idx} {...event} />
