@@ -118,17 +118,38 @@ export const auth = {
 
   // Login user
   async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
-    const response = await httpClient.post<LoginResponse>(API_ENDPOINTS.AUTH.LOGIN, {
-      email,
-      password,
-    });
+    // Make direct fetch request without Authorization header for login
+    const url = `${ENV.API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`;
+    
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (response.success && response.data) {
-      this.setTokens(response.data.access, response.data.refresh);
-      localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(response.data.user));
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        throw new Error(data?.detail || data?.message || data?.error || ERROR_MESSAGES.SERVER_ERROR);
+      }
+
+      // Store tokens and user data
+      if (data.access && data.refresh) {
+        this.setTokens(data.access, data.refresh);
+        localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.user));
+      }
+
+      return { data, success: true };
+    } catch (error) {
+      console.error('Login error:', error);
+      return {
+        error: error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR,
+        success: false,
+      };
     }
-
-    return response;
   },
 
   // Logout user
