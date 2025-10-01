@@ -1,77 +1,78 @@
-from django.db import models
+from typing import Optional
+
 from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.core.validators import MinValueValidator
+from django.db import models
 from django.utils import timezone
+
+from config.constants import ActivityStatus, DeletionRequestStatus, ValidationLimits
+from config.utils import validate_activity_categories
 
 
 class Activity(models.Model):
-    class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'  # admin only
-        OPEN = 'open', 'Open'
-        FULL = 'full', 'Full'
-        CLOSED = 'closed', 'Closed'
-        CANCELLED = 'cancelled', 'Cancelled'
-
-    def _validate_categories(value):
-        """Validate categories: non-empty list up to 4 items and each within allowed set.
-        Allowed categories come from settings.ACTIVITY_CATEGORY_GROUPS.
-        """
-        if value is None:
-            return
-        if not isinstance(value, list):
-            raise ValidationError('categories must be a list of strings (1-4).')
-        if not (1 <= len(value) <= 4):
-            raise ValidationError('categories must have between 1 and 4 items.')
-        if not all(isinstance(i, str) and i.strip() for i in value):
-            raise ValidationError('each category must be a non-empty string.')
-        # Build allowed list solely from ACTIVITY_CATEGORY_GROUPS
-        groups = getattr(settings, 'ACTIVITY_CATEGORY_GROUPS', None)
-        allowed = []
-        if isinstance(groups, dict):
-            for name, items in groups.items():
-                if isinstance(items, (list, tuple)) and items:
-                    # Non-empty group: add its items
-                    allowed.extend([str(x) for x in items])
-                elif isinstance(items, (list, tuple)) and not items:
-                    # Empty group: header itself is a selectable top-level category
-                    allowed.append(str(name))
-        invalid = [c for c in value if c not in allowed]
-        if invalid:
-            if not allowed:
-                raise ValidationError('Category configuration missing or invalid: set ACTIVITY_CATEGORY_GROUPS in settings.')
-            raise ValidationError(f"invalid category(ies): {invalid}. Allowed: {allowed}")
-
+    """Model representing a volunteer activity."""
+    
     organizer_profile = models.ForeignKey(
         'users.OrganizerProfile',
         on_delete=models.CASCADE,
         related_name='activities'
     )
-    categories = models.JSONField(default=list, blank=True, validators=[_validate_categories])
-    title = models.CharField(max_length=255)
+    categories = models.JSONField(
+        default=list, 
+        blank=True, 
+        validators=[validate_activity_categories]
+    )
+    title = models.CharField(max_length=ValidationLimits.MAX_TITLE_LENGTH)
     description = models.TextField(blank=True)
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
-    location = models.CharField(max_length=255, blank=True)
+    location = models.CharField(max_length=ValidationLimits.MAX_LOCATION_LENGTH, blank=True)
     max_participants = models.PositiveIntegerField(null=True, blank=True)
     current_participants = models.PositiveIntegerField(default=0)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
-    hours_awarded = models.DecimalField(max_digits=5, decimal_places=2, null=True, blank=True, validators=[MinValueValidator(0)])
+    status = models.CharField(
+        max_length=20, 
+        choices=ActivityStatus.CHOICES, 
+        default=ActivityStatus.PENDING
+    )
+    hours_awarded = models.DecimalField(
+        max_digits=5, 
+        decimal_places=2, 
+        null=True, 
+        blank=True, 
+        validators=[MinValueValidator(0)]
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    def __str__(self):
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name = "Activity"
+        verbose_name_plural = "Activities"
+
+    def __str__(self) -> str:
         return f"{self.title} ({self.get_status_display()})"
 
+    def clean(self) -> None:
+        """Validate the activity model."""
+        super().clean()
+        
+        if self.start_at and self.end_at and self.start_at >= self.end_at:
+            raise ValidationError("Start time must be before end time.")
+            
+        if self.max_participants is not None and self.max_participants <= 0:
+            raise ValidationError("Maximum participants must be positive.")
+            
+        if self.current_participants < 0:
+            raise ValidationError("Current participants cannot be negative.")
 
-
-    # ----- Business rules helpers -----
     @property
     def requires_admin_for_delete(self) -> bool:
         """Return True when organizer needs admin approval to delete (>= 1 participant)."""
         return (self.current_participants or 0) > 0
 
-    def request_deletion(self, user, reason: str | None = None):
+    def request_deletion(self, user, reason: Optional[str] = None) -> 'ActivityDeletionRequest':
+        """Create a deletion request for this activity."""
         if not self.requires_admin_for_delete:
             raise ValidationError("Deletion request not required: no participants; delete is allowed.")
         if not reason or not str(reason).strip():
@@ -84,24 +85,32 @@ class Activity(models.Model):
 
     @property
     def capacity_reached(self) -> bool:
-        """Return True if current_participants has reached or exceeded max_participants.
-        When max_participants is None, capacity is considered not reached.
-        """
+        """Return True if current_participants has reached or exceeded max_participants."""
         if self.max_participants is None:
             return False
         return (self.current_participants or 0) >= self.max_participants
-
+    
+    @property
+    def is_active(self) -> bool:
+        """Return True if activity is currently active."""
+        return self.status == ActivityStatus.OPEN
+    
+    @property
+    def is_past(self) -> bool:
+        """Return True if activity has ended."""
+        return self.end_at < timezone.now()
 
 
 class ActivityDeletionRequest(models.Model):
-    class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        APPROVED = 'approved', 'Approved'
-        REJECTED = 'rejected', 'Rejected'
-
+    """Model representing a request to delete an activity."""
+    
     activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='deletion_requests')
     reason = models.TextField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(
+        max_length=20, 
+        choices=DeletionRequestStatus.CHOICES, 
+        default=DeletionRequestStatus.PENDING
+    )
     requested_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -122,6 +131,24 @@ class ActivityDeletionRequest(models.Model):
 
     class Meta:
         ordering = ['-requested_at']
+        verbose_name = "Activity Deletion Request"
+        verbose_name_plural = "Activity Deletion Requests"
 
     def __str__(self) -> str:
         return f"Deletion request for {self.activity_id} ({self.get_status_display()})"
+    
+    def approve(self, reviewer, note: Optional[str] = None) -> None:
+        """Approve the deletion request."""
+        self.status = DeletionRequestStatus.APPROVED
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.review_note = note or ""
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_note'])
+    
+    def reject(self, reviewer, note: Optional[str] = None) -> None:
+        """Reject the deletion request."""
+        self.status = DeletionRequestStatus.REJECTED
+        self.reviewed_by = reviewer
+        self.reviewed_at = timezone.now()
+        self.review_note = note or ""
+        self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_note'])
