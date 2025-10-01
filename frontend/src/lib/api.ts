@@ -84,6 +84,41 @@ class ApiService {
     }
   }
 
+  async logout(): Promise<ApiResponse<null>> {
+    try {
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      if (refreshToken) {
+        const response = await fetch(`${API_BASE_URL}/users/logout/`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ refresh: refreshToken }),
+        });
+
+        // clear local storage even logout fail
+        if (!response.ok) {
+          console.warn('Logout failed, but clearing local storage anyway');
+        }
+      }
+
+      this.clearAuthTokens();
+      
+      return { success: true, data: null };
+    } catch (error) {
+      console.error('Logout error:', error);
+      this.clearAuthTokens();
+      return { success: true, data: null };
+    }
+  }
+
+  private clearAuthTokens(): void {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+    localStorage.removeItem('user');
+    sessionStorage.clear();
+  }
+
+
   async register(userData: {
     email: string;
     password: string;
@@ -195,13 +230,13 @@ class ApiService {
 
   async updateUser(userId: number, userData: Partial<User>): Promise<ApiResponse<User>> {
     try {
-      console.log('🔄 updateUser called with:', { userId, userData });
+      console.log('updateUser called with:', { userId, userData });
       
       const url = `${API_BASE_URL}/users/${userId}/update/`;
-      console.log('📡 Making request to:', url);
+      console.log('Making request to:', url);
       
       const headers = this.getAuthHeaders();
-      console.log('🔐 Headers:', headers);
+      console.log('Headers:', headers);
       
       const response = await fetch(url, {
         method: 'PATCH',
@@ -209,18 +244,17 @@ class ApiService {
         body: JSON.stringify(userData),
       });
   
-      console.log('📡 Response status:', response.status);
-      console.log('📡 Response ok:', response.ok);
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
   
-      // Get the raw response text
       const responseText = await response.text();
-      console.log('📡 Raw response:', responseText);
+      console.log('Raw response:', responseText);
   
       let responseData;
       try {
         responseData = responseText ? JSON.parse(responseText) : {};
       } catch {
-        console.error('❌ Failed to parse response as JSON:', responseText);
+        console.error(' Failed to parse response as JSON:', responseText);
         return { 
           success: false, 
           error: `Server returned invalid JSON: ${responseText}` 
@@ -228,10 +262,10 @@ class ApiService {
       }
   
       if (response.ok) {
-        console.log('✅ Update successful!');
+        console.log('Update successful!');
         return { success: true, data: responseData };
       } else {
-        console.error('❌ Update failed:', responseData);
+        console.error('Update failed:', responseData);
         
         let errorMessage = 'Request failed';
         if (responseData.detail) {
@@ -247,9 +281,9 @@ class ApiService {
         return { success: false, error: errorMessage };
       }
     } catch (error) {
-      console.error('💥 NETWORK ERROR in updateUser:', error);
-      console.error('💥 Error name:', error instanceof Error ? error.name : 'Unknown');
-      console.error('💥 Error message:', error instanceof Error ? error.message : 'Unknown');
+      console.error('NETWORK ERROR in updateUser:', error);
+      console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
       
       if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
         return this.updateUser(userId, userData);
