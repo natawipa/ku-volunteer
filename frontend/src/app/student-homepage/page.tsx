@@ -4,7 +4,6 @@ import EventTypeSection from "../components/EventTypeSection";
 import SearchCard from "../components/SearchCard";
 import ProfileCard from "../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon} from "@heroicons/react/24/outline";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 

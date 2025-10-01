@@ -3,7 +3,6 @@ import EventTypeSection from "../components/EventTypeSection";
 // import EventCardHorizontal from "../components/EventCardHorizontal";
 import ProfileCard from "../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -101,7 +100,7 @@ export default function Home() {
         {/* -------------------------- */}
 
         <section className="mb-6 mt-18">
-          <h2 className="font-extrabold mb-2 text-2xl">My Organized Event</h2>
+          <h2 className="font-extrabold mb-2 text-2xl">My Organization Event</h2>
           <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-2 pt-2">
             {events.map((event, idx) => (
               <EventCard key={idx} {...event} />
