@@ -109,5 +109,7 @@ export function useStudentRegistration() {
     submitSuccess,
     showRedirectPage,
     oauthSession,
+    showRedirectPage,
+    oauthSession,
   };
 }
