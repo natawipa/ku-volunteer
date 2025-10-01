@@ -39,7 +39,7 @@ const OrganizationRegisterContent: React.FC = () => {
   // Handle redirect after successful registration
   useEffect(() => {
     if (showRedirectPage) {
-      const redirectUrl = oauthSession ? '/staff-homepage' : '/login';
+      const redirectUrl = oauthSession ? '/organization-homepage' : '/login';
       router.push(redirectUrl);
     }
   }, [showRedirectPage, oauthSession, router]);
