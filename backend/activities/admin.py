@@ -6,14 +6,12 @@ from users.models import User
 
 class OrganizerChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, obj: User) -> str:
-        org_name = getattr(getattr(obj, 'organizer_profile', None), 'organization_name', None)
-        return org_name or obj.email
+        fullname = f"{(obj.first_name or '').strip()} {(obj.last_name or '').strip()}".strip()
+        return fullname or obj.email
 
 
 class ActivityAdminForm(forms.ModelForm):
-    organizer = OrganizerChoiceField(
-        queryset=User.objects.filter(role='organizer').select_related('organizer_profile')
-    )
+    organizer = OrganizerChoiceField(queryset=User.objects.filter(role='organizer'))
 
     class Meta:
         model = Activity
