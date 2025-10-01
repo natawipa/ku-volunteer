@@ -264,7 +264,7 @@ export default function Profile() {
           )}
         </div>
 
-        {/* ------------------------------- */}
+        
 
         {/* My Event */}
         <section className="mb-6">

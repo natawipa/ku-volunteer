@@ -46,6 +46,10 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         
         if role == "student" and not student_id_external:
             raise serializers.ValidationError({"student_id_external": "This field is required for students."})
+        # Ensure student_id_external is unique across StudentProfile
+        if role == "student" and student_id_external:
+            if StudentProfile.objects.filter(student_id_external=student_id_external).exists():
+                raise serializers.ValidationError({"student_id_external": "This student ID is already in use."})
             
         return attrs
 

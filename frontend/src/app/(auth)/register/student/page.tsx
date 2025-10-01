@@ -1,16 +1,15 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, Suspense, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import Card from '../../../(auth)/components/Card';
 import { FormField } from '../../../(auth)/components/FormField';
 import { Dropdown } from '../../../(auth)/components/Dropdown';
 import { TITLE_OPTIONS, TitleOption } from './types';
 import { useStudentRegistration } from './useStudentRegistration';
 
-
-
-const StudentRegisterPage: React.FC = () => {
+const StudentRegisterContent: React.FC = () => {
   const {
     register,
     setValue,
@@ -18,8 +17,11 @@ const StudentRegisterPage: React.FC = () => {
     isSubmitting,
     submitError,
     submitSuccess,
+    showRedirectPage,
+    oauthSession,
     formState: { errors },
   } = useStudentRegistration();
+  const router = useRouter();
 
   const [selectedTitle, setSelectedTitle] = useState<TitleOption | ''>('');
 
@@ -27,6 +29,14 @@ const StudentRegisterPage: React.FC = () => {
     setSelectedTitle(title);
     setValue('title', title, { shouldValidate: true });
   };
+
+  // Handle redirect after successful registration
+  useEffect(() => {
+    if (showRedirectPage) {
+      const redirectUrl = oauthSession ? '/student-homepage' : '/login';
+      router.push(redirectUrl);
+    }
+  }, [showRedirectPage, oauthSession, router]);
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
@@ -40,13 +50,13 @@ const StudentRegisterPage: React.FC = () => {
         )}
         {submitSuccess && (
           <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <p className="text-green-600 text-sm">Registration successful!</p>
+            <p className="text-green-600 text-sm">Registration successful! Redirecting to login page...</p>
           </div>
         )}
         <form onSubmit={onSubmit} className="space-y-6">
           <FormField
             id="studentID"
-            label="รหัสนิสิต"
+            label="Student ID"
             type="text"
             placeholder="e.x. 6610xxxxxx"
             register={register("studentID")}
@@ -59,7 +69,7 @@ const StudentRegisterPage: React.FC = () => {
               onChange={handleTitleSelect}
               options={TITLE_OPTIONS}
               placeholder="Select Title"
-              label="คำนำหน้า"
+              label="Select Title"
               error={errors.title?.message}
             />
             <input type="hidden" {...register('title')} />
@@ -68,7 +78,7 @@ const StudentRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="firstName"
-              label="ชื่อ"
+              label="First Name"
               type="text"
               placeholder="First Name"
               register={register("firstName")}
@@ -76,7 +86,7 @@ const StudentRegisterPage: React.FC = () => {
             />
             <FormField
               id="lastName"
-              label="นามสกุล"
+              label="Last Name"
               type="text"
               placeholder="Last Name"
               register={register("lastName")}
@@ -87,7 +97,7 @@ const StudentRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="faculty"
-              label="คณะ"
+              label="Faculty"
               type="text"
               placeholder="e.g. Engineering"
               register={register("faculty")}
@@ -95,7 +105,7 @@ const StudentRegisterPage: React.FC = () => {
             />
             <FormField
               id="major"
-              label="สาขา"
+              label="Major"
               type="text"
               placeholder="e.g. Computer Engineering"
               register={register("major")}
@@ -106,7 +116,7 @@ const StudentRegisterPage: React.FC = () => {
           <div className="grid grid-cols-2 gap-4">
             <FormField
               id="year"
-              label="ชั้นปี"
+              label="Year"
               type="number"
               placeholder="Year"
               min="1"
@@ -118,7 +128,7 @@ const StudentRegisterPage: React.FC = () => {
 
           <FormField
             id="email"
-            label="อีเมล"
+            label="Email"
             type="email"
             placeholder="username@gmail.com"
             required
@@ -128,7 +138,7 @@ const StudentRegisterPage: React.FC = () => {
 
           <FormField
             id="password"
-            label="รหัสผ่าน"
+            label="Password"
             type="password"
             placeholder="Password"
             required
@@ -138,7 +148,7 @@ const StudentRegisterPage: React.FC = () => {
 
           <FormField
             id="confirmPassword"
-            label="ยืนยันรหัสผ่าน"
+            label="Confirm Password"
             type="password"
             placeholder="Confirm Password"
             required
@@ -167,6 +177,24 @@ const StudentRegisterPage: React.FC = () => {
         </form>
       </Card>
     </div>
+  );
+};
+
+const StudentRegisterPage: React.FC = () => {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
+        <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>
+        <div className="absolute bottom-0 left-0 w-full h-150 bg-[url('/images/wavewave.png')] bg-bottom bg-no-repeat bg-cover z-0"></div>
+        <Card title="Student Register">
+          <div className="flex justify-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600"></div>
+          </div>
+        </Card>
+      </div>
+    }>
+      <StudentRegisterContent />
+    </Suspense>
   );
 };
 
