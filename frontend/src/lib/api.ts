@@ -255,6 +255,7 @@ class ApiService {
         responseData = responseText ? JSON.parse(responseText) : {};
       } catch {
         console.error(' Failed to parse response as JSON:', responseText);
+
         return { 
           success: false, 
           error: `Server returned invalid JSON: ${responseText}` 
