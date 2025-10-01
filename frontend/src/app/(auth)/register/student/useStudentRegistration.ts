@@ -10,7 +10,7 @@ export function useStudentRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showRedirectPage, setShowRedirectPage] = useState(false);
+  const [showRedirectPage] = useState(false);
   const searchParams = useSearchParams();
   const [oauthSession, setOAuthSession] = useState<string>('');
 
