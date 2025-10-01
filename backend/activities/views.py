@@ -3,7 +3,11 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.shortcuts import get_object_or_404
 from .models import Activity, ActivityDeletionRequest
-from .serializers import ActivitySerializer, ActivityWriteSerializer, ActivityDeletionRequestSerializer
+from .serializers import (
+    ActivitySerializer,
+    ActivityWriteSerializer,
+    ActivityDeletionRequestSerializer,
+)
 from django.utils import timezone
 from django.conf import settings
 
@@ -30,19 +34,27 @@ class ActivityListCreateView(generics.ListCreateAPIView):
         return ActivitySerializer
 
     def perform_create(self, serializer):
-        # Only organizers create activities
-        if getattr(self.request.user, 'role', None) != 'organizer':
-            self.permission_denied(self.request, message='Only organizers can create activities')
+        # Organizers and admins can create activities
+        if getattr(self.request.user, 'role', None) not in ('organizer', 'admin') and not self.request.user.is_superuser:
+            self.permission_denied(self.request, message='Only organizers or admins can create activities')
         serializer.save()
 
     def get_queryset(self):
         user = self.request.user
         if getattr(user, 'role', None) == 'organizer':
-            return self.queryset.filter(organizer_profile__user=user)
+            return self.queryset.all().filter(organizer_profile__user=user)
         if getattr(user, 'role', None) == 'admin' or user.is_superuser:
-            return self.queryset
-        # Students see open activities only (optional, can be adjusted later)
-        return self.queryset.filter(status=Activity.Status.OPEN)
+            return self.queryset.all()
+        # Students: see all activities except pending
+        return self.queryset.all().exclude(status=Activity.Status.PENDING)
+
+
+class ActivityListOnlyView(ActivityListCreateView):
+    http_method_names = ['get']
+
+
+class ActivityCreateOnlyView(ActivityListCreateView):
+    http_method_names = ['post']
 
 
 class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
@@ -60,6 +72,14 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         if getattr(user, 'role', None) == 'organizer' and instance.organizer_profile.user != user:
             self.permission_denied(self.request, message='Not your activity')
         serializer.save()
+
+
+class ActivityDetailOnlyView(ActivityRetrieveUpdateView):
+    http_method_names = ['get']
+
+
+class ActivityUpdateOnlyView(ActivityRetrieveUpdateView):
+    http_method_names = ['put', 'patch']
 
 
 class ActivityDeleteView(APIView):

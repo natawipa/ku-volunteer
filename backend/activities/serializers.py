@@ -4,6 +4,7 @@ from .models import Activity, ActivityDeletionRequest
 
 class ActivitySerializer(serializers.ModelSerializer):
     requires_admin_for_delete = serializers.BooleanField(read_only=True)
+    capacity_reached = serializers.BooleanField(read_only=True)
     organizer_profile_id = serializers.IntegerField(source='organizer_profile.id', read_only=True)
     organizer_email = serializers.EmailField(source='organizer_profile.user.email', read_only=True)
     organizer_name = serializers.CharField(source='organizer_profile.organization_name', read_only=True)
@@ -13,11 +14,11 @@ class ActivitySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'categories', 'title', 'description',
             'start_at', 'end_at', 'location', 'max_participants', 'current_participants',
-            'status', 'hours_awarded', 'created_at', 'updated_at', 'requires_admin_for_delete',
+            'status', 'hours_awarded', 'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached',
         ]
         read_only_fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'current_participants', 'status',
-            'created_at', 'updated_at', 'requires_admin_for_delete'
+            'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached'
         ]
 
 
@@ -47,3 +48,5 @@ class ActivityDeletionRequestSerializer(serializers.ModelSerializer):
             'requested_at', 'reviewed_by', 'reviewed_at', 'review_note'
         ]
         read_only_fields = ['status', 'requested_at', 'reviewed_by', 'reviewed_at']
+
+

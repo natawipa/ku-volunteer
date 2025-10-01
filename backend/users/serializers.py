@@ -3,6 +3,9 @@ from .models import User, StudentProfile, OrganizerProfile
 
 
 class StudentProfileSerializer(serializers.ModelSerializer):
+    # Map API field name 'graduation_year' to model field 'year' for compatibility with main branch
+    graduation_year = serializers.IntegerField(source="year", required=False, allow_null=True)
+
     class Meta:
         model = StudentProfile
         fields = ["student_id_external", "year", "faculty", "major"]

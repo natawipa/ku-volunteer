@@ -82,6 +82,16 @@ class Activity(models.Model):
             requested_by=user,
         )
 
+    @property
+    def capacity_reached(self) -> bool:
+        """Return True if current_participants has reached or exceeded max_participants.
+        When max_participants is None, capacity is considered not reached.
+        """
+        if self.max_participants is None:
+            return False
+        return (self.current_participants or 0) >= self.max_participants
+
+
 
 class ActivityDeletionRequest(models.Model):
     class Status(models.TextChoices):

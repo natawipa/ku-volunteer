@@ -45,17 +45,11 @@ class ActivityAdminForm(forms.ModelForm):
             # Combine: top-level options first, then grouped sections
             self.fields['categories'].choices = top_level_options + grouped_choices
         else:
-            allowed = getattr(
-                settings,
-                'ACTIVITY_ALLOWED_CATEGORIES',
-                [
-                    'กิจกรรมมหาวิทยาลัย',
-                    'เสริมสร้างสมรรถนะ',
-                    'เพื่อสังคม',
-                    'อื่นๆ',
-                ],
+            # No fallback: model only accepts categories from ACTIVITY_CATEGORY_GROUPS
+            self.fields['categories'].choices = []
+            self.fields['categories'].help_text = (
+                'No categories configured. Please set ACTIVITY_CATEGORY_GROUPS in settings.'
             )
-            self.fields['categories'].choices = [(c, c) for c in allowed]
         # If instance exists, prefill
         if self.instance and isinstance(self.instance.categories, list):
             self.initial['categories'] = self.instance.categories
