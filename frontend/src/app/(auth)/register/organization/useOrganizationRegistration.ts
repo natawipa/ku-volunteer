@@ -72,9 +72,9 @@ export function useOrganizationRegistration() {
 
             const role = loginData?.user?.role || 'organizer';
             if (role === 'organizer') {
-              window.location.href = '/staff-homepage';
+              window.location.href = '/homepage/organization';
             } else if (role === 'student') {
-              window.location.href = '/student-homepage';
+              window.location.href = '/homepage/student';
             } else {
               window.location.href = '/';
             }

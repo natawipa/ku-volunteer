@@ -1,13 +1,13 @@
-import EventCard from "../components/EventCard";
-import EventTypeSection from "../components/EventTypeSection";
+import EventCard from "../../components/EventCard";
+import EventTypeSection from "../../components/EventTypeSection";
 // import EventCardHorizontal from "../components/EventCardHorizontal";
-import ProfileCard from "../components/ProfileCard";
+import ProfileCard from "../../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon, PlusIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";
 
 // Fetch Data from example.json
-import eventsData from "../example.json";
+import eventsData from "../../example.json";
 
 const events = eventsData.events;
 

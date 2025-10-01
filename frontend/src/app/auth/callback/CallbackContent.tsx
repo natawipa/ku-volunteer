@@ -23,10 +23,10 @@ export default function CallbackContent() {
       console.log('OAuth redirecting based on role:', role);
       if (role === 'student') {
         console.log('Redirecting to student homepage');
-        router.replace('/student-homepage');
+        router.replace('/homepage/student');
       } else if (role === 'organizer') {
         console.log('Redirecting to staff homepage');
-        router.replace('/staff-homepage');
+        router.replace('/homepage/organization');
       } else {
         console.log('Redirecting to main page');
         router.replace('/'); // Default redirect for admin or unknown roles

@@ -33,7 +33,7 @@ const StudentRegisterContent: React.FC = () => {
   // Handle redirect after successful registration
   useEffect(() => {
     if (showRedirectPage) {
-      const redirectUrl = oauthSession ? '/student-homepage' : '/login';
+      const redirectUrl = oauthSession ? '/homepage/student' : '/login';
       router.push(redirectUrl);
     }
   }, [showRedirectPage, oauthSession, router]);

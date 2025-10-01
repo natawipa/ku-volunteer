@@ -3,7 +3,6 @@ import { useRef, useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { UserCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { apiService, type User } from "../../lib/api";
 
 type ProfileCardProps = {
@@ -11,7 +10,6 @@ type ProfileCardProps = {
 };
 
 export default function ProfileCard({ role }: ProfileCardProps) {
-  const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
@@ -61,8 +59,6 @@ export default function ProfileCard({ role }: ProfileCardProps) {
     }
   };
 
-    const profileLink = role === "student-homepage" ? "/student-profile" : "/organization-profile";
-
      return (
     <div className="relative" ref={wrapperRef}>
       {/* Profile Button */}
@@ -89,7 +85,7 @@ export default function ProfileCard({ role }: ProfileCardProps) {
 
         {/* View Profile */}
           <Link
-            href={profileLink}
+            href="/profile"
             onClick={() => setIsOpen(false)}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-gray-700 hover:bg-gray-50"
           >

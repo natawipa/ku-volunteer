@@ -1,8 +1,8 @@
 "use client";
-import EventCard from "../components/EventCard";
-import EventTypeSection from "../components/EventTypeSection";
-import SearchCard from "../components/SearchCard";
-import ProfileCard from "../components/ProfileCard";
+import EventCard from "../../components/EventCard";
+import EventTypeSection from "../../components/EventTypeSection";
+import SearchCard from "../../components/SearchCard";
+import ProfileCard from "../../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import Image from "next/image";
 import { useRef, useState, useEffect} from "react";
 
 // Fetch Data from example.json
-import eventsData from "../example.json";
+import eventsData from "../../example.json";
 
 const events = eventsData.events;
 

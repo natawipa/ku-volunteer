@@ -74,9 +74,9 @@ export function useStudentRegistration() {
             // Redirect based on role (student for this flow)
             const role = loginData?.user?.role || 'student';
             if (role === 'student') {
-              window.location.href = '/student-homepage';
+              window.location.href = '/homepage/student';
             } else if (role === 'organizer') {
-              window.location.href = '/staff-homepage';
+              window.location.href = '/homepage/organization';
             } else {
               window.location.href = '/';
             }
@@ -107,8 +107,6 @@ export function useStudentRegistration() {
     isSubmitting,
     submitError,
     submitSuccess,
-    showRedirectPage,
-    oauthSession,
     showRedirectPage,
     oauthSession,
   };
