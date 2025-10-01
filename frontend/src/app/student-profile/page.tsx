@@ -96,11 +96,11 @@ export default function Profile() {
           </div>
         </div>
 
-        
+        {/* ------------------------------- */}
 
         {/* My Event */}
         <section className="mb-6">
-          <h3 className="font-bold text-xl mb-2">My Enrolled Event</h3>
+          <h3 className="font-bold text-xl mb-2">My Event</h3>
           <div className="flex items-center">
             <div className="flex gap-4 overflow-x-auto">
               {events.map((e, i) => (

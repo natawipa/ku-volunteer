@@ -8,7 +8,7 @@ import Image from "next/image";
 import { useRef, useState, useEffect} from "react";
 
 // Fetch Data from example.json
-// import eventsData from "../../example.json";
+import students from "@/app/dataexample/students.json";
 
 // const events = eventsData.events;
 
@@ -60,12 +60,22 @@ export default function Home() {
         {/* -------------------------- */} 
 
         <h2 className="font-semibold mb-6 text-2xl pt-11 lg:pt-20 md:pt-16">Student Name</h2>
-        <div className="flex justify-between">
-        <p>Mr. Somchai Rungreung</p>
-        <div className="flex gap-10">
-            <p className="bg-yellow-50 px-5 rounded-[31px] cursor-pointer">edit</p>
-            <p className="bg-red-100 px-5 rounded-[31px] cursor-pointer">delete</p>
-        </div>
+        <div className="flex flex-col gap-4 mb-10 ">
+          {students.slice().reverse().slice().map((s) => (
+            <div key={s.id} className="flex justify-between items-center  border-b pb-2">
+              <p className="flex-1">
+                {s.title} {s.first_name} {s.last_name}
+              </p>
+              <div className="flex gap-4">
+                <button className="bg-yellow-50 px-4 py-1 rounded-full hover:bg-yellow-100 transition-colors cursor-pointer">
+                  edit
+                </button>
+                <button className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer">
+                  delete
+                </button>
+              </div>
+            </div>
+          ))}
         </div>
     </div>
     </div>
