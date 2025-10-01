@@ -15,8 +15,7 @@ class Activity(models.Model):
 
     def _validate_categories(value):
         """Validate categories: non-empty list up to 4 items and each within allowed set.
-
-        Allowed categories can be configured via settings.ACTIVITY_ALLOWED_CATEGORIES.
+        Allowed categories come from settings.ACTIVITY_CATEGORY_GROUPS.
         """
         if value is None:
             return
@@ -26,22 +25,25 @@ class Activity(models.Model):
             raise ValidationError('categories must have between 1 and 4 items.')
         if not all(isinstance(i, str) and i.strip() for i in value):
             raise ValidationError('each category must be a non-empty string.')
-        allowed = getattr(
-            settings,
-            'ACTIVITY_ALLOWED_CATEGORIES',
-            [
-                'กิจกรรมมหาวิทยาลัย',
-                'เสริมสร้างสมรรถนะ',
-                'เพื่อสังคม',
-                'อื่นๆ',
-            ],
-        )
+        # Build allowed list solely from ACTIVITY_CATEGORY_GROUPS
+        groups = getattr(settings, 'ACTIVITY_CATEGORY_GROUPS', None)
+        allowed = []
+        if isinstance(groups, dict):
+            for name, items in groups.items():
+                if isinstance(items, (list, tuple)) and items:
+                    # Non-empty group: add its items
+                    allowed.extend([str(x) for x in items])
+                elif isinstance(items, (list, tuple)) and not items:
+                    # Empty group: header itself is a selectable top-level category
+                    allowed.append(str(name))
         invalid = [c for c in value if c not in allowed]
         if invalid:
+            if not allowed:
+                raise ValidationError('Category configuration missing or invalid: set ACTIVITY_CATEGORY_GROUPS in settings.')
             raise ValidationError(f"invalid category(ies): {invalid}. Allowed: {allowed}")
 
-    organizer = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+    organizer_profile = models.ForeignKey(
+        'users.OrganizerProfile',
         on_delete=models.CASCADE,
         related_name='activities'
     )
@@ -58,20 +60,10 @@ class Activity(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
-    # Organizer deletion request workflow: if current_participants > 0, organizer must request admin approval
-    deletion_requested = models.BooleanField(default=False)
-    deletion_reason = models.TextField(blank=True, null=True)
-    deletion_requested_at = models.DateTimeField(blank=True, null=True)
-    deletion_requested_by = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='activity_deletion_requests',
-    )
-
     def __str__(self):
         return f"{self.title} ({self.get_status_display()})"
+
+
 
     # ----- Business rules helpers -----
     @property
@@ -79,39 +71,47 @@ class Activity(models.Model):
         """Return True when organizer needs admin approval to delete (>= 1 participant)."""
         return (self.current_participants or 0) > 0
 
-    def can_be_deleted_by(self, user) -> bool:
-        """Admins can always delete. Organizer may delete only when no participants signed up.
-
-        Note: This does not perform deletion; use in views/services to gate delete actions.
-        """
-        if user is None:
-            return False
-        # Admins can delete anytime
-        if getattr(user, 'role', None) == 'admin' or getattr(user, 'is_superuser', False):
-            return True
-        # Organizer can delete only own activity and when zero participants
-        if getattr(user, 'role', None) == 'organizer' and user == self.organizer:
-            return self.current_participants == 0
-        return False
-
     def request_deletion(self, user, reason: str | None = None):
-        """Mark this activity as having a deletion request by an organizer with a reason.
-
-        Intended for the case: current_participants >= 1 so organizer cannot hard-delete without admin.
-        """
-        # Preconditions
         if not self.requires_admin_for_delete:
-            # No need to request deletion; organizer can delete directly when participants are zero
             raise ValidationError("Deletion request not required: no participants; delete is allowed.")
-        if self.deletion_requested:
-            raise ValidationError("Deletion has already been requested for this activity.")
         if not reason or not str(reason).strip():
-            raise ValidationError({"deletion_reason": "Reason is required when requesting deletion."})
+            raise ValidationError({"reason": "Reason is required when requesting deletion."})
+        return ActivityDeletionRequest.objects.create(
+            activity=self,
+            reason=str(reason).strip(),
+            requested_by=user,
+        )
 
-        self.deletion_requested = True
-        self.deletion_reason = str(reason).strip()
-        self.deletion_requested_at = timezone.now()
-        self.deletion_requested_by = user if user and getattr(user, 'role', None) == 'organizer' else None
-        self.save(update_fields=[
-            'deletion_requested', 'deletion_reason', 'deletion_requested_at', 'deletion_requested_by'
-        ])
+
+class ActivityDeletionRequest(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        APPROVED = 'approved', 'Approved'
+        REJECTED = 'rejected', 'Rejected'
+
+    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='deletion_requests')
+    reason = models.TextField()
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    requested_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='requested_activity_deletions',
+    )
+    requested_at = models.DateTimeField(auto_now_add=True)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviewed_activity_deletions',
+    )
+    reviewed_at = models.DateTimeField(blank=True, null=True)
+    review_note = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ['-requested_at']
+
+    def __str__(self) -> str:
+        return f"Deletion request for {self.activity_id} ({self.get_status_display()})"
