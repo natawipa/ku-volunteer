@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'social_django',
+    'activities',
 ]
 
 REST_FRAMEWORK = {
