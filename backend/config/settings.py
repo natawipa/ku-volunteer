@@ -52,13 +52,14 @@ INSTALLED_APPS = [
     'corsheaders',
     'users',
     'social_django',
+    'activities',
 ]
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'DEFAULT_PAGINATION_CLASS': 'config.pagination.NoPrevNextPagination',  # use custom paginator (count + results only)
     'PAGE_SIZE': 20,
 }
 
