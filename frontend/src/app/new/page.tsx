@@ -9,6 +9,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
+import { activitiesApi } from "../../lib/activities";
+import { auth } from "../../lib/utils";
 
 // Move the main content to a separate component
 function ActivityFormContent() {
@@ -27,9 +29,11 @@ function ActivityFormContent() {
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [cover, setCover] = useState<File | null>(null);
   const [pictures, setPictures] = useState<File[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [activityCreated, setActivityCreated] = useState(false);
 
   /**
-   * restore activity data whencancel delete confirmation
+   * restore activity data when cancel delete confirmation
    */
   useEffect(() => {
     const savedActivityData = searchParams.get('savedActivityData');
@@ -62,6 +66,7 @@ function ActivityFormContent() {
       }
     }
   }, [searchParams]);
+
 
   /**
    * activity data 
@@ -107,38 +112,79 @@ function ActivityFormContent() {
     }
     if (categories.length === 0) newErrors.categories = "Select at least one category";
     if (!description.trim()) newErrors.description = "Description is required";
-    if (!cover) newErrors.cover = "Cover image is required";
+    // Removed cover image requirement since backend doesn't have it yet
+    // if (!cover) newErrors.cover = "Cover image is required";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   /**
-   * mock data save func 
+   * REAL API save function
    */
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!validate()) return;
+  
+    if (!auth.isAuthenticated()) {
+      alert("You must be logged in to create an activity");
+      router.push('/login');
+      return;
+    }
 
-    // Create mock response data
-    const mockResponse = {
-      id: "activity-" + Date.now(),
-      title: title,
-      location: location,
-      dateStart: dateStart,
-      dateEnd: dateEnd,
-      hour: hour,
-      maxParticipants: maxParticipants,
-      categories: categories,
-      description: description,
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString()
-    };
-
-    // api call success
-    console.log('✅ Activity created (MOCK):', mockResponse);
-    alert('Activity created successfully! (Mock Data)');
-    
-    setActivityId(mockResponse.id);
+    // Prevent duplicate submissions
+    if (activityCreated) {
+      alert("Activity already created! Redirecting to homepage...");
+      router.push('/');
+      return;
+    }
+  
+    setIsSubmitting(true);
+  
+    try {
+      const activityData = {
+        title: title.trim(),
+        description: description.trim(),
+        location: location.trim(),
+        start_at: new Date(dateStart).toISOString(),
+        end_at: new Date(dateEnd).toISOString(),
+        max_participants: Number(maxParticipants),
+        hours_awarded: Number(hour),
+        categories: categories,
+      };
+  
+      console.log('📤 Sending activity data to backend:', activityData);
+  
+      const result = await activitiesApi.createActivity(activityData);
+      
+      console.log('📥 Backend response:', result);
+      
+      if (result.success && result.data) {
+        console.log('✅ Activity created successfully:', result.data);
+        
+        // Mark activity as created to prevent duplicates
+        setActivityCreated(true); // UPDATE THIS LINE
+        
+        // FIX: Safely check for ID
+        if (result.data.id) {
+          setActivityId(result.data.id.toString());
+        }
+        // If no ID, that's okay - we still created the activity
+        
+        alert('Activity created successfully! It will be reviewed by admin before being published.');
+        
+        // Redirect to homepage
+        router.push('/');
+        
+      } else {
+        throw new Error(result.error || 'Failed to create activity');
+      }
+      
+    } catch (error) {
+      console.error('❌ Failed to create activity:', error);
+      alert(`Failed to create activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const clearError = (field: string) => {
@@ -147,10 +193,10 @@ function ActivityFormContent() {
     }
   };
 
-
   const handleCancel = () => {
-    // do later
-    console.log("Cancel clicked");
+    if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
+      router.push('/');
+    }
   };
 
   return (
@@ -216,7 +262,7 @@ function ActivityFormContent() {
                 setTitle(e.target.value);
                 clearError("title");
               }}
-              className="text-2xl font-semibold border-b focus:outline-none"
+              className="text-2xl font-semibold border-b focus:outline-none w-full mr-4"
             />
             
             <button 
@@ -224,7 +270,8 @@ function ActivityFormContent() {
               className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
                      text-sm sm:text-base text-red-600 border border-red-600 
                      rounded-lg hover:bg-red-50 focus:outline-none 
-                     focus:ring-2 focus:ring-red-300 cursor-pointer"
+                     focus:ring-2 focus:ring-red-300 cursor-pointer flex-shrink-0"
+              disabled={isSubmitting}
             >
               <Trash2 size={16} /> 
               <span className="hidden sm:inline">Delete Activity</span>
@@ -232,7 +279,7 @@ function ActivityFormContent() {
           </div>
           {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
-          {/* Image Upload Section */}
+          {/* Image Upload Section - Optional for now */}
           <ImageUploadSection
             cover={cover}
             pictures={pictures}
@@ -269,15 +316,17 @@ function ActivityFormContent() {
           <div className="flex justify-between pt-4 border-t mt-6">
             <button 
               onClick={handleCancel}
-              className="text-gray-600 hover:text-gray-900 cursor-pointer"
+              className="text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400"
+              disabled={isSubmitting}
             >
               Cancel
             </button>
             <button 
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer"
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
               onClick={handleSave}
+              disabled={isSubmitting}
             >
-              {activityId ? 'Update Activity' : 'Create Activity'}
+              {isSubmitting ? 'Creating...' : (activityId ? 'Update Activity' : 'Create Activity')}
             </button>
           </div>
         </div>

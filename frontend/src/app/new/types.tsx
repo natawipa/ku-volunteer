@@ -10,16 +10,16 @@ export type CategoryNode = {
   };
   
   export const categories: CategoryNode[] = [
-    { label: "กิจกรรมมหาวิทยาลัย", selectable: true },
+    { label: "University Activities", selectable: true },
     {
-      label: "กิจกรรมเพื่อเสริมสร้างสมรรถนะ",
+      label: "Enhance Competencies",
       selectable: false,
       children: [
-        { label: "ด้านพัฒนาคุณธรรมและจริยธรม", selectable: true },
-        { label: "ด้านพัฒนาทักษะการคิดและการเรียนรู้", selectable: true },
-        { label: "ด้านพัฒนาทักษะและเสริมสร้างความสัมพันธ์ระหว่างบุคคล", selectable: true },
-        { label: "ด้านพัฒนาสุขภาพ", selectable: true },
+        { label: "Development of Morality and Ethics", selectable: true },
+        { label: "Development of Thinking and Learning Skills", selectable: true },
+        { label: "Development of Interpersonal Skills and Relationship Building", selectable: true },
+        { label: "Development of Health and Well-being", selectable: true },
       ],
     },
-    { label: "กิจกรรมเพื่อสังคม", selectable: true },
+    { label: "Social Engagement Activities", selectable: true },
   ];

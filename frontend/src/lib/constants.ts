@@ -21,6 +21,14 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/api/users/${id}/update/`,
     DELETE: (id: string | number) => `/api/users/delete/${id}/`,
   },
+  ACTIVITIES: {
+    LIST: '/api/activities/list/',
+    CREATE: '/api/activities/create/',
+    DETAIL: (id: string | number) => `/api/activities/${id}/`,
+    UPDATE: (id: string | number) => `/api/activities/${id}/update/`,
+    DELETE: (id: string | number) => `/api/activities/delete/${id}/`,
+    METADATA: '/api/activities/metadata/',
+  },
   TOKEN: {
     OBTAIN: '/api/token/',
     REFRESH: '/api/token/refresh/',

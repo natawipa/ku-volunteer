@@ -26,7 +26,7 @@ class ActivityWriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Activity
         fields = [
-            'categories', 'title', 'description', 'start_at', 'end_at', 'location',
+            'id', 'categories', 'title', 'description', 'start_at', 'end_at', 'location',
             'max_participants', 'hours_awarded'
         ]
 

@@ -15,7 +15,7 @@ class HttpClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAccessToken();
-
+  
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
@@ -24,18 +24,39 @@ class HttpClient {
       },
       ...options,
     };
-
+  
+    console.log('🌐 Making request to:', url);
+    console.log('🔧 Request config:', {
+      method: config.method,
+      headers: config.headers,
+      body: config.body ? JSON.parse(config.body as string) : 'No body'
+    });
+  
     try {
       const response = await fetch(url, config);
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        throw new Error(data?.detail || data?.message || ERROR_MESSAGES.SERVER_ERROR);
+      console.log('📄 Response status:', response.status);
+      console.log('📄 Response ok:', response.ok);
+  
+      const responseText = await response.text();
+      console.log('📄 Raw response:', responseText);
+  
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : null;
+      } catch (parseError) {
+        console.error('❌ Failed to parse JSON:', parseError);
+        data = null;
       }
-
+  
+      if (!response.ok) {
+        console.error('❌ API Error Response:', data);
+        throw new Error(data?.detail || data?.message || data?.error || ERROR_MESSAGES.SERVER_ERROR);
+      }
+  
+      console.log('✅ API Success Response:', data);
       return { data, success: true };
     } catch (error) {
-      console.error('API Request Error:', error);
+      console.error('❌ API Request Error:', error);
       return {
         error: error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR,
         success: false,
