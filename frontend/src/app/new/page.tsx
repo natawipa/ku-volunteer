@@ -1,141 +1,19 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import { PlusCircle, Trash2, Edit2, X } from "lucide-react";
+import { useState } from "react";
+import { Trash2 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter } from "next/navigation";
 
-type CategoryNode = {
-  label: string;
-  selectable?: boolean;
-  children?: CategoryNode[];
-};
+import FormFields from "./components/FormFields";
+import ImageUploadSection from "./components/ImageUploadSection";
 
-type CategorySelectProps = {
-  value: string[];
-  onChange: (value: string[]) => void;
-};
-
-const categories: CategoryNode[] = [
-  { label: "กิจกรรมมหาวิทยาลัย", selectable: true },
-  {
-    label: "กิจกรรมเพื่อเสริมสร้างสมรรถนะ",
-    selectable: false,
-    children: [
-      { label: "ด้านพัฒนาคุณธรรมและจริยธรม", selectable: true },
-      { label: "ด้านพัฒนาทักษะการคิดและการเรียนรู้", selectable: true },
-      { label: "ด้านพัฒนาทักษะและเสริมสร้างความสัมพันธ์ระหว่างบุคคล", selectable: true },
-      { label: "ด้านพัฒนาสุขภาพ", selectable: true },
-    ],
-  },
-  { label: "กิจกรรมเพื่อสังคม", selectable: true },
-];
-
-function CategorySelect({ value, onChange }: CategorySelectProps) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
-
-  const toggleCategory = (option: string) => {
-    if (value.includes(option)) {
-      onChange(value.filter((o) => o !== option));
-    } else if (value.length < 3) {
-      onChange([...value, option]);
-    }
-  };
-
-  const removeCategory = (option: string) => {
-    onChange(value.filter((o) => o !== option));
-  };
-
-  return (
-    <div className="flex flex-col text-sm space-y-2 relative" ref={ref}>
-      <label className="flex flex-col text-sm">Category</label>
-
-      {/* White Box */}
-      <div
-        className="border border-gray-400 rounded-lg p-2 flex flex-wrap gap-2 cursor-pointer min-h-[48px] bg-white"
-        onClick={() => setOpen(!open)}
-      >
-        {value.length === 0 && (
-          <span className="text-gray-400">Select up to 3 categories</span>
-        )}
-
-        {value.map((cat) => (
-          <span
-            key={cat}
-            className="flex items-center bg-yellow-200 text-black px-3 py-1 rounded-full text-sm"
-          >
-            {cat}
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                removeCategory(cat);
-              }}
-              className="ml-2 text-black hover:text-red-600"
-            >
-              <X size={14} />
-            </button>
-          </span>
-        ))}
-      </div>
-
-      {/* Dropdown overlay */}
-      {open && (
-        <div className="absolute top-full left-0 mt-2 w-full border border-gray-400 rounded-lg bg-white shadow-md max-h-60 overflow-y-auto z-20">
-          {categories.map((cat, idx) => (
-            <div key={idx} className="border-b border-gray-400 last:border-none">
-              <div
-                className={`px-3 py-2 ${
-                  cat.selectable
-                    ? "cursor-pointer hover:bg-green-200"
-                    : "font-medium"
-                }`}
-                onClick={() =>
-                  cat.selectable ? toggleCategory(cat.label) : undefined
-                }
-              >
-                {cat.label}
-            </div>
-            {cat.children && (
-              <div className="px-5 py-2 space-y-1">
-                {cat.children.map((child) => (
-                <div
-                  key={child.label}
-                  className={`px-2 py-1 rounded cursor-pointer ${
-                    value.includes(child.label)
-                      ? "bg-green-600 text-white"
-                      : "hover:bg-green-200"
-                  }`}
-                  onClick={() => toggleCategory(child.label)}
-                >
-                  {child.label}
-                </div>
-              ))}
-            </div>
-            )}
-          </div>
-        ))}
-      </div>
-      )}
-    </div>
-  );
-}
 
 export default function EventForm() {
   const router = useRouter();
+  
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [dateStart, setDateStart] = useState<string>("");
@@ -145,13 +23,12 @@ export default function EventForm() {
   const [categories, setCategories] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
   const [cover, setCover] = useState<File | null>(null);
   const [pictures, setPictures] = useState<File[]>([]);
 
-  // event data obj
-  // collects all form data and will passed to delete confirmation page
-  // just auto-generate mock ID ( replace with real ID from db)
+  /**
+   * collect all form data for API and delete confirmation
+    id is a mock id so it need to be replace with real event id*/
   const eventData = {
     id: "mock-event-id-" + Date.now(),
     title: title,
@@ -183,20 +60,16 @@ export default function EventForm() {
     if (dateStart && dateEnd && new Date(dateStart) > new Date(dateEnd)) {
       newErrors.dateEnd = "End date must be after start date";
     }
-
     if (!hour) newErrors.hour = "Hour is required";
     else if (Number(hour) < 1 || Number(hour) > 10) {
       newErrors.hour = "Hour must be between 1 and 10";
     }
-
     if (!maxParticipants) newErrors.maxParticipants = "Max participants required";
     else if (Number(maxParticipants) < 1) {
       newErrors.maxParticipants = "Must be at least 1";
     }
     if (categories.length === 0) newErrors.categories = "Select at least one category";
-
     if (!description.trim()) newErrors.description = "Description is required";
-
     if (!cover) newErrors.cover = "Cover image is required";
     
     setErrors(newErrors);
@@ -204,18 +77,53 @@ export default function EventForm() {
   };
 
 
-  const handleSave = () => {
-    if (validate()) {
-      alert("Form is valid — submit here 🚀");
+  const handleSave = async () => {
+    if (!validate()) return;
+    
+    try {
+      const response = await fetch('/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: title,
+          location: location,
+          dateStart: dateStart,
+          dateEnd: dateEnd,
+          hour: hour,
+          maxParticipants: maxParticipants,
+          categories: categories,
+          description: description,
+        }),
+      });
+  
+      if (response.ok) {
+        const savedEvent = await response.json();
+        console.log('Event created:', savedEvent);
+        alert('Event created successfully!');
+        
+        // backend return real ID
+        console.log('Real event ID:', savedEvent.id);
+      } else {
+        alert('Failed to create event');
+      }
+    } catch (error) {
+      console.error('Error creating event:', error);
+      alert('Error creating event');
+    }
+  };
+
+  const clearError = (field: string) => {
+    if (errors[field]) {
+      setErrors(prev => ({ ...prev, [field]: "" }));
     }
   };
 
   return (
     <div className="relative">
-      {/* Background gradient */}
+      {/* Background styling */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[130px]"></div>
-
-      {/* Mountain background */}
       <Image
         src="/mountain.svg"
         alt="mountain"
@@ -224,7 +132,7 @@ export default function EventForm() {
         className="absolute inset-0 top-0 w-full h-[120px] object-cover pt-11"
       />
 
-      {/* Foreground content */}
+      {/* Main content */}
       <div className="relative p-6">
         <header className="flex justify-between items-center">
           <Image
@@ -247,19 +155,15 @@ export default function EventForm() {
             >
               All Event
             </Link>
-
             <Link href="/profile">
-              {
-                <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
-              }
+              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
             </Link>
           </nav>
         </header>
 
-      {/* Form */}
-
+        {/* Event Form Container */}
         <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
-          {/* Header */}
+          {/* Header with title and delete button */}
           <div className="flex items-center justify-between mb-6">
             <input
               type="text"
@@ -267,12 +171,11 @@ export default function EventForm() {
               value={title}
               onChange={(e) => {
                 setTitle(e.target.value);
-                if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+                clearError("title");
               }}
               className="text-2xl font-semibold border-b focus:outline-none"
             />
             
-            {/* Delete Button */}
             <button 
               onClick={handleDeleteClick}
               className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
@@ -286,204 +189,52 @@ export default function EventForm() {
           </div>
           {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
-          
-          {/* Cover Image */}
-          <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mb-4">
-            {cover ? (
-              // Show preview
-              <Image
-                src={URL.createObjectURL(cover)}
-                alt="cover"
-                width={500}
-                height={200}
-                className="object-cover w-full h-full"
-              />
-            ) : (
-              <span className="text-gray-500">Upload Cover</span>
-            )}
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => {
-                if (e.target.files?.[0]) setCover(e.target.files[0]);
-                if (errors.cover) setErrors((prev) => ({ ...prev, cover: "" }));
-              }}
-              className="absolute inset-0 opacity-0 cursor-pointer"
-            />
-
-            {cover && (
-              <button
-                type="button"
-                onClick={() => setCover(null)}
-                className="absolute top-2 right-2 bg-white shadow px-2 py-1 text-sm rounded flex items-center gap-1 cursor-pointer hover:bg-gray-100"
-              >
-                <Edit2 size={14} /> 
-                <span className="hidden sm:inline">Change</span>
-              </button>
-            )}
-          </div>
-          {errors.cover && <p className="text-red-600 text-sm">{errors.cover}</p>}
-
-          {/* Title, Location, Date, Category */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <label className="flex flex-col text-sm">
-              Location
-              <input
-                type="text"
-                className="border border-gray-400 rounded px-2 py-1"
-                placeholder="Enter location"
-                value={location}
-                onChange={(e) => {
-                  setLocation(e.target.value);
-                  if (errors.location) setErrors((prev) => ({ ...prev, location: "" }));
-                }}
-              />
-              {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
-            </label>
-
-            <label className="flex flex-col text-sm">
-              Date
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  value={dateStart}
-                  onChange={(e) => {
-                    setDateStart(e.target.value);
-                    if (errors.dateStart) setErrors((prev) => ({ ...prev, dateStart: "" }));
-                  }}
-                  className="border border-gray-400 rounded px-2 py-1 flex-1"
-                />
-
-                <div className=""> to </div>
-                <input
-                  type="date"
-                  value={dateEnd}
-                  className="border border-gray-400 rounded px-2 py-1 flex-1"
-                  onChange={(e) => {
-                    setDateEnd(e.target.value);
-                    if (errors.dateEnd) setErrors((prev) => ({ ...prev, dateEnd: "" }));
-                  }}
-                />
-              </div>
-              {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
-              {errors.dateEnd && <p className="text-red-600 text-sm">{errors.dateEnd}</p>}
-            </label>
-
-            <label className="flex flex-col text-sm">
-              Hour
-              <input
-                type="number"
-                min="1"
-                max="10"
-                className="border border-gray-400 rounded px-2 py-1"
-                value={hour}
-                onChange={(e) => {
-                  setHour(e.target.value ? Number(e.target.value) : "");
-                  if (errors.hour) setErrors((prev) => ({ ...prev, hour: "" }));
-                }}
-                placeholder="Enter hours reward"
-              />
-              {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
-          </label>
-
-          <label className="flex flex-col text-sm">
-              Max Participants
-              <input
-                type="number"
-                min="1"
-                value={maxParticipants}
-                onChange={(e) => {
-                  setMaxParticipants(e.target.value ? Number(e.target.value) : "");
-                  if (errors.maxParticipants) setErrors((prev) => ({ ...prev, maxParticipants: "" }));
-                }}
-                className="border border-gray-400 rounded px-2 py-1"
-                placeholder="Enter max participants"
-              />
-              {errors.maxParticipants && <p className="text-red-600 text-sm">{errors.maxParticipants}</p>}
-          </label>
-          </div>
-
-          {/* Category Select */}
-          <CategorySelect
-            value={categories}
-            onChange={(selected: string[]) => {
-              setCategories(selected);
-              if (errors.categories) setErrors((prev) => ({ ...prev, categories: "" }));
-            }}
+          {/* Image Upload Section */}
+          <ImageUploadSection
+            cover={cover}
+            pictures={pictures}
+            onCoverChange={setCover}
+            onPicturesChange={setPictures}
+            coverError={errors.cover}
           />
-          {errors.categories && <p className="text-red-600 text-sm">{errors.categories}</p>}
 
-          {/* Description */}
-          <label className="flex flex-col text-sm">
-            Description
-            <textarea
-              rows={4}
-              value={description}
-              onChange={(e) => {
-                setDescription(e.target.value);
-                if (errors.description) setErrors((prev) => ({ ...prev, description: "" }));
-              }}
-              className="border border-gray-400 rounded px-2 py-1"
-              placeholder="Write your event description..."
-            />
-            {errors.description && <p className="text-red-600 text-sm">{errors.description}</p>}
-          </label>
+          {/* Form Fields Section */}
+          <FormFields
+            // Form values
+            title={title}
+            location={location}
+            dateStart={dateStart}
+            dateEnd={dateEnd}
+            hour={hour}
+            maxParticipants={maxParticipants}
+            categories={categories}
+            description={description}
+            // Form handlers
+            onTitleChange={(value) => { setTitle(value); clearError("title"); }}
+            onLocationChange={(value) => { setLocation(value); clearError("location"); }}
+            onDateStartChange={(value) => { setDateStart(value); clearError("dateStart"); }}
+            onDateEndChange={(value) => { setDateEnd(value); clearError("dateEnd"); }}
+            onHourChange={(value) => { setHour(value); clearError("hour"); }}
+            onMaxParticipantsChange={(value) => { setMaxParticipants(value); clearError("maxParticipants"); }}
+            onCategoriesChange={(value) => { setCategories(value); clearError("categories"); }}
+            onDescriptionChange={(value) => { setDescription(value); clearError("description"); }}
+            // Errors
+            errors={errors}
+          />
 
-          <p className="text-sm font-medium mb-2">Additional Pictures</p>
-            <div className="bg-mutegreen shadow rounded-xl p-6 space-y-6 py-7 mt-1">
-              <div className="flex gap-4 overflow-x-auto">
-                {pictures.map((pic, i) => (
-                  <div key={i} className="relative flex-shrink-0 w-32 h-28">
-                    <Image
-                      src={URL.createObjectURL(pic)}
-                      alt={`pic-${i}`}
-                      width={128}
-                      height={112}
-                      className="object-cover w-full h-full rounded-lg"
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setPictures(pictures.filter((_, idx) => idx !== i))
-                      }
-                      className="absolute top-1 right-1 bg-white rounded-full p-1 shadow text-red-600 hover:text-red-800"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-
-                {/* Upload button */}
-                <label className="flex-shrink-0 w-32 h-28 flex items-center justify-center bg-gray-300 rounded-lg cursor-pointer">
-                  <PlusCircle className="text-gray-500" size={28} />
-                  <input
-                    type="file"
-                    accept="image/*"
-                    multiple
-                    onChange={(e) => {
-                      if (e.target.files) {
-                        setPictures([...pictures, ...Array.from(e.target.files)]);
-                      }
-                    }}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-            </div>
-
-          {/* Footer buttons */}
+          {/* Action Buttons */}
           <div className="flex justify-between pt-4 border-t mt-6">
             <button className="text-gray-600 hover:text-gray-900 cursor-pointer">
               Cancel
             </button>
-
-            <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer"
-              onClick={handleSave}>
+            <button 
+              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer"
+              onClick={handleSave}
+            >
               Save
             </button>
+          </div>
         </div>
-      </div>
       </div>
     </div>
   );

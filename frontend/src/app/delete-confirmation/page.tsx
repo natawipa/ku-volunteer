@@ -6,7 +6,6 @@ import Link from "next/link";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
 import { useSearchParams } from "next/navigation";
 
-// Define TypeScript interface
 interface EventData {
   id: string;
   title: string;
@@ -46,10 +45,10 @@ export default function DeleteEventConfirmation() {
   // Mock event data structure (for reference)
   const mockEventData: EventData = {
     id: "event-001",
-    title: "Annual Tech Conference 2024",
+    title: "Annual Tech Conference 2025",
     location: "Convention Center",
-    dateStart: "2024-12-15",
-    dateEnd: "2024-12-16",
+    dateStart: "2025-12-15",
+    dateEnd: "2025-12-16",
     hour: 8,
     maxParticipants: 500,
     categories: ["กิจกรรมมหาวิทยาลัย", "ด้านพัฒนาทักษะการคิดและการเรียนรู้"],
