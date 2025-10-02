@@ -1,42 +1,20 @@
 "use client";
-import { MagnifyingGlassIcon, ChevronDownIcon} from "@heroicons/react/24/outline";
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
-
-import { useRef, useState, useEffect} from "react";
+import React from "react";
 
 // Fetch Data from requestDelete.json
-import eventsData from "../requestDelete.json";
-import { Check } from "lucide-react";
+import eventsData from "../../requestDelete.json";
 
 const events = eventsData.events;
 
-interface Event {
-  id: number;
-  title: string;
-  post: string;
-  datestart: string;
-  dateend: string;
-  location: string;
-  description: string;
-  image: string;
-  category: string[];
-  reason: string;
-  capacity: number;
-  organizer: string;
-  additionalImages?: string[];
-}
+export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = React.use(params);
+  const eventId = parseInt(id, 10);
+  const event = events.find((e) => e.id === eventId);
 
-export default function EventPage({ eventId = 1 }: { eventId?: number }) {
-    const [event, setEvent] = useState<Event | null>(null);
-
-    useEffect(() => {
-        const selectedEvent = eventsData.events.find((e) => e.id === eventId);
-        setEvent(selectedEvent || null);
-    }, [eventId]);
-
-    if (!event) return <p className="text-center mt-10">Event not found</p>;
+  if (!event) return <p className="text-center mt-10">Event not found</p>;
 
 
     return (
