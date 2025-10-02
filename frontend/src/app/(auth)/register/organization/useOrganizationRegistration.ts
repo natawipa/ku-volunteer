@@ -57,35 +57,10 @@ export function useOrganizationRegistration() {
           return;
         }
 
-        // Manual registration: auto-login and redirect based on role
-        try {
-          const loginRes = await fetch('http://localhost:8000/api/users/login/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: data.email, password: data.password }),
-          });
-
-          const loginData = await loginRes.json();
-          if (loginRes.ok) {
-            localStorage.setItem('access_token', loginData.access);
-            localStorage.setItem('refresh_token', loginData.refresh);
-
-            const role = loginData?.user?.role || 'organizer';
-            if (role === 'organizer') {
-              window.location.href = '/staff-homepage';
-            } else if (role === 'student') {
-              window.location.href = '/student-homepage';
-            } else {
-              window.location.href = '/';
-            }
-          } else {
-            console.error('Auto-login failed after registration:', loginData);
-            window.location.href = '/login';
-          }
-        } catch (e) {
-          console.error('Auto-login error:', e);
+                // Simple redirect to login page after successful registration
+        setTimeout(() => {
           window.location.href = '/login';
-        }
+        }, 1500); // Brief delay to show success message
       } else {
         console.error('Registration failed:', result.message);
         setSubmitError(result.message || 'Registration failed');

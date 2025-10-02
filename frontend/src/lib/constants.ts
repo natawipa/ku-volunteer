@@ -57,8 +57,8 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   ROLE_SELECTION: '/role',
-  STUDENT_HOMEPAGE: '/student-homepage',
-  STAFF_HOMEPAGE: '/staff-homepage',
+  STUDENT_HOMEPAGE: '/', // Unified homepage
+  STAFF_HOMEPAGE: '/', // Unified homepage
   PROFILE: '/profile',
   EVENT_DETAIL: (id: string | number) => `/events/${id}`,
   EVENT_TYPE: {

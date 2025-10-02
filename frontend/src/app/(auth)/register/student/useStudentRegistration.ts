@@ -10,7 +10,6 @@ export function useStudentRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showRedirectPage] = useState(false);
   const searchParams = useSearchParams();
   const [oauthSession, setOAuthSession] = useState<string>('');
 
@@ -51,44 +50,10 @@ export function useStudentRegistration() {
         console.log('Registration successful:', result.data);
         setSubmitSuccess(true);
 
-        // If OAuth registration, backend already issued tokens and provided a callback URL
-        if (oauthSession && result.redirect_url) {
-          window.location.href = result.redirect_url;
-          return;
-        }
-
-        // Manual registration flow: auto-login, store tokens, and redirect by role
-        try {
-          const loginRes = await fetch('http://localhost:8000/api/users/login/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: data.email, password: data.password }),
-          });
-
-          const loginData = await loginRes.json();
-          if (loginRes.ok) {
-            // Store tokens
-            localStorage.setItem('access_token', loginData.access);
-            localStorage.setItem('refresh_token', loginData.refresh);
-
-            // Redirect based on role (student for this flow)
-            const role = loginData?.user?.role || 'student';
-            if (role === 'student') {
-              window.location.href = '/student-homepage';
-            } else if (role === 'organizer') {
-              window.location.href = '/staff-homepage';
-            } else {
-              window.location.href = '/';
-            }
-          } else {
-            console.error('Auto-login failed after registration:', loginData);
-            // Fallback: send to login page
-            window.location.href = '/login';
-          }
-        } catch (e) {
-          console.error('Auto-login error:', e);
+        // Simple redirect to login page after successful registration
+        setTimeout(() => {
           window.location.href = '/login';
-        }
+        }, 1500); // Brief delay to show success message
       } else {
         console.error('Registration failed:', result.message);
         setSubmitError(result.message || 'Registration failed');
@@ -107,7 +72,6 @@ export function useStudentRegistration() {
     isSubmitting,
     submitError,
     submitSuccess,
-    showRedirectPage,
     oauthSession,
   };
 }

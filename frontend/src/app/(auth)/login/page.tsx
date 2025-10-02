@@ -57,15 +57,9 @@ const LoginPage: React.FC = () => {
       const response = await auth.login(formData.email, formData.password);
 
       if (response.success && response.data) {
-        // Redirect based on user role
-        const userRole = response.data.user.role;
-        if (userRole === USER_ROLES.STUDENT) {
-          router.push(ROUTES.STUDENT_HOMEPAGE);
-        } else if (userRole === USER_ROLES.ORGANIZER) {
-          router.push(ROUTES.STAFF_HOMEPAGE);
-        } else {
-          router.push(ROUTES.HOME); // Default redirect for admin
-        }
+        // Always redirect to the unified home page
+        // The home page will display appropriate content based on user role
+        router.push('/');
       } else {
         setApiError(handleApiError(response.error || ERROR_MESSAGES.INVALID_CREDENTIALS));
       }

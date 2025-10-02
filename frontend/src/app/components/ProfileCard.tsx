@@ -3,6 +3,7 @@ import { useRef, useState, useEffect } from "react";
 import { LogOut } from "lucide-react";
 import { UserCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
+import { clearAuthData, getCurrentUser } from "../../lib/auth";
 
 type ProfileCardProps = {
   role: "student-homepage" | "organization-homepage";
@@ -10,7 +11,16 @@ type ProfileCardProps = {
 
 export default function ProfileCard({ role }: ProfileCardProps) {
     const [isOpen, setIsOpen] = useState(false);
+    const [userEmail, setUserEmail] = useState("username@email.com");
     const wrapperRef = useRef<HTMLDivElement>(null);
+
+    // Get user data on mount
+    useEffect(() => {
+      const user = getCurrentUser();
+      if (user && user.email) {
+        setUserEmail(user.email);
+      }
+    }, []);
 
     // Close dropdown if clicking outside
     useEffect(() => {
@@ -24,6 +34,13 @@ export default function ProfileCard({ role }: ProfileCardProps) {
     }, []);
 
     const profileLink = role === "student-homepage" ? "/student-profile" : "/organization-profile";
+
+    const handleLogout = () => {
+      clearAuthData();
+      setIsOpen(false);
+      // Redirect to home page
+      window.location.href = '/';
+    };
 
      return (
     <div className="relative" ref={wrapperRef}>
@@ -39,7 +56,7 @@ export default function ProfileCard({ role }: ProfileCardProps) {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white shadow-lg ring-1 ring-black/5 p-3">
           <p className="text-sm text-gray-500 mb-2">Signed in as</p>
-          <p className="font-semibold mb-3">username@email.com</p>
+          <p className="font-semibold mb-3">{userEmail}</p>
           <hr className="my-2" />
 
         {/* View Profile */}
@@ -54,10 +71,7 @@ export default function ProfileCard({ role }: ProfileCardProps) {
 
         {/* Log Out */}
           <button
-            onClick={() => {
-              setIsOpen(false);
-              alert("Logging out...");
-            }}
+            onClick={handleLogout}
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-red-600 hover:bg-red-50 hover:cursor-pointer"
           >
             <LogOut className="h-4 w-4" />

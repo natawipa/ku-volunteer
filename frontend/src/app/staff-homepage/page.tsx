@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
-export default function StudentHomepage() {
+export default function StaffHomepage() {
   const router = useRouter();
 
   useEffect(() => {

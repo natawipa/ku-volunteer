@@ -19,18 +19,9 @@ export default function CallbackContent() {
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
       
-      // Redirect immediately based on user role
-      console.log('OAuth redirecting based on role:', role);
-      if (role === 'student') {
-        console.log('Redirecting to student homepage');
-        router.replace('/student-homepage');
-      } else if (role === 'organizer') {
-        console.log('Redirecting to staff homepage');
-        router.replace('/staff-homepage');
-      } else {
-        console.log('Redirecting to main page');
-        router.replace('/'); // Default redirect for admin or unknown roles
-      }
+      // Redirect to unified home page for all users
+      console.log('OAuth redirecting to unified home page, role:', role);
+      router.replace('/');
     } else {
       console.error('OAuth callback missing parameters');
       router.replace('/login?error=authentication_failed');
