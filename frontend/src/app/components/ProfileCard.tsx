@@ -5,13 +5,8 @@ import { UserCircleIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import { apiService, type User } from "../../lib/api";
 
-type ProfileCardProps = {
-  role: "student-homepage" | "organization-homepage";
-};
-
-export default function ProfileCard({ role }: ProfileCardProps) {
+export default function ProfileCard() {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
   const [formError, setFormError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -27,8 +22,6 @@ export default function ProfileCard({ role }: ProfileCardProps) {
         }
       } catch {
         setFormError('Network error occurred');
-      } finally {
-        setLoading(false);
       }
     };
 
@@ -49,7 +42,7 @@ export default function ProfileCard({ role }: ProfileCardProps) {
   const handleLogout = async () => {
     try {
       setIsOpen(false);
-      const result = await apiService.logout();
+      await apiService.logout();
       
       // Always redirect to landing page with full reload
       window.location.href = '/';  // This clears React state completely

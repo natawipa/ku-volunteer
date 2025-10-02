@@ -69,7 +69,7 @@ export default function Home() {
               <span className="mr-1">New</span>
               </div>
             </Link>
-            <ProfileCard role="organization-homepage" />
+            <ProfileCard />
           </nav>
         </header>
 
