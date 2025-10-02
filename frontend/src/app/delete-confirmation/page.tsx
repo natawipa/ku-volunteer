@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { UserCircleIcon } from "@heroicons/react/24/outline";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
-interface EventData {
+interface ActivityData { 
   id: string;
   title: string;
   location?: string;
@@ -18,48 +18,39 @@ interface EventData {
   description?: string;
 }
 
-export default function DeleteEventConfirmation() {
+function DeleteConfirmationContent() {
   const searchParams = useSearchParams();
-  const [eventData, setEventData] = useState<EventData | null>(null);
-  const [eventName, setEventName] = useState("");
+  const router = useRouter();
+  
+  const [activityData, setActivityData] = useState<ActivityData | null>(null); // Changed from eventData
+  const [activityName, setActivityName] = useState(""); // Changed from eventName
   const [reason, setReason] = useState("");
   const [errors, setErrors] = useState<{
     title?: string;
     reason?: string;
   }>({});
 
-  // Get event from URL 
   useEffect(() => {
-    const eventDataParam = searchParams.get('eventData');
-    if (eventDataParam) {
+    const activityDataParam = searchParams.get('activityData'); // CHANGED THIS LINE
+    if (activityDataParam) {
       try {
-        const parsedData: EventData = JSON.parse(decodeURIComponent(eventDataParam));
-        setEventData(parsedData);
-        setEventName(parsedData.title); // Auto-fill event title
+        const parsedData: ActivityData = JSON.parse(decodeURIComponent(activityDataParam));
+        setActivityData(parsedData);
+        setActivityName(parsedData.title); // Auto-fill activity title
+        console.log("Received activity data:", parsedData); // Debug log
       } catch (error) {
-        console.error("Error parsing event data:", error);
+        console.error("Error parsing activity data:", error);
       }
+    } else {
+      console.log("No activityData found in URL"); // Debug log
     }
   }, [searchParams]);
-
-  // Mock event data structure (for reference)
-  const mockEventData: EventData = {
-    id: "event-001",
-    title: "Annual Tech Conference 2025",
-    location: "Convention Center",
-    dateStart: "2025-12-15",
-    dateEnd: "2025-12-16",
-    hour: 8,
-    maxParticipants: 500,
-    categories: ["กิจกรรมมหาวิทยาลัย", "ด้านพัฒนาทักษะการคิดและการเรียนรู้"],
-    description: "A conference about latest technologies and innovations"
-  };
 
   const validateForm = () => {
     const newErrors: { title?: string; reason?: string } = {};
     
-    if (!eventName.trim()) {
-      newErrors.title = "Please enter an event title";
+    if (!activityName.trim()) { 
+      newErrors.title = "Please enter an activity title";
     }
     
     if (!reason.trim()) {
@@ -77,7 +68,7 @@ export default function DeleteEventConfirmation() {
     
     if (validateForm()) {
       const deleteRequestData = {
-        event: eventData || { title: eventName },
+        activity: activityData || { title: activityName }, 
         reason: reason.trim(),
         timestamp: new Date().toISOString(),
         requestId: `del-req-${Date.now()}`
@@ -85,16 +76,20 @@ export default function DeleteEventConfirmation() {
 
       console.log("Delete Request Data:", JSON.stringify(deleteRequestData, null, 2));
       
-      // ex deleteEventAPI(deleteRequestData);
-      
-      console.log("Deleting event:", eventName, "Reason:", reason);
-      console.log("Complete event data:", eventData);
+      alert("Delete request submitted! (Check console for data)");
+      // router.push('/');
     }
   };
 
   const handleCancel = () => {
-    console.log("Cancelled");
-    window.history.back();
+    console.log("Cancelling delete - preserving activity data");
+    
+    if (activityData) {
+      // Return to edit with  activity data 
+      router.push(`/new?savedActivityData=${encodeURIComponent(JSON.stringify(activityData))}`);
+    } else {
+      window.history.back();
+    }
   };
 
   return (
@@ -122,8 +117,8 @@ export default function DeleteEventConfirmation() {
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
               Document
             </Link>
-            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-              All Event
+            <Link href="/all-activities" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
+              All Activities
             </Link>
             <Link href="/new" className="btn bg-[#215701] text-white px-3 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
               + New
@@ -137,23 +132,38 @@ export default function DeleteEventConfirmation() {
         {/* Delete Confirmation Form */}
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-16">
           <h1 className="text-2xl font-semibold text-center mb-8">
-            Delete Event Confirmation
+            Delete Activity Confirmation
           </h1>
 
+          {/* Activity preview */}
+          {activityData && (
+            <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <h3 className="font-medium text-yellow-800 mb-2">Activity to be deleted:</h3>
+              <p className="text-sm text-yellow-700">
+                <strong>{activityData.title}</strong>
+                {activityData.location && ` • ${activityData.location}`}
+                {activityData.dateStart && ` • ${activityData.dateStart}`}
+              </p>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Event Field - Now pre-filled and read-only */}
+            {/* Activity Field */}
             <div className="flex items-start gap-4">
               <label className="text-base font-medium pt-2 w-24 text-left">
-                Event
+                Activity
               </label>
               <div className="flex-1">
                 <input
                   type="text"
-                  value={eventName}
+                  value={activityName}
                   readOnly
                   className="w-full border border-gray-300 rounded-lg px-4 py-2 bg-gray-50 cursor-not-allowed"
-                  placeholder="Event title will auto-fill"
+                  placeholder="Activity title will auto-fill"
                 />
+                <p className="text-sm text-gray-500 mt-1">
+                  This activity will be permanently deleted
+                </p>
               </div>
             </div>
 
@@ -196,20 +206,34 @@ export default function DeleteEventConfirmation() {
               <button
                 type="button"
                 onClick={handleCancel}
-                className="text-gray-600 hover:text-gray-900 font-medium"
+                className="text-gray-600 hover:text-gray-900 font-medium px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
               >
-                Cancel
+                ← Cancel & Keep Editing
               </button>
               <button
                 type="submit"
-                className="bg-green-600 text-white px-8 py-2 rounded-lg hover:bg-green-700 transition-colors font-medium"
+                className="bg-red-600 text-white px-8 py-2 rounded-lg hover:bg-red-700 transition-colors font-medium"
               >
-                Submit Delete Request
+                Confirm Delete
               </button>
             </div>
           </form>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function DeleteActivityConfirmation() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Loading...</p>
+        </div>
+      </div>
+    }>
+      <DeleteConfirmationContent />
+    </Suspense>
   );
 }
