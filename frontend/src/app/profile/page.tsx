@@ -234,20 +234,6 @@ export default function Profile() {
                   {user.organizer_profile.organization_name || 'N/A'}
                 </b>
               </div>
-              {/* Row 3 */}
-              <div className="flex justify-between items-center">
-                <span>Email</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.email}
-                </b>
-              </div>
-              {/* Row 4 */}
-              <div className="flex justify-between items-center">
-                <span>Role</span>
-                <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </b>
-              </div>
             </div>
           )}
 
