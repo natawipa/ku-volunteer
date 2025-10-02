@@ -56,7 +56,7 @@ export function useStudentRegistration() {
           if (result.redirect_url) {
             window.location.href = result.redirect_url;
           } else {
-            window.location.href = '/homepage/student';
+            window.location.href = '/';
           }
         } else {
           // Manual registration: redirect to login page after short delay
