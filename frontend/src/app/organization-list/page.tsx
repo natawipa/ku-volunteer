@@ -1,17 +1,11 @@
 "use client";
-import SearchCard from "@/app/components/SearchCard";
 import { EyeIcon } from "@heroicons/react/24/outline";
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
-
-import { useRef, useState, useEffect} from "react";
 import organizations from "@/app/organizerExample.json";
 
 export default function Home() {
-    const [isOpen, setIsOpen] = useState(false);
-    const wrapperRef = useRef<HTMLDivElement>(null);
-    const [isScrolled, setIsScrolled] = useState(false);
 
     return (
       <div className="relative">

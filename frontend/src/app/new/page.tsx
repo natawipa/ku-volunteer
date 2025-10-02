@@ -10,43 +10,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
 
-// Mock activity data
-const mockActivities = [
-  {
-    id: "activity-001",
-    title: "Volunteer Beach Cleanup",
-    location: "Patong Beach, Phuket",
-    dateStart: "2024-03-15",
-    dateEnd: "2024-03-15",
-    hour: 4,
-    maxParticipants: 50,
-    categories: ["กิจกรรมเพื่อสังคม"],
-    description: "Join us for a beach cleanup activity to help preserve our beautiful beaches. We'll provide gloves, bags, and refreshments."
-  },
-  {
-    id: "activity-002",
-    title: "Coding Workshop for Beginners",
-    location: "Computer Lab, Engineering Building",
-    dateStart: "2024-03-20",
-    dateEnd: "2024-03-20",
-    hour: 6,
-    maxParticipants: 30,
-    categories: ["ด้านพัฒนาทักษะการคิดและการเรียนรู้"],
-    description: "Learn the basics of web development with HTML, CSS, and JavaScript. Perfect for students with no prior coding experience."
-  },
-  {
-    id: "activity-003",
-    title: "Mindfulness Meditation Session",
-    location: "University Park",
-    dateStart: "2024-03-25",
-    dateEnd: "2024-03-25",
-    hour: 2,
-    maxParticipants: 25,
-    categories: ["ด้านพัฒนาสุขภาพ"],
-    description: "Relax and de-stress with guided meditation sessions. Learn techniques to manage academic stress and improve mental wellbeing."
-  }
-];
-
 // Move the main content to a separate component
 function ActivityFormContent() {
   const router = useRouter();

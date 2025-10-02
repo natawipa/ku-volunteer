@@ -28,7 +28,6 @@ interface FormFieldsProps {
 }
 
 export default function FormFields({
-  title,
   location,
   dateStart,
   dateEnd,
@@ -36,7 +35,6 @@ export default function FormFields({
   maxParticipants,
   categories,
   description,
-  onTitleChange,
   onLocationChange,
   onDateStartChange,
   onDateEndChange,

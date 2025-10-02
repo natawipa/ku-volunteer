@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { X } from "lucide-react";
-import { CategoryNode, CategorySelectProps, categories } from "../types";
+import { CategorySelectProps, categories } from "../types";
 
 export default function CategorySelect({ value, onChange }: CategorySelectProps) {
   const [open, setOpen] = useState(false);
