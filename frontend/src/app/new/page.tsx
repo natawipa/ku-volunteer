@@ -235,9 +235,9 @@ export default function EventForm() {
 
       {/* --------------- Form Fields --------------- */}
 
-        <div className="max-w-5xl mx-auto bg-white shadow rounded-xl p-6 space-y-6 py-7 mt-13">
+        <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
           {/* Header */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-6">
             <input
               type="text"
               placeholder="Input Event Title"
@@ -248,6 +248,7 @@ export default function EventForm() {
               }}
               className="text-2xl font-semibold border-b focus:outline-none"
             />
+            
             <button className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
                    text-sm sm:text-base text-red-600 border border-red-600 
                    rounded-lg hover:bg-red-50 focus:outline-none 
@@ -258,8 +259,9 @@ export default function EventForm() {
           </div>
           {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
+          
           {/* Cover Image */}
-          <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
+          <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mb-4">
             {cover ? (
               // Show preview if cover is uploaded
               <Image
@@ -445,52 +447,8 @@ export default function EventForm() {
               </div>
             </div>
 
-          {/* Additional Questions */}
-        <div>
-            <p className="text-sm font-medium mb-2">Additional Questions</p>
-            {questions.map((q, idx) => (
-              <div key={idx} className="relative mb-2">
-                <label className="block text-sm font-medium mb-1">
-                  Question {idx + 1}
-                </label>
-
-                <input
-                  type="text"
-                  placeholder={`Enter question ${idx + 1}`}
-                  value={q}
-                  onChange={(e) => {
-                    const copy = [...questions];
-                    copy[idx] = e.target.value;
-                    setQuestions(copy);
-                  }}
-                  className="w-full border border-gray-400 rounded px-2 py-1 pr-10"
-                />
-
-                {/* Delete button inside the input */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const copy = [...questions];
-                    copy.splice(idx, 1);
-                    setQuestions(copy);
-                  }}
-                  className="absolute right-3 top-[35px] text-red-600 hover:text-red-800"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-
-            ))}
-            <button
-                onClick={addQuestion}
-                className="flex items-center gap-1 text-green-600 border border-green-600 px-3 py-1 rounded hover:bg-green-50 cursor-pointer"
-            >
-                <PlusCircle size={16} /> Add Question
-            </button>
-            </div>
-
           {/* Footer buttons */}
-          <div className="flex justify-between pt-4 border-t">
+          <div className="flex justify-between pt-4 border-t mt-6">
             <button className="text-gray-600 hover:text-gray-900 cursor-pointer">
               Cancel
             </button>
