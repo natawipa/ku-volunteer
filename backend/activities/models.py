@@ -42,6 +42,8 @@ class Activity(models.Model):
         blank=True, 
         validators=[MinValueValidator(0)]
     )
+    # Reason provided by admin when an activity is rejected in moderation
+    rejection_reason = models.TextField(blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

@@ -14,11 +14,11 @@ class ActivitySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'categories', 'title', 'description',
             'start_at', 'end_at', 'location', 'max_participants', 'current_participants',
-            'status', 'hours_awarded', 'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached',
+            'status', 'hours_awarded', 'rejection_reason', 'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached',
         ]
         read_only_fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'current_participants', 'status',
-            'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached'
+            'rejection_reason', 'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached'
         ]
 
 
@@ -48,5 +48,4 @@ class ActivityDeletionRequestSerializer(serializers.ModelSerializer):
             'requested_at', 'reviewed_by', 'reviewed_at', 'review_note'
         ]
         read_only_fields = ['status', 'requested_at', 'reviewed_by', 'reviewed_at']
-
 

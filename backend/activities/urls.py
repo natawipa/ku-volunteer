@@ -9,6 +9,8 @@ from .views import (
     ActivityDeletionRequestListView,
     ActivityDeletionRequestReviewView,
     ActivityMetadataView,
+    ActivityModerationListView,
+    ActivityModerationReviewView,
 )
 
 
@@ -25,4 +27,7 @@ urlpatterns = [
     path('deletion-requests/<int:pk>/review/', ActivityDeletionRequestReviewView.as_view(), name='activity-deletion-request-review'),
     # Metadata for categories
     path('metadata/', ActivityMetadataView.as_view(), name='activity-metadata'),
+    # Admin moderation of activities
+    path('moderation/pending/', ActivityModerationListView.as_view(), name='activity-moderation-list'),
+    path('moderation/<int:pk>/review/', ActivityModerationReviewView.as_view(), name='activity-moderation-review'),
 ]

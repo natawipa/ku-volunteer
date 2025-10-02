@@ -242,6 +242,11 @@ class ActivityDeletionRequestReviewView(APIView):
         if action == 'approve':
             deletion_request.approve(request.user, note)
         else:
+            if not (note or '').strip():
+                return Response(
+                    {'detail': 'Rejection note (reason) is required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             deletion_request.reject(request.user, note)
         
         return Response(ActivityDeletionRequestSerializer(deletion_request).data)
@@ -283,3 +288,41 @@ class ActivityMetadataView(APIView):
                 'categories_max': 4,
             }
         return Response(payload)
+
+
+class ActivityModerationListView(generics.ListAPIView):
+    """List pending activities for admin moderation."""
+    permission_classes = [permissions.IsAuthenticated, IsAdmin]
+    serializer_class = ActivitySerializer
+
+    def get_queryset(self):
+        return Activity.objects.filter(status=ActivityStatus.PENDING).select_related('organizer_profile', 'organizer_profile__user')
+
+
+class ActivityModerationReviewView(APIView):
+    """Approve or reject an activity (admin only)."""
+    permission_classes = [permissions.IsAuthenticated, IsAdmin]
+
+    def post(self, request: Request, pk: int) -> Response:
+        activity = get_object_or_404(Activity, pk=pk)
+        action = request.data.get('action')  # 'approve' or 'reject'
+        if action not in ('approve', 'reject'):
+            return Response({'detail': StatusMessages.INVALID_ACTION}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Only allow moderation from pending
+        if activity.status != ActivityStatus.PENDING:
+            return Response({'detail': 'Only pending activities can be moderated.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if action == 'approve':
+            activity.status = ActivityStatus.OPEN
+            activity.rejection_reason = ''
+            activity.save(update_fields=['status', 'rejection_reason'])
+            return Response({'detail': 'Activity set to open.'})
+        else:
+            reason = (request.data.get('reason') or '').strip()
+            if not reason:
+                return Response({'detail': 'Rejection reason is required.'}, status=status.HTTP_400_BAD_REQUEST)
+            activity.status = ActivityStatus.REJECTED
+            activity.rejection_reason = reason
+            activity.save(update_fields=['status', 'rejection_reason'])
+            return Response({'detail': 'Activity rejected with reason provided.'})
