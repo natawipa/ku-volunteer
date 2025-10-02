@@ -48,7 +48,15 @@ class ActivityListCreateView(generics.ListCreateAPIView):
         user_role = getattr(user, 'role', None)
         
         if user_role == UserRoles.ORGANIZER:
-            return self.queryset.filter(organizer_profile__user=user)
+            # Get user's organization name from their organizer profile
+            try:
+                organizer_profile = user.organizer_profile
+                organization_name = organizer_profile.organization_name
+                # Show all activities from the same organization
+                return self.queryset.filter(organizer_profile__organization_name=organization_name)
+            except:
+                # If no organizer profile found, show no activities
+                return self.queryset.none()
         if is_admin_user(user):
             return self.queryset.all()
         # Students: see all activities except pending
@@ -83,12 +91,21 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         user = self.request.user
         user_role = getattr(user, 'role', None)
         
-        if (user_role == UserRoles.ORGANIZER and 
-            instance.organizer_profile.user != user):
-            self.permission_denied(
-                self.request, 
-                message=StatusMessages.NOT_YOUR_ACTIVITY
-            )
+        # Check if organizer belongs to same organization
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = instance.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    self.permission_denied(
+                        self.request, 
+                        message=StatusMessages.NOT_YOUR_ACTIVITY
+                    )
+            except:
+                self.permission_denied(
+                    self.request, 
+                    message=StatusMessages.NOT_YOUR_ACTIVITY
+                )
         serializer.save()
 
 
@@ -118,9 +135,22 @@ class ActivityDeleteView(APIView):
             activity.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
 
-        # Organizer deletion rules
-        if (user_role != UserRoles.ORGANIZER or 
-            activity.organizer_profile.user != user):
+        # Organizer deletion rules - check if user belongs to same organization
+        if user_role != UserRoles.ORGANIZER:
+            return Response(
+                {'detail': StatusMessages.PERMISSION_DENIED}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            user_org_name = user.organizer_profile.organization_name
+            activity_org_name = activity.organizer_profile.organization_name
+            if user_org_name != activity_org_name:
+                return Response(
+                    {'detail': StatusMessages.PERMISSION_DENIED}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except:
             return Response(
                 {'detail': StatusMessages.PERMISSION_DENIED}, 
                 status=status.HTTP_403_FORBIDDEN
@@ -148,8 +178,22 @@ class ActivityRequestDeleteView(APIView):
         user = request.user
         user_role = getattr(user, 'role', None)
         
-        if (user_role != UserRoles.ORGANIZER or 
-            activity.organizer_profile.user != user):
+        # Check if user is organizer and belongs to same organization
+        if user_role != UserRoles.ORGANIZER:
+            return Response(
+                {'detail': StatusMessages.PERMISSION_DENIED}, 
+                status=status.HTTP_403_FORBIDDEN
+            )
+        
+        try:
+            user_org_name = user.organizer_profile.organization_name
+            activity_org_name = activity.organizer_profile.organization_name
+            if user_org_name != activity_org_name:
+                return Response(
+                    {'detail': StatusMessages.PERMISSION_DENIED}, 
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        except:
             return Response(
                 {'detail': StatusMessages.PERMISSION_DENIED}, 
                 status=status.HTTP_403_FORBIDDEN

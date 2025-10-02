@@ -66,7 +66,7 @@ class ActivityAdminForm(forms.ModelForm):
 @admin.register(Activity)
 class ActivityAdmin(admin.ModelAdmin):
     form = ActivityAdminForm
-    list_display = ('id', 'title', 'get_organizer_name', 'status', 'start_at', 'end_at', 'created_at')
+    list_display = ('id', 'title', 'get_organizer_name', 'status', 'current_participants', 'max_participants', 'start_at', 'end_at', 'created_at')
     list_filter = ('status', 'start_at', 'end_at', 'created_at')
     search_fields = (
         'title', 'description', 'location',
@@ -86,7 +86,7 @@ class ActivityAdmin(admin.ModelAdmin):
             'fields': ('start_at', 'end_at')
         }),
         ('Capacity & status', {
-            'fields': ('max_participants', 'hours_awarded', 'status')
+            'fields': ('max_participants', 'current_participants', 'hours_awarded', 'status')
         }),
         ('Metadata', {
             'classes': ('collapse',),
