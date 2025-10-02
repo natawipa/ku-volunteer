@@ -4,8 +4,8 @@ import { useState, useRef, useEffect } from "react";
 import { PlusCircle, Trash2, Edit2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import {UserCircleIcon } from "@heroicons/react/24/solid";
-import { date } from "zod";
+import { UserCircleIcon } from "@heroicons/react/24/solid";
+import { useRouter } from "next/navigation";
 
 type CategoryNode = {
   label: string;
@@ -135,6 +135,7 @@ function CategorySelect({ value, onChange }: CategorySelectProps) {
 }
 
 export default function EventForm() {
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [location, setLocation] = useState("");
   const [dateStart, setDateStart] = useState<string>("");
@@ -145,9 +146,32 @@ export default function EventForm() {
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
-  const addQuestion = () => setQuestions([...questions, ""]);
   const [cover, setCover] = useState<File | null>(null);
   const [pictures, setPictures] = useState<File[]>([]);
+
+  // event data obj
+  // collects all form data and will passed to delete confirmation page
+  // just auto-generate mock ID ( replace with real ID from db)
+  const eventData = {
+    id: "mock-event-id-" + Date.now(),
+    title: title,
+    location: location,
+    dateStart: dateStart,
+    dateEnd: dateEnd,
+    hour: hour,
+    maxParticipants: maxParticipants,
+    categories: categories,
+    description: description,
+  };
+
+  const handleDeleteClick = () => {
+    if (!title.trim()) {
+      alert("Please enter an event title before deleting");
+      return;
+    }
+    
+    router.push(`/delete-confirmation?eventData=${encodeURIComponent(JSON.stringify(eventData))}`);
+  };
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -179,7 +203,6 @@ export default function EventForm() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const [questions, setQuestions] = useState<string[]>([]);
 
   const handleSave = () => {
     if (validate()) {
@@ -233,7 +256,7 @@ export default function EventForm() {
           </nav>
         </header>
 
-      {/* --------------- Form Fields --------------- */}
+      {/* Form */}
 
         <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
           {/* Header */}
@@ -249,10 +272,14 @@ export default function EventForm() {
               className="text-2xl font-semibold border-b focus:outline-none"
             />
             
-            <button className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
-                   text-sm sm:text-base text-red-600 border border-red-600 
-                   rounded-lg hover:bg-red-50 focus:outline-none 
-                   focus:ring-2 focus:ring-red-300 cursor-pointer">
+            {/* Delete Button */}
+            <button 
+              onClick={handleDeleteClick}
+              className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
+                     text-sm sm:text-base text-red-600 border border-red-600 
+                     rounded-lg hover:bg-red-50 focus:outline-none 
+                     focus:ring-2 focus:ring-red-300 cursor-pointer"
+            >
               <Trash2 size={16} /> 
               <span className="hidden sm:inline">Delete Event</span>
             </button>
@@ -263,7 +290,7 @@ export default function EventForm() {
           {/* Cover Image */}
           <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mb-4">
             {cover ? (
-              // Show preview if cover is uploaded
+              // Show preview
               <Image
                 src={URL.createObjectURL(cover)}
                 alt="cover"
@@ -402,8 +429,6 @@ export default function EventForm() {
             />
             {errors.description && <p className="text-red-600 text-sm">{errors.description}</p>}
           </label>
-
-          
 
           <p className="text-sm font-medium mb-2">Additional Pictures</p>
             <div className="bg-mutegreen shadow rounded-xl p-6 space-y-6 py-7 mt-1">
