@@ -57,7 +57,7 @@ export default function Profile() {
         </div>
         <div className="relative p-6">
           <button
-            onClick={() => router.push("/organization-homepage")}
+            onClick={() => router.push("/")}
             className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
             hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
           >
@@ -88,13 +88,7 @@ export default function Profile() {
         <div className="relative p-6">
           <button
             onClick={() => {
-              if (user?.role === 'organizer') {
-                router.push('/homepage/organization');
-              } else if (user?.role === 'student') {
-                router.push('/homepage/student');
-              } else {
-                router.push('/');
-              }
+              router.push('/');
             }}
             className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
             hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
@@ -143,13 +137,7 @@ export default function Profile() {
       {/* Back button */}
         <button
           onClick={() => {
-            if (user?.role === 'organizer') {
-              router.push('/homepage/organization');
-            } else if (user?.role === 'student') {
-              router.push('/homepage/student');
-            } else {
-              router.push('/');
-            }
+            router.push('/');
           }}
           className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
           hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"

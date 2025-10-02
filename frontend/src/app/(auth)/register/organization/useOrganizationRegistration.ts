@@ -10,7 +10,6 @@ export function useOrganizationRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showRedirectPage] = useState(false);
   const searchParams = useSearchParams();
   const [oauthSession, setOAuthSession] = useState<string>('');
 
@@ -59,10 +58,10 @@ export function useOrganizationRegistration() {
             window.location.href = '/homepage/organization';
           }
         } else {
-          // Manual registration will redirect to login page after short delay
-          setTimeout(() => {
-            window.location.href = '/login';
-          }, 2000);
+                  // Simple redirect to login page after successful registration
+        setTimeout(() => {
+          window.location.href = '/login';
+        }, 1500); // Brief delay to show success message
         }
       } else {
         console.error('Registration failed:', result.message);
@@ -82,7 +81,6 @@ export function useOrganizationRegistration() {
     isSubmitting,
     submitError,
     submitSuccess,
-    showRedirectPage,
     oauthSession,
   };
 }

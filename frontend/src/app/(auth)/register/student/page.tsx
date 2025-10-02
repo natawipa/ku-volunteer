@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, Suspense, useEffect } from 'react';
+import React, { useState, Suspense } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Card from '../../../(auth)/components/Card';
 import { FormField } from '../../../(auth)/components/FormField';
 import { Dropdown } from '../../../(auth)/components/Dropdown';
@@ -17,11 +16,8 @@ const StudentRegisterContent: React.FC = () => {
     isSubmitting,
     submitError,
     submitSuccess,
-    showRedirectPage,
-    oauthSession,
     formState: { errors },
   } = useStudentRegistration();
-  const router = useRouter();
 
   const [selectedTitle, setSelectedTitle] = useState<TitleOption | ''>('');
 
@@ -29,14 +25,6 @@ const StudentRegisterContent: React.FC = () => {
     setSelectedTitle(title);
     setValue('title', title, { shouldValidate: true });
   };
-
-  // Handle redirect after successful registration
-  useEffect(() => {
-    if (showRedirectPage) {
-      const redirectUrl = oauthSession ? '/homepage/student' : '/login';
-      router.push(redirectUrl);
-    }
-  }, [showRedirectPage, oauthSession, router]);
 
   return (
     <div className="min-h-screen  bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">

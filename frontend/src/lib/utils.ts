@@ -116,6 +116,19 @@ export const auth = {
     return !!this.getAccessToken();
   },
 
+  // Get user data from localStorage
+  getUserData(): { id?: string | number; email?: string; first_name?: string; last_name?: string; role?: string; is_active?: boolean; created_at?: string; updated_at?: string } | null {
+    if (typeof window === 'undefined') return null;
+    const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+    return userData ? JSON.parse(userData) : null;
+  },
+
+  // Get user role
+  getUserRole(): string | null {
+    const userData = this.getUserData();
+    return userData?.role || null;
+  },
+
   // Login user
   async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
     // Make direct fetch request without Authorization header for login
@@ -274,7 +287,7 @@ export const debounce = <T extends (...args: unknown[]) => unknown>(
   call: (...args: Parameters<T>) => void;
   cancel: () => void;
 } => {
-  let timeoutId: NodeJS.Timeout | undefined;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   const debounced = (...args: Parameters<T>) => {
     if (timeoutId) clearTimeout(timeoutId);
     timeoutId = setTimeout(() => func(...args), delay);

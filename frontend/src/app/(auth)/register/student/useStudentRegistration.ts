@@ -10,7 +10,6 @@ export function useStudentRegistration() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [showRedirectPage] = useState(false);
   const searchParams = useSearchParams();
   const [oauthSession, setOAuthSession] = useState<string>('');
 
@@ -56,7 +55,7 @@ export function useStudentRegistration() {
           if (result.redirect_url) {
             window.location.href = result.redirect_url;
           } else {
-            window.location.href = '/homepage/student';
+            window.location.href = '/';
           }
         } else {
           // Manual registration: redirect to login page after short delay
@@ -82,7 +81,6 @@ export function useStudentRegistration() {
     isSubmitting,
     submitError,
     submitSuccess,
-    showRedirectPage,
     oauthSession,
   };
 }
