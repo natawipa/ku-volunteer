@@ -13,6 +13,11 @@ type CategoryNode = {
   children?: CategoryNode[];
 };
 
+type CategorySelectProps = {
+  value: string[];
+  onChange: (value: string[]) => void;
+};
+
 const categories: CategoryNode[] = [
   { label: "กิจกรรมมหาวิทยาลัย", selectable: true },
   {
@@ -28,9 +33,8 @@ const categories: CategoryNode[] = [
   { label: "กิจกรรมเพื่อสังคม", selectable: true },
 ];
 
-function CategorySelect() {
+function CategorySelect({ value, onChange }: CategorySelectProps) {
   const [open, setOpen] = useState(false);
-  const [selected, setSelected] = useState<string[]>([]);
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -44,15 +48,15 @@ function CategorySelect() {
   }, []);
 
   const toggleCategory = (option: string) => {
-    if (selected.includes(option)) {
-      setSelected(selected.filter((o) => o !== option));
-    } else if (selected.length < 3) {
-      setSelected([...selected, option]);
+    if (value.includes(option)) {
+      onChange(value.filter((o) => o !== option));
+    } else if (value.length < 3) {
+      onChange([...value, option]);
     }
   };
 
   const removeCategory = (option: string) => {
-    setSelected(selected.filter((o) => o !== option));
+    onChange(value.filter((o) => o !== option));
   };
 
   return (
@@ -64,11 +68,11 @@ function CategorySelect() {
         className="border border-gray-400 rounded-lg p-2 flex flex-wrap gap-2 cursor-pointer min-h-[48px] bg-white"
         onClick={() => setOpen(!open)}
       >
-        {selected.length === 0 && (
+        {value.length === 0 && (
           <span className="text-gray-400">Select up to 3 categories</span>
         )}
 
-        {selected.map((cat) => (
+        {value.map((cat) => (
           <span
             key={cat}
             className="flex items-center bg-yellow-200 text-black px-3 py-1 rounded-full text-sm"
@@ -111,7 +115,7 @@ function CategorySelect() {
                 <div
                   key={child.label}
                   className={`px-2 py-1 rounded cursor-pointer ${
-                    selected.includes(child.label)
+                    value.includes(child.label)
                       ? "bg-green-600 text-white"
                       : "hover:bg-green-200"
                   }`}
@@ -137,8 +141,13 @@ export default function EventForm() {
   const [dateEnd, setDateEnd] = useState<string>("");
   const [hour, setHour] = useState<number | "">("");
   const [maxParticipants, setMaxParticipants] = useState<number | "">("");
+  const [categories, setCategories] = useState<string[]>([]);
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const addQuestion = () => setQuestions([...questions, ""]);
+  const [cover, setCover] = useState<File | null>(null);
+  const [pictures, setPictures] = useState<File[]>([]);
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
@@ -147,7 +156,7 @@ export default function EventForm() {
     if (!location.trim()) newErrors.location = "Location is required";
     if (!dateStart) newErrors.dateStart = "Start date is required";
     if (!dateEnd) newErrors.dateEnd = "End date is required";
-    if (dateStart && dateEnd && dateStart > dateEnd) {
+    if (dateStart && dateEnd && new Date(dateStart) > new Date(dateEnd)) {
       newErrors.dateEnd = "End date must be after start date";
     }
 
@@ -160,8 +169,12 @@ export default function EventForm() {
     else if (Number(maxParticipants) < 1) {
       newErrors.maxParticipants = "Must be at least 1";
     }
+    if (categories.length === 0) newErrors.categories = "Select at least one category";
+
     if (!description.trim()) newErrors.description = "Description is required";
 
+    if (!cover) newErrors.cover = "Cover image is required";
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -173,10 +186,6 @@ export default function EventForm() {
       alert("Form is valid — submit here 🚀");
     }
   };
-
-  const addQuestion = () => setQuestions([...questions, ""]);
-  const [cover, setCover] = useState<File | null>(null);
-  const [pictures, setPictures] = useState<File[]>([]);
 
   return (
     <div className="relative">
@@ -233,7 +242,10 @@ export default function EventForm() {
               type="text"
               placeholder="Input Event Title"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => {
+                setTitle(e.target.value);
+                if (errors.title) setErrors((prev) => ({ ...prev, title: "" }));
+              }}
               className="text-2xl font-semibold border-b focus:outline-none"
             />
             <button className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
@@ -266,6 +278,7 @@ export default function EventForm() {
               accept="image/*"
               onChange={(e) => {
                 if (e.target.files?.[0]) setCover(e.target.files[0]);
+                if (errors.cover) setErrors((prev) => ({ ...prev, cover: "" }));
               }}
               className="absolute inset-0 opacity-0 cursor-pointer"
             />
@@ -281,6 +294,7 @@ export default function EventForm() {
               </button>
             )}
           </div>
+          {errors.cover && <p className="text-red-600 text-sm">{errors.cover}</p>}
 
           {/* Title, Location, Date, Category */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -291,7 +305,10 @@ export default function EventForm() {
                 className="border border-gray-400 rounded px-2 py-1"
                 placeholder="Enter location"
                 value={location}
-                onChange={(e) => setLocation(e.target.value)}
+                onChange={(e) => {
+                  setLocation(e.target.value);
+                  if (errors.location) setErrors((prev) => ({ ...prev, location: "" }));
+                }}
               />
               {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
             </label>
@@ -302,7 +319,10 @@ export default function EventForm() {
                 <input
                   type="date"
                   value={dateStart}
-                  onChange={(e) => setDateStart(e.target.value)}
+                  onChange={(e) => {
+                    setDateStart(e.target.value);
+                    if (errors.dateStart) setErrors((prev) => ({ ...prev, dateStart: "" }));
+                  }}
                   className="border border-gray-400 rounded px-2 py-1 flex-1"
                 />
 
@@ -311,7 +331,10 @@ export default function EventForm() {
                   type="date"
                   value={dateEnd}
                   className="border border-gray-400 rounded px-2 py-1 flex-1"
-                  onChange={(e) => setDateEnd(e.target.value)}
+                  onChange={(e) => {
+                    setDateEnd(e.target.value);
+                    if (errors.dateEnd) setErrors((prev) => ({ ...prev, dateEnd: "" }));
+                  }}
                 />
               </div>
               {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
@@ -326,7 +349,10 @@ export default function EventForm() {
                 max="10"
                 className="border border-gray-400 rounded px-2 py-1"
                 value={hour}
-                onChange={(e) => setHour(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => {
+                  setHour(e.target.value ? Number(e.target.value) : "");
+                  if (errors.hour) setErrors((prev) => ({ ...prev, hour: "" }));
+                }}
                 placeholder="Enter hours reward"
               />
               {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
@@ -338,7 +364,10 @@ export default function EventForm() {
                 type="number"
                 min="1"
                 value={maxParticipants}
-                onChange={(e) => setMaxParticipants(e.target.value ? Number(e.target.value) : "")}
+                onChange={(e) => {
+                  setMaxParticipants(e.target.value ? Number(e.target.value) : "");
+                  if (errors.maxParticipants) setErrors((prev) => ({ ...prev, maxParticipants: "" }));
+                }}
                 className="border border-gray-400 rounded px-2 py-1"
                 placeholder="Enter max participants"
               />
@@ -347,7 +376,14 @@ export default function EventForm() {
           </div>
 
           {/* Category Select */}
-          <CategorySelect />
+          <CategorySelect
+            value={categories}
+            onChange={(selected: string[]) => {
+              setCategories(selected);
+              if (errors.categories) setErrors((prev) => ({ ...prev, categories: "" }));
+            }}
+          />
+          {errors.categories && <p className="text-red-600 text-sm">{errors.categories}</p>}
 
           {/* Description */}
           <label className="flex flex-col text-sm">
@@ -355,7 +391,10 @@ export default function EventForm() {
             <textarea
               rows={4}
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => {
+                setDescription(e.target.value);
+                if (errors.description) setErrors((prev) => ({ ...prev, description: "" }));
+              }}
               className="border border-gray-400 rounded px-2 py-1"
               placeholder="Write your event description..."
             />
@@ -455,7 +494,7 @@ export default function EventForm() {
             <button className="text-gray-600 hover:text-gray-900 cursor-pointer">
               Cancel
             </button>
-            
+
             <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer"
               onClick={handleSave}>
               Save
