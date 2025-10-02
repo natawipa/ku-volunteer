@@ -56,8 +56,6 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   ROLE_SELECTION: '/role',
-  STUDENT_HOMEPAGE: '/homepage/student',
-  STAFF_HOMEPAGE: '/homepage/organization',
   PROFILE: '/profile',
   EVENT_DETAIL: (id: string | number) => `/events/${id}`,
   EVENT_TYPE: {
