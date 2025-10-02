@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import Card from '../../(auth)/components/Card';
-import { API_ENDPOINTS, ENV, ERROR_MESSAGES, ROUTES, USER_ROLES } from '../../../lib/constants';
+import { API_ENDPOINTS, ENV, ERROR_MESSAGES, ROUTES } from '../../../lib/constants';
 import type { LoginFormData } from '../../../lib/types';
 import { auth, handleApiError, validation } from '../../../lib/utils';
 
