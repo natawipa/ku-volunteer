@@ -5,6 +5,7 @@ import { PlusCircle, Trash2, Edit2, X } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import {UserCircleIcon } from "@heroicons/react/24/solid";
+import { date } from "zod";
 
 type CategoryNode = {
   label: string;
@@ -130,7 +131,48 @@ function CategorySelect() {
 }
 
 export default function EventForm() {
+  const [title, setTitle] = useState("");
+  const [location, setLocation] = useState("");
+  const [dateStart, setDateStart] = useState<string>("");
+  const [dateEnd, setDateEnd] = useState<string>("");
+  const [hour, setHour] = useState<number | "">("");
+  const [maxParticipants, setMaxParticipants] = useState<number | "">("");
+  const [description, setDescription] = useState("");
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+  const validate = () => {
+    const newErrors: Record<string, string> = {};
+
+    if (!title.trim()) newErrors.title = "Title is required";
+    if (!location.trim()) newErrors.location = "Location is required";
+    if (!dateStart) newErrors.dateStart = "Start date is required";
+    if (!dateEnd) newErrors.dateEnd = "End date is required";
+    if (dateStart && dateEnd && dateStart > dateEnd) {
+      newErrors.dateEnd = "End date must be after start date";
+    }
+
+    if (!hour) newErrors.hour = "Hour is required";
+    else if (Number(hour) < 1 || Number(hour) > 10) {
+      newErrors.hour = "Hour must be between 1 and 10";
+    }
+
+    if (!maxParticipants) newErrors.maxParticipants = "Max participants required";
+    else if (Number(maxParticipants) < 1) {
+      newErrors.maxParticipants = "Must be at least 1";
+    }
+    if (!description.trim()) newErrors.description = "Description is required";
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const [questions, setQuestions] = useState<string[]>([]);
+
+  const handleSave = () => {
+    if (validate()) {
+      alert("Form is valid — submit here 🚀");
+    }
+  };
 
   const addQuestion = () => setQuestions([...questions, ""]);
   const [cover, setCover] = useState<File | null>(null);
@@ -173,17 +215,6 @@ export default function EventForm() {
             >
               All Event
             </Link>
-            {/* <Link
-              href="/new"
-              className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200"
-            >
-              <div className="flex items-center">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                <span className="mr-1">New</span>
-              </div>
-            </Link> */}
 
             <Link href="/profile">
               {
@@ -193,12 +224,16 @@ export default function EventForm() {
           </nav>
         </header>
 
+      {/* --------------- Form Fields --------------- */}
+
         <div className="max-w-5xl mx-auto bg-white shadow rounded-xl p-6 space-y-6 py-7 mt-13">
           {/* Header */}
           <div className="flex items-center justify-between">
             <input
               type="text"
               placeholder="Input Event Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
               className="text-2xl font-semibold border-b focus:outline-none"
             />
             <button className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
@@ -209,6 +244,7 @@ export default function EventForm() {
               <span className="hidden sm:inline">Delete Event</span>
             </button>
           </div>
+          {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
           {/* Cover Image */}
           <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden">
@@ -248,35 +284,38 @@ export default function EventForm() {
 
           {/* Title, Location, Date, Category */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* <label className="flex flex-col text-sm">
-              Title
-              <input
-                type="text"
-                className="border border-gray-400 rounded px-2 py-1"
-                placeholder="Enter event title"
-              />
-            </label> */}
             <label className="flex flex-col text-sm">
               Location
               <input
                 type="text"
                 className="border border-gray-400 rounded px-2 py-1"
                 placeholder="Enter location"
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
               />
+              {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
             </label>
+
             <label className="flex flex-col text-sm">
               Date
               <div className="flex gap-2">
                 <input
                   type="date"
+                  value={dateStart}
+                  onChange={(e) => setDateStart(e.target.value)}
                   className="border border-gray-400 rounded px-2 py-1 flex-1"
                 />
+
                 <div className=""> to </div>
                 <input
                   type="date"
+                  value={dateEnd}
                   className="border border-gray-400 rounded px-2 py-1 flex-1"
+                  onChange={(e) => setDateEnd(e.target.value)}
                 />
               </div>
+              {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
+              {errors.dateEnd && <p className="text-red-600 text-sm">{errors.dateEnd}</p>}
             </label>
 
             <label className="flex flex-col text-sm">
@@ -286,17 +325,24 @@ export default function EventForm() {
                 min="1"
                 max="10"
                 className="border border-gray-400 rounded px-2 py-1"
+                value={hour}
+                onChange={(e) => setHour(e.target.value ? Number(e.target.value) : "")}
                 placeholder="Enter hours reward"
               />
+              {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
           </label>
+
           <label className="flex flex-col text-sm">
               Max Participants
               <input
                 type="number"
                 min="1"
+                value={maxParticipants}
+                onChange={(e) => setMaxParticipants(e.target.value ? Number(e.target.value) : "")}
                 className="border border-gray-400 rounded px-2 py-1"
                 placeholder="Enter max participants"
               />
+              {errors.maxParticipants && <p className="text-red-600 text-sm">{errors.maxParticipants}</p>}
           </label>
           </div>
 
@@ -308,9 +354,12 @@ export default function EventForm() {
             Description
             <textarea
               rows={4}
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
               className="border border-gray-400 rounded px-2 py-1"
               placeholder="Write your event description..."
             />
+            {errors.description && <p className="text-red-600 text-sm">{errors.description}</p>}
           </label>
 
           
@@ -403,8 +452,12 @@ export default function EventForm() {
 
           {/* Footer buttons */}
           <div className="flex justify-between pt-4 border-t">
-            <button className="text-gray-600 hover:text-gray-900 cursor-pointer">Cancel</button>
-            <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
+            <button className="text-gray-600 hover:text-gray-900 cursor-pointer">
+              Cancel
+            </button>
+            
+            <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer"
+              onClick={handleSave}>
               Save
             </button>
         </div>
