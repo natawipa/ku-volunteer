@@ -1,5 +1,5 @@
 "use client";
-import EventCard from "../../components/EventCard";
+import EventCardHorizontal from "../../components/EventCardHorizontal"; // Changed import
 import { activitiesApi } from "../../../lib/activities";
 import type { Activity } from "../../../lib/types";
 import { useEffect, useState, useRef } from "react";
@@ -308,9 +308,9 @@ export default function EnhanceCompetenciesPage() {
                 )}
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="space-y-4">
                 {events.map((event, idx) => (
-                  <EventCard key={idx} {...event} />
+                  <EventCardHorizontal key={idx} {...event} />
                 ))}
               </div>
             )}
