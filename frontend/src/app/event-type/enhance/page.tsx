@@ -40,7 +40,7 @@ const transformActivityToEvent = (activity: Activity) => {
   };
 };
 
-export default function SocialEngagementActivities() {
+export default function EnhanceCompetenciesPage() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -58,33 +58,36 @@ export default function SocialEngagementActivities() {
     setUserRole(role);
   }, []);
 
-  // Fetch social activities on component mount
+  // Fetch Enhance Competencies activities on component mount
   useEffect(() => {
-    const fetchSocialEngagementActivities = async () => {
+    const fetchEnhanceCompetencies = async () => {
       try {
         setLoading(true);
         const response = await activitiesApi.getActivities();
         
         if (response.success && response.data) {
-          // Filter activities that have "Social Activities" category (same logic as homepage)
-          const SocialEngagementActivities = response.data.filter(activity => 
+          // Filter activities that have "Enhance Competencies Activities" category (same logic as homepage)
+          const EnhanceCompetencies = response.data.filter(activity => 
             Array.isArray(activity.categories) && activity.categories.some(cat => 
-              cat.includes("Social Engagement Activities")
+              cat.includes("Development of Morality and Ethics") ||
+              cat.includes("Development of Thinking and Learning Skills") ||
+              cat.includes("Development of Interpersonal Skills and Relationship Building") ||
+              cat.includes("Development of Health and Well-being")
             )
           );
-          setActivities(SocialEngagementActivities);
+          setActivities(EnhanceCompetencies);
         } else {
           setError(response.error || 'Failed to fetch activities');
         }
       } catch (err) {
-        console.error('Error fetching Social Engagement Activities activities:', err);
+        console.error('Error fetching Enhance Competencies activities:', err);
         setError('Network error occurred');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchSocialEngagementActivities();
+    fetchEnhanceCompetencies();
   }, []);
 
   // Handle scroll to add shadow to header
@@ -255,12 +258,12 @@ export default function SocialEngagementActivities() {
 
         {/* Event Type Header Section */}
         <section className="mb-8">
-          <div className="bg-gradient-to-r from-[#A1E59E]/26 to-red-200 rounded-lg p-6 flex items-center justify-between">
+          <div className="bg-gradient-to-r from-[#A1E59E]/26 to-yellow-200 rounded-lg p-6 flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold mb-2">Social Engagement Activities </h1>
+              <h1 className="text-3xl font-bold mb-2">Enhance Competencies</h1>
             </div>
             <Image
-              src="/brainlove.svg"
+              src="/brainthink.svg"
               alt="brain icon"
               width={80}
               height={80}
@@ -273,7 +276,7 @@ export default function SocialEngagementActivities() {
         {loading && (
           <div className="flex justify-center items-center h-48">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-            <span className="ml-3 text-gray-600">Loading social engagement activities...</span>
+            <span className="ml-3 text-gray-600">Loading Enhance Competencies activities...</span>
           </div>
         )}
 
@@ -296,11 +299,11 @@ export default function SocialEngagementActivities() {
           <>
             {events.length === 0 ? (
               <div className="text-center py-12">
-                <h3 className="text-gray-800 font-semibold mb-2 text-xl">No Social Engagement Activities Found</h3>
-                <p className="text-gray-600">There are currently no social engagement activities available.</p>
+                <h3 className="text-gray-800 font-semibold mb-2 text-xl">No Enhance Competencies Activities Found</h3>
+                <p className="text-gray-600">There are currently no Enhance Competencies activities available.</p>
                 {userRole === USER_ROLES.ORGANIZER && (
                   <Link href="/new" className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C] mt-4 inline-block">
-                    Create Social Engagement Activity
+                    Create Enhance Competencies Activity
                   </Link>
                 )}
               </div>

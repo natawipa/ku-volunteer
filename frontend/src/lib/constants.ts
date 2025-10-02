@@ -67,7 +67,7 @@ export const ROUTES = {
   PROFILE: '/profile',
   EVENT_DETAIL: (id: string | number) => `/events/${id}`,
   EVENT_TYPE: {
-    SKILL_BUILDING: '/event-type/skill-building',
+    ENHANCE: '/event-type/enhance',
     SOCIAL: '/event-type/social',
     UNIVERSITY: '/event-type/university',
   },

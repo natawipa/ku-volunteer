@@ -11,6 +11,7 @@ import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
+import { USER_ROLES } from "../../lib/constants";
 
 // Move the main content to a separate component
 function ActivityFormContent() {
@@ -31,17 +32,56 @@ function ActivityFormContent() {
   const [pictures, setPictures] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activityCreated, setActivityCreated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [debugInfo, setDebugInfo] = useState<string>("");
+
+  // Check authentication on component mount
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const authenticated = auth.isAuthenticated();
+        const role = auth.getUserRole();
+        setIsAuthenticated(authenticated);
+        setUserRole(role);
+        
+        console.log('🔐 New page auth check:', { authenticated, role });
+        
+        // Redirect if not authenticated or not organizer
+        if (!authenticated) {
+          alert("Please log in to create an activity");
+          router.push('/login');
+          return;
+        }
+        
+        if (role !== USER_ROLES.ORGANIZER) {
+          alert("Only organizers can create activities");
+          router.push('/');
+          return;
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        setDebugInfo(`Auth error: ${error}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   /**
    * restore activity data when cancel delete confirmation
    */
   useEffect(() => {
-    const savedActivityData = searchParams.get('savedActivityData');
-    if (savedActivityData) {
-      try {
+    try {
+      const savedActivityData = searchParams.get('savedActivityData');
+      if (savedActivityData) {
         const parsedData = JSON.parse(decodeURIComponent(savedActivityData));
         
         console.log("Restoring activity data from delete cancellation");
+        setDebugInfo(prev => prev + " | Restoring saved data");
         
         // Restore all form data
         setTitle(parsedData.title || "");
@@ -60,13 +100,12 @@ function ActivityFormContent() {
         const url = new URL(window.location.href);
         url.searchParams.delete('savedActivityData');
         window.history.replaceState({}, '', url.toString());
-        
-      } catch (error) {
-        console.error("Error restoring activity data:", error);
       }
+    } catch (error) {
+      console.error("Error restoring activity data:", error);
+      setDebugInfo(prev => prev + ` | Restore error: ${error}`);
     }
   }, [searchParams]);
-
 
   /**
    * activity data 
@@ -112,8 +151,6 @@ function ActivityFormContent() {
     }
     if (categories.length === 0) newErrors.categories = "Select at least one category";
     if (!description.trim()) newErrors.description = "Description is required";
-    // Removed cover image requirement since backend doesn't have it yet
-    // if (!cover) newErrors.cover = "Cover image is required";
     
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -125,9 +162,8 @@ function ActivityFormContent() {
   const handleSave = async () => {
     if (!validate()) return;
   
-    if (!auth.isAuthenticated()) {
-      alert("You must be logged in to create an activity");
-      router.push('/login');
+    if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
+      alert("You must be logged in as an organizer to create an activity");
       return;
     }
 
@@ -153,26 +189,25 @@ function ActivityFormContent() {
       };
   
       console.log('📤 Sending activity data to backend:', activityData);
-  
+      setDebugInfo(prev => prev + " | Sending to API");
+
       const result = await activitiesApi.createActivity(activityData);
       
       console.log('📥 Backend response:', result);
+      setDebugInfo(prev => prev + ` | API response: ${result.success}`);
       
       if (result.success && result.data) {
         console.log('✅ Activity created successfully:', result.data);
+        setDebugInfo(prev => prev + " | Activity created");
         
         // Mark activity as created to prevent duplicates
-        setActivityCreated(true); // UPDATE THIS LINE
+        setActivityCreated(true);
         
-        // FIX: Safely check for ID
         if (result.data.id) {
           setActivityId(result.data.id.toString());
         }
-        // If no ID, that's okay - we still created the activity
         
-        alert('Activity created successfully! It will be reviewed by admin before being published.');
-        
-        // Redirect to homepage
+        alert('Activity created successfully!');
         router.push('/');
         
       } else {
@@ -181,6 +216,7 @@ function ActivityFormContent() {
       
     } catch (error) {
       console.error('❌ Failed to create activity:', error);
+      setDebugInfo(prev => prev + ` | Error: ${error}`);
       alert(`Failed to create activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
@@ -199,8 +235,38 @@ function ActivityFormContent() {
     }
   };
 
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Checking permissions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error if not authorized
+  if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Access denied. Organizer role required.</p>
+          <button 
+            onClick={() => router.push('/')}
+            className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+          >
+            Back to Home
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="relative">
+      {/* Debug info - remove in production */}
+
       {/* Background styling */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[130px]"></div>
       <Image
