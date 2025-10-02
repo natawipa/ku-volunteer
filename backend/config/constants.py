@@ -21,6 +21,7 @@ class ActivityStatus:
     FULL = 'full'
     CLOSED = 'closed'
     CANCELLED = 'cancelled'
+    REJECTED = 'rejected'
     
     CHOICES = [
         (PENDING, 'Pending'),
@@ -28,6 +29,7 @@ class ActivityStatus:
         (FULL, 'Full'),
         (CLOSED, 'Closed'),
         (CANCELLED, 'Cancelled'),
+        (REJECTED, 'Rejected'),
     ]
 
 # Organization types
