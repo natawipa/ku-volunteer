@@ -9,13 +9,13 @@ export default function NewPage() {
         <p className="text-gray-600 mb-6">Event creation page is coming soon!</p>
         <div className="space-y-2">
           <Link 
-            href="/student-homepage" 
+            href="/homepage/student" 
             className="block w-full bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 transition-colors"
           >
             Back to Student Homepage
           </Link>
           <Link 
-            href="/staff-homepage" 
+            href="/homepage/organization" 
             className="block w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition-colors"
           >
             Back to Staff Homepage

@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiService, type User } from "../../lib/api";
+import Link from "next/link";
 
 // Fetch Data from example.json
 import eventsData from "../example.json";
@@ -56,7 +57,7 @@ export default function Profile() {
         </div>
         <div className="relative p-6">
           <button
-            onClick={() => router.back()}
+            onClick={() => router.push("/organization-homepage")}
             className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
             hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
           >
@@ -86,7 +87,15 @@ export default function Profile() {
         </div>
         <div className="relative p-6">
           <button
-            onClick={() => router.back()}
+            onClick={() => {
+              if (user?.role === 'organizer') {
+                router.push('/homepage/organization');
+              } else if (user?.role === 'student') {
+                router.push('/homepage/student');
+              } else {
+                router.push('/');
+              }
+            }}
             className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
             hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
           >
@@ -110,7 +119,7 @@ export default function Profile() {
     );
   }
 
-  // Get display name based on user data
+
   const displayName = user 
     ? `${user.title || ''} ${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
     : 'Unknown User';
@@ -133,7 +142,15 @@ export default function Profile() {
 
       {/* Back button */}
         <button
-          onClick={() => router.back()}
+          onClick={() => {
+            if (user?.role === 'organizer') {
+              router.push('/homepage/organization');
+            } else if (user?.role === 'student') {
+              router.push('/homepage/student');
+            } else {
+              router.push('/');
+            }
+          }}
           className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
           hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
         >
@@ -141,7 +158,11 @@ export default function Profile() {
           Back
         </button>
 
-
+      {/* Update Profile */}
+        <Link href="/profile/edit" className="absolute right-6 top-6 flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6] hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md">
+            Update Profile
+        </Link>
+        
         {/* Profile card */}
         <div className="flex flex-col sm:flex-row items-center p-8 
                   space-y-4 sm:space-y-0 sm:space-x-8 
@@ -213,20 +234,6 @@ export default function Profile() {
                   {user.organizer_profile.organization_name || 'N/A'}
                 </b>
               </div>
-              {/* Row 3 */}
-              <div className="flex justify-between items-center">
-                <span>Email</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.email}
-                </b>
-              </div>
-              {/* Row 4 */}
-              <div className="flex justify-between items-center">
-                <span>Role</span>
-                <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.role.charAt(0).toUpperCase() + user.role.slice(1)}
-                </b>
-              </div>
             </div>
           )}
 
@@ -243,7 +250,7 @@ export default function Profile() {
               <div className="flex justify-between items-center">
                 <span>Role</span>
                 <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  Administrator
+                  Admin
                 </b>
               </div>
               {/* Row 3 */}

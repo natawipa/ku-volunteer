@@ -52,39 +52,17 @@ export function useOrganizationRegistration() {
         setSubmitSuccess(true);
 
         // If OAuth registration, backend already issued tokens and provided a callback URL
-        if (oauthSession && result.redirect_url) {
-          window.location.href = result.redirect_url;
-          return;
-        }
-
-        // Manual registration: auto-login and redirect based on role
-        try {
-          const loginRes = await fetch('http://localhost:8000/api/users/login/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: data.email, password: data.password }),
-          });
-
-          const loginData = await loginRes.json();
-          if (loginRes.ok) {
-            localStorage.setItem('access_token', loginData.access);
-            localStorage.setItem('refresh_token', loginData.refresh);
-
-            const role = loginData?.user?.role || 'organizer';
-            if (role === 'organizer') {
-              window.location.href = '/staff-homepage';
-            } else if (role === 'student') {
-              window.location.href = '/student-homepage';
-            } else {
-              window.location.href = '/';
-            }
+        if (oauthSession) {
+          if (result.redirect_url) {
+            window.location.href = result.redirect_url;
           } else {
-            console.error('Auto-login failed after registration:', loginData);
-            window.location.href = '/login';
+            window.location.href = '/homepage/organization';
           }
-        } catch (e) {
-          console.error('Auto-login error:', e);
-          window.location.href = '/login';
+        } else {
+          // Manual registration will redirect to login page after short delay
+          setTimeout(() => {
+            window.location.href = '/login';
+          }, 2000);
         }
       } else {
         console.error('Registration failed:', result.message);

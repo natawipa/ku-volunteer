@@ -1,8 +1,8 @@
-"use client";
-import EventCard from "../components/EventCard";
-import EventTypeSection from "../components/EventTypeSection";
-import SearchCard from "../components/SearchCard";
-import ProfileCard from "../components/ProfileCard";
+"use client"
+import EventCard from "../../components/EventCard";
+import EventTypeSection from "../../components/EventTypeSection";
+import SearchCard from "../../components/SearchCard";
+import ProfileCard from "../../components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon} from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";
@@ -10,7 +10,7 @@ import Image from "next/image";
 import { useRef, useState, useEffect} from "react";
 
 // Fetch Data from example.json
-import eventsData from "../example.json";
+import eventsData from "../../example.json";
 
 const events = eventsData.events;
 
@@ -92,7 +92,7 @@ export default function Home() {
             <nav className="flex items-center space-x-8">
               <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
               <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-              <ProfileCard role="student-homepage"/>
+              <ProfileCard/>
             </nav>
           </header>
   

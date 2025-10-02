@@ -10,21 +10,20 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/users/login/',
     REGISTER: '/api/users/register/',
+    OAUTH_REGISTER: '/api/users/oauth-register/',
     GOOGLE_LOGIN: '/api/auth/google/login/',
     LOGOUT: '/api/users/logout/',
   },
   USERS: {
     PROFILE: '/api/users/profile/',
-    LIST: '/api/users/',
+    LIST: '/api/users/list/',
     DETAIL: (id: string | number) => `/api/users/${id}/`,
+    UPDATE: (id: string | number) => `/api/users/${id}/update/`,
+    DELETE: (id: string | number) => `/api/users/delete/${id}/`,
   },
-  ACTIVITIES: {
-    LIST: '/api/activities/',
-    DETAIL: (id: string | number) => `/api/activities/${id}/`,
-    CREATE: '/api/activities/',
-    UPDATE: (id: string | number) => `/api/activities/${id}/`,
-    DELETE: (id: string | number) => `/api/activities/${id}/`,
-    METADATA: '/api/activities/metadata/',
+  TOKEN: {
+    OBTAIN: '/api/token/',
+    REFRESH: '/api/token/refresh/',
   },
 } as const;
 
@@ -57,8 +56,8 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   ROLE_SELECTION: '/role',
-  STUDENT_HOMEPAGE: '/student-homepage',
-  STAFF_HOMEPAGE: '/staff-homepage',
+  STUDENT_HOMEPAGE: '/homepage/student',
+  STAFF_HOMEPAGE: '/homepage/organization',
   PROFILE: '/profile',
   EVENT_DETAIL: (id: string | number) => `/events/${id}`,
   EVENT_TYPE: {

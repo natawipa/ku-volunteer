@@ -96,6 +96,7 @@ export interface LoginResponse {
 export interface ApiError {
   detail?: string;
   message?: string;
+  error?: string;
   errors?: Record<string, string[]>;
 }
 
