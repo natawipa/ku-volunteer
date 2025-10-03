@@ -208,19 +208,52 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
               <p className="text-gray-700 whitespace-pre-wrap">{transformedEvent.description}</p>
             </div>
 
-            {/* Footer buttons */}
             <div className="flex justify-between pt-4 border-t mt-11">
-              <Link href="/" className="text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400">
-                Back to Home
-              </Link>
+            <Link 
+              href="/" 
+              className="flex items-center text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-200"
+            >
+              Back to Home
+            </Link>
 
-              <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 cursor-pointer">
-                {isAuthenticated ? 'Apply Now' : 'Login to Apply'}
-              </button>
-            </div>
+            {isAuthenticated ? (
+              userRole === USER_ROLES.STUDENT ? (
+                // Student - Apply button
+                <button className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium">
+                  Apply Now
+                </button>
+              ) : userRole === USER_ROLES.ORGANIZER ? (
+                <Link 
+                  href={{
+                    pathname: '/new',
+                    query: { 
+                      edit: eventId,
+                      activityData: encodeURIComponent(JSON.stringify(event))
+                    }
+                  }}
+                  className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 cursor-pointer transition-all duration-200 font-medium text-center"
+                >
+                  Edit Event
+                </Link>
+              ) : (
+                // Other roles
+                <button className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium" disabled>
+                  Not Available
+                </button>
+              )
+            ) : (
+              // Not authenticated
+              <Link
+                href="/login"
+                className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium text-center"
+              >
+                Login to Apply
+              </Link>
+            )}
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

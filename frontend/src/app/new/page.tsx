@@ -12,6 +12,7 @@ import ImageUploadSection from "./components/ImageUploadSection";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
 import { USER_ROLES } from "../../lib/constants";
+import type { Activity } from "../../lib/types";
 
 // Move the main content to a separate component
 function ActivityFormContent() {
@@ -36,6 +37,8 @@ function ActivityFormContent() {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [, setDebugInfo] = useState<string>("");
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [originalActivity, setOriginalActivity] = useState<Activity | null>(null)
 
   // Check authentication on component mount
   useEffect(() => {
@@ -71,6 +74,46 @@ function ActivityFormContent() {
     checkAuth();
   }, [router]);
 
+  useEffect(() => {
+    const editParam = searchParams.get('edit');
+    const activityDataParam = searchParams.get('activityData');
+    
+    if (editParam && activityDataParam) {
+      try {
+        console.log('🔄 Entering edit mode for activity:', editParam);
+        const activityData = JSON.parse(decodeURIComponent(activityDataParam)) as Activity;
+        
+        setIsEditMode(true);
+        setActivityId(editParam);
+        setOriginalActivity(activityData);
+        
+        // Populate form with existing activity data
+        setTitle(activityData.title || "");
+        setLocation(activityData.location || "");
+        setDescription(activityData.description || "");
+        setCategories(activityData.categories || []);
+        setMaxParticipants(activityData.max_participants || "");
+        setHour(activityData.hours_awarded || "");
+        
+        // Format dates for input fields (YYYY-MM-DD)
+        if (activityData.start_at) {
+          const startDate = new Date(activityData.start_at);
+          setDateStart(startDate.toISOString().split('T')[0]);
+        }
+        
+        if (activityData.end_at) {
+          const endDate = new Date(activityData.end_at);
+          setDateEnd(endDate.toISOString().split('T')[0]);
+        }
+        
+        console.log('✅ Activity data loaded for editing:', activityData);
+      } catch (error) {
+        console.error('❌ Error parsing activity data:', error);
+        alert('Error loading activity data for editing');
+      }
+    }
+  }, [searchParams]);
+
   /**
    * restore activity data when cancel delete confirmation
    */
@@ -81,7 +124,6 @@ function ActivityFormContent() {
         const parsedData = JSON.parse(decodeURIComponent(savedActivityData));
         
         console.log("Restoring activity data from delete cancellation");
-        setDebugInfo(prev => prev + " | Restoring saved data");
         
         // Restore all form data
         setTitle(parsedData.title || "");
@@ -103,7 +145,6 @@ function ActivityFormContent() {
       }
     } catch (error) {
       console.error("Error restoring activity data:", error);
-      setDebugInfo(prev => prev + ` | Restore error: ${error}`);
     }
   }, [searchParams]);
 
@@ -111,7 +152,7 @@ function ActivityFormContent() {
    * activity data 
    */
   const activityData = {
-    id: activityId || "mock-activity-id-" + Date.now(),
+    id: activityId,
     title: title,
     location: location,
     dateStart: dateStart,
@@ -156,19 +197,16 @@ function ActivityFormContent() {
     return Object.keys(newErrors).length === 0;
   };
 
-  /**
-   * REAL API save function
-   */
   const handleSave = async () => {
     if (!validate()) return;
   
     if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
-      alert("You must be logged in as an organizer to create an activity");
+      alert("You must be logged in as an organizer to manage activities");
       return;
     }
 
     // Prevent duplicate submissions
-    if (activityCreated) {
+    if (activityCreated && !isEditMode) {
       alert("Activity already created! Redirecting to homepage...");
       router.push('/');
       return;
@@ -189,35 +227,45 @@ function ActivityFormContent() {
       };
   
       console.log('📤 Sending activity data to backend:', activityData);
-      setDebugInfo(prev => prev + " | Sending to API");
+      console.log('🔧 Mode:', isEditMode ? 'EDIT' : 'CREATE');
 
-      const result = await activitiesApi.createActivity(activityData);
+      let result;
       
-      console.log('📥 Backend response:', result);
-      setDebugInfo(prev => prev + ` | API response: ${result.success}`);
-      
-      if (result.success && result.data) {
-        console.log('✅ Activity created successfully:', result.data);
-        setDebugInfo(prev => prev + " | Activity created");
+      if (isEditMode && activityId) {
+        // Update existing activity
+        result = await activitiesApi.updateActivity(parseInt(activityId), activityData);
+        console.log('📥 Backend update response:', result);
         
-        // Mark activity as created to prevent duplicates
-        setActivityCreated(true);
-        
-        if (result.data.id) {
-          setActivityId(result.data.id.toString());
+        if (result.success && result.data) {
+          console.log('✅ Activity updated successfully:', result.data);
+          alert('Activity updated successfully!');
+          router.push(`/event-detail/${activityId}`);
+        } else {
+          throw new Error(result.error || 'Failed to update activity');
         }
-        
-        alert('Activity created successfully!');
-        router.push('/');
-        
       } else {
-        throw new Error(result.error || 'Failed to create activity');
+        // Create new activity
+        result = await activitiesApi.createActivity(activityData);
+        console.log('📥 Backend create response:', result);
+        
+        if (result.success && result.data) {
+          console.log('✅ Activity created successfully:', result.data);
+          setActivityCreated(true);
+          
+          if (result.data.id) {
+            setActivityId(result.data.id.toString());
+          }
+          
+          alert('Activity created successfully!');
+          router.push('/');
+        } else {
+          throw new Error(result.error || 'Failed to create activity');
+        }
       }
       
     } catch (error) {
-      console.error('❌ Failed to create activity:', error);
-      setDebugInfo(prev => prev + ` | Error: ${error}`);
-      alert(`Failed to create activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      console.error('❌ Failed to save activity:', error);
+      alert(`Failed to ${isEditMode ? 'update' : 'create'} activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -231,7 +279,13 @@ function ActivityFormContent() {
 
   const handleCancel = () => {
     if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      router.push('/');
+      if (isEditMode && activityId) {
+        //back to the event detail page
+        router.push(`/event-detail/${activityId}`);
+      } else {
+        // back to home for new activities
+        router.push('/');
+      }
     }
   };
 
