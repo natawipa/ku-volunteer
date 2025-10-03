@@ -1,19 +1,12 @@
 "use client";
-import EventCard from "../components/EventCard";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
+// import EventCard from "../components/EventCard";
+// import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiService, type User } from "../../lib/api";
 import Link from "next/link";
-
-// Fetch Data from example.json
-import eventsData from "../example.json";
-
-const events = eventsData.events;
-
-// ------------------------------------
 
 
 export default function Profile() {

@@ -1,5 +1,5 @@
 "use client";
-import EventCard from "../components/EventCard";
+// import EventCard from "../components/EventCard";
 import SearchCard from "@/app/components/SearchCard";
 import { MagnifyingGlassIcon, ChevronDownIcon} from "@heroicons/react/24/outline";
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
@@ -9,11 +9,8 @@ import Image from "next/image";
 import { useRef, useState, useEffect} from "react";
 
 // Fetch Data from example.json
-import eventsData from "../example.json";
 import students from "../studentExample.json";
 import organizations from "../organizerExample.json";
-const events = eventsData.events;
-
 // ------------------------------------ 
 
 export default function Home() {

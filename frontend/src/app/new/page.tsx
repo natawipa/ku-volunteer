@@ -38,7 +38,6 @@ function ActivityFormContent() {
   const [loading, setLoading] = useState(true);
   const [, setDebugInfo] = useState<string>("");
   const [isEditMode, setIsEditMode] = useState(false);
-  const [originalActivity, setOriginalActivity] = useState<Activity | null>(null)
 
   // Check authentication on component mount
   useEffect(() => {
@@ -85,7 +84,6 @@ function ActivityFormContent() {
         
         setIsEditMode(true);
         setActivityId(editParam);
-        setOriginalActivity(activityData);
         
         // Populate form with existing activity data
         setTitle(activityData.title || "");
