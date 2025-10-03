@@ -34,6 +34,7 @@ export interface Activity {
   updated_at: string;
   requires_admin_for_delete: boolean;
   capacity_reached: boolean;
+  cover_image_url?: string;
 }
 
 // Form types

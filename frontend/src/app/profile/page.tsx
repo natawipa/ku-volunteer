@@ -1,12 +1,46 @@
 "use client";
-// import EventCard from "../components/EventCard";
-// import { ChevronRightIcon } from "@heroicons/react/24/outline";
+import EventCard from "../components/EventCard";
+import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { apiService, type User } from "../../lib/api";
+import { activitiesApi } from "../../lib/activities";
+import { type Activity } from "../../lib/types";
 import Link from "next/link";
+
+// Transform Activity to EventCard format
+const transformActivityToEvent = (activity: Activity) => {
+  if (!activity) {
+    console.warn('⚠️ Empty activity passed to transform function');
+    return {
+      id: 0,
+      title: 'Unknown Activity',
+      post: new Date().toLocaleDateString('en-GB'),
+      dateStart: new Date().toLocaleDateString('en-GB'),
+      dateEnd: new Date().toLocaleDateString('en-GB'),
+      location: 'Unknown Location',
+      category: [],
+      imgSrc: "/titleExample.jpg",
+      capacity: 0,
+      status: 'unknown'
+    };
+  }
+
+  return {
+    id: activity.id || 0,
+    title: activity.title || 'Untitled Activity',
+    post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
+    dateStart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),
+    dateEnd: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
+    location: activity.location || 'Unknown Location',
+    category: activity.categories || [],
+    imgSrc: activity.cover_image_url || "/titleExample.jpg",
+    capacity: activity.max_participants || 0,
+    status: activity.status === "open" ? "upcoming" : activity.status || 'unknown',
+  };
+};
 
 
 export default function Profile() {
@@ -14,6 +48,8 @@ export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [events, setEvents] = useState<Activity[]>([]);
+  const [favoriteEvents, setFavoriteEvents] = useState<Activity[]>([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -21,6 +57,25 @@ export default function Profile() {
         const result = await apiService.getCurrentUser();
         if (result.success && result.data) {
           setUser(result.data);
+          
+          // Fetch user's events based on role
+          if (result.data.role === 'organizer') {
+            const eventsResult = await activitiesApi.getActivities();
+            if (eventsResult.success && eventsResult.data) {
+              // Filter events created by this organizer
+              const userEvents = eventsResult.data || [];
+              setEvents(userEvents.slice(0, 4)); // Show max 4 events
+            }
+          } else if (result.data.role === 'student') {
+            // For students, show registered events as "My Event"
+            const eventsResult = await activitiesApi.getActivities();
+            if (eventsResult.success && eventsResult.data) {
+              const allEvents = eventsResult.data || [];
+              // For demo purposes, show some events. In real app, filter by user registrations
+              setEvents(allEvents.slice(0, 4));
+              setFavoriteEvents(allEvents.slice(4, 8));
+            }
+          }
         } else {
           setError(result.error || 'Failed to load profile');
         }
@@ -132,20 +187,20 @@ export default function Profile() {
           onClick={() => {
             router.push('/');
           }}
-          className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-          hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
+          className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
+          hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md"
         >
           <ChevronLeftIcon className="w-5 h-5" />
           Back
         </button>
 
       {/* Update Profile */}
-        <Link href="/profile/edit" className="absolute right-6 top-6 flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6] hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md">
-            Update Profile
+        <Link href="/profile/edit" className="absolute right-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2 hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
+            Edit
         </Link>
         
         {/* Profile card */}
-        <div className="flex flex-col sm:flex-row items-center p-8 
+        <div className="flex flex-col sm:flex-row items-center p-8 mt-12
                   space-y-4 sm:space-y-0 sm:space-x-8 
                   ml-0 sm:ml-4 md:ml-8 lg:ml-16 
                   transition-all duration-300">
@@ -157,7 +212,7 @@ export default function Profile() {
             className="p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
           />
           <div>
-            <h2 className="font-extrabold text-lg bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6]">{displayName}</h2>
+            <h2 className="font-extrabold text-2xl bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6]">{displayName}</h2>
           </div>
         </div>
 
@@ -252,39 +307,49 @@ export default function Profile() {
           )}
         </div>
 
-        
-
-        {/* My Event
-        <section className="mb-6">
-          <h3 className="font-bold text-xl mb-2">My Event</h3>
+        {/* My Event */}
+        <section className="mb-6 px-6">
+          <h3 className="font-extrabold text-2xl mb-4">My Event</h3>
           <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto">
-              {events.map((e, i) => (
-                <EventCard key={i} {...e} />
-              ))}
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {events.length > 0 ? (
+                events.map((activity, i) => (
+                  <EventCard key={i} {...transformActivityToEvent(activity)} />
+                ))
+              ) : (
+                <p className="text-gray-600">No events found</p>
+              )}
             </div>
-            <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300">
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
+            {events.length > 4 && (
+              <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300 flex-shrink-0">
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+            )}
           </div>
         </section>
 
-        {/* Favorite Event 
-        <section>
-          <h3 className="font-bold text-xl mb-2">
+        {/* Favorite Event */}
+        <section className="px-6">
+          <h3 className="font-extrabold text-2xl mb-4">
             Favorite Event <span>⭐</span>
           </h3>
           <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto">
-              {events.map((event, i) => (
-                <EventCard key={i} {...event} />
-              ))}
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {favoriteEvents.length > 0 ? (
+                favoriteEvents.map((activity, i) => (
+                  <EventCard key={i} {...transformActivityToEvent(activity)} />
+                ))
+              ) : (
+                <p className="text-gray-600">No favorite events found</p>
+              )}
             </div>
-            <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300">
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
+            {favoriteEvents.length > 4 && (
+              <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300 flex-shrink-0">
+                <ChevronRightIcon className="w-5 h-5" />
+              </button>
+            )}
           </div>
-        </section> */}
+        </section>
       </div>
     </div>
   );
