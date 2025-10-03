@@ -1,6 +1,8 @@
 import Image from "next/image";
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { auth } from '../../lib/utils';
 
 export interface EventCardProps {
   id: number;
@@ -28,8 +30,22 @@ const categoryColors: Record<string, string> = {
 };
 
 const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, category, imgSrc, status 
-}) => {  return (
-    <Link href={`/event-detail/${id}`}>
+}) => {
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent) => {
+    // If user is not authenticated, redirect to login instead of going to detail
+    if (!auth.isAuthenticated()) {
+      e.preventDefault();
+      router.push('/login');
+      return;
+    }
+    // otherwise navigate to detail page
+    router.push(`/event-detail/${id}`);
+  };
+
+  return (
+    <div onClick={handleClick} role="button" tabIndex={0} className="cursor-pointer">
       <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">
         <Image
           src={imgSrc}
@@ -71,8 +87,8 @@ const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, cat
           ))}
         </div>
       )}
+      </div>
     </div>
-    </Link>
   );
 }
 

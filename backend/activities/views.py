@@ -66,6 +66,16 @@ class ActivityListCreateView(generics.ListCreateAPIView):
 class ActivityListOnlyView(ActivityListCreateView):
     """API view for listing activities only."""
     http_method_names = ['get']
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        """Filter queryset based on user authentication and role."""
+        # If user is not authenticated, show only open activities
+        if not self.request.user.is_authenticated:
+            return self.queryset.filter(status=ActivityStatus.OPEN)
+        
+        # For authenticated users, use the parent logic
+        return super().get_queryset()
 
 
 class ActivityCreateOnlyView(ActivityListCreateView):
