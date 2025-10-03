@@ -50,15 +50,15 @@ function ActivityFormContent() {
         
         console.log('🔐 New page auth check:', { authenticated, role });
         
-        // Redirect if not authenticated or not organizer
+        // Redirect if not authenticated or not organizer or admin
         if (!authenticated) {
           alert("Please log in to create an activity");
           router.push('/login');
           return;
         }
         
-        if (role !== USER_ROLES.ORGANIZER) {
-          alert("Only organizers can create activities");
+        if (role !== USER_ROLES.ORGANIZER && role!== USER_ROLES.ADMIN) {
+          alert("Only organizers or admin can create activities");
           router.push('/');
           return;
         }

@@ -11,7 +11,7 @@ import { USER_ROLES } from "../../../lib/constants";
 import ProfileCard from "../../components/ProfileCard";
 import SearchCard from "../../components/SearchCard";
 
-// Transform Activity to EventCard format (same as homepage)
+// Transform Activity to EventCard format
 const transformActivityToEvent = (activity: Activity) => {
   if (!activity) {
     return {
@@ -52,7 +52,7 @@ export default function EnhanceCompetenciesPage() {
   const [error, setError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  // Check authentication and user role on component mount
+  // Check authentication and user role
   useEffect(() => {
     const authenticated = auth.isAuthenticated();
     const role = auth.getUserRole();
@@ -60,7 +60,7 @@ export default function EnhanceCompetenciesPage() {
     setUserRole(role);
   }, []);
 
-  // Fetch Enhance Competencies activities on component mount
+  // get Enhance Competencies activities
   useEffect(() => {
     const fetchEnhanceCompetencies = async () => {
       try {
@@ -68,7 +68,7 @@ export default function EnhanceCompetenciesPage() {
         const response = await activitiesApi.getActivities();
         
         if (response.success && response.data) {
-          // Filter activities that have "Enhance Competencies Activities" category (same logic as homepage)
+          // Filter activities
           const EnhanceCompetencies = response.data.filter(activity => 
             Array.isArray(activity.categories) && activity.categories.some(cat => 
               cat.includes("Development of Morality and Ethics") ||
@@ -92,7 +92,7 @@ export default function EnhanceCompetenciesPage() {
     fetchEnhanceCompetencies();
   }, []);
 
-  // Handle scroll to add shadow to header
+  // Handle scroll
   useEffect(() => {
     if (isAuthenticated) {
       const handleScroll = () => {
@@ -120,13 +120,13 @@ export default function EnhanceCompetenciesPage() {
 
   const events = activities.map(transformActivityToEvent);
 
-  // Get appropriate logo based on user role
+  // Get logo based on user role
   const getLogo = () => {
     if (!isAuthenticated) return "/Logo_Kasetsart.svg";
     return userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/Logo_Kasetsart.svg";
   };
 
-  // Get appropriate navigation for authenticated users
+  // Get navigation for authenticated users
   const getNavigation = () => {
     if (!isAuthenticated) {
       return (
@@ -296,7 +296,7 @@ export default function EnhanceCompetenciesPage() {
           </div>
         )}
 
-        {/* Activities grid */}
+        {/* activities grid */}
         {!loading && !error && (
           <>
             {events.length === 0 ? (

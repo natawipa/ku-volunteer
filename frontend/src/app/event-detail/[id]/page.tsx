@@ -55,7 +55,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     }
   }, [eventId]);
 
-  // Transform activity data to match your component structure
+  // Transform activity data
   const transformActivityData = (activity: Activity) => {
     return {
       id: activity.id,
@@ -222,6 +222,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
                 <button className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium">
                   Apply Now
                 </button>
+                // Organizer - Edit button
               ) : userRole === USER_ROLES.ORGANIZER ? (
                 <Link 
                   href={{

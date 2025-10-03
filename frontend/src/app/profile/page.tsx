@@ -56,25 +56,33 @@ export default function Profile() {
       try {
         const result = await apiService.getCurrentUser();
         if (result.success && result.data) {
-          setUser(result.data);
+          const userData = result.data;
+          setUser(userData);
           
-          // Fetch user's events based on role
-          if (result.data.role === 'organizer') {
+          // get user's events based on role
+          if (userData.role === 'organizer') {
             const eventsResult = await activitiesApi.getActivities();
             if (eventsResult.success && eventsResult.data) {
-              // Filter events created by this organizer
-              const userEvents = eventsResult.data || [];
-              setEvents(userEvents.slice(0, 4)); // Show max 4 events
+              // Filter events
+              const userOrganizationName = userData.organizer_profile?.organization_name;
+              
+              if (userOrganizationName) {
+                const userEvents = eventsResult.data.filter(activity => 
+                  activity.organizer_name === userOrganizationName
+                ) || [];
+                
+                setEvents(userEvents.slice(0, 4));
+                console.log(`Found ${userEvents.length} activities for organization: ${userOrganizationName}`);
+              } else {
+                // show empty for no event with this organization name
+                setEvents([]);
+                console.log('No organization name found for user');
+              }
             }
-          } else if (result.data.role === 'student') {
-            // show registered events
-            const eventsResult = await activitiesApi.getActivities();
-            if (eventsResult.success && eventsResult.data) {
-              const allEvents = eventsResult.data || [];
-              // demo
-              setEvents(allEvents.slice(0, 4));
-              setFavoriteEvents(allEvents.slice(4, 8));
-            }
+          } else if (userData.role === 'student') {
+            // student dont have event yet
+            setEvents([]);
+            setFavoriteEvents([]);
           }
         } else {
           setError(result.error || 'Failed to load profile');
@@ -86,7 +94,7 @@ export default function Profile() {
         setLoading(false);
       }
     };
-
+  
     fetchUserData();
   }, []);
 
@@ -263,61 +271,61 @@ export default function Profile() {
               </div>
             )}
 
-                      {user?.role === 'organizer' && user.organizer_profile && (
-                        <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
-                          {/* Row 1 */}
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                            <span className="min-w-[140px]">Organization Type</span>
-                            <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                              {user.organizer_profile.organization_type === 'internal' ? 'Kasetsart University' : 
-                              user.organizer_profile.organization_type === 'external' ? 'External Organization' : 'N/A'}
-                            </b>
-                          </div>
-                          {/* Row 2 */}
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                            <span className="min-w-[140px]">Organization Name</span>
-                            <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                              {user.organizer_profile.organization_name || 'N/A'}
-                            </b>
-                          </div>
-                        </div>
-                      )}
-
-                      {user?.role === 'admin' && (
-                        <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
-                          {/* Row 1 */}
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                            <span className="min-w-[100px]">Email</span>
-                            <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                              {user.email}
-                            </b>
-                          </div>
-                          {/* Row 2 */}
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                            <span className="min-w-[100px]">Role</span>
-                            <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left">
-                              Admin
-                            </b>
-                          </div>
-                          {/* Row 3 */}
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                            <span className="min-w-[100px]">First Name</span>
-                            <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                              {user.first_name || 'N/A'}
-                            </b>
-                          </div>
-                          {/* Row 4 */}
-                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                            <span className="min-w-[100px]">Last Name</span>
-                            <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                              {user.last_name || 'N/A'}
-                            </b>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+            {user?.role === 'organizer' && user.organizer_profile && (
+              <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
+                {/* Row 1 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[140px]">Organization Type</span>
+                  <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                    {user.organizer_profile.organization_type === 'internal' ? 'Kasetsart University' : 
+                    user.organizer_profile.organization_type === 'external' ? 'External Organization' : 'N/A'}
+                  </b>
                 </div>
+                {/* Row 2 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[140px]">Organization Name</span>
+                  <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                    {user.organizer_profile.organization_name || 'N/A'}
+                  </b>
+                </div>
+              </div>
+            )}
+
+            {user?.role === 'admin' && (
+              <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
+                {/* Row 1 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Email</span>
+                  <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                    {user.email}
+                  </b>
+                </div>
+                {/* Row 2 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Role</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left">
+                    Admin
+                  </b>
+                </div>
+                {/* Row 3 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">First Name</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                    {user.first_name || 'N/A'}
+                  </b>
+                </div>
+                {/* Row 4 */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Last Name</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                    {user.last_name || 'N/A'}
+                  </b>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
 
         {/* My Event */}
         <section className="mb-6 px-6">
