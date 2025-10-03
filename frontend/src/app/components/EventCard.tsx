@@ -1,6 +1,5 @@
 import Image from "next/image";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
 import { useRouter } from 'next/navigation';
 import { auth } from '../../lib/utils';
 
