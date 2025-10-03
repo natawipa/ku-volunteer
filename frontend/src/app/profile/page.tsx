@@ -67,11 +67,11 @@ export default function Profile() {
               setEvents(userEvents.slice(0, 4)); // Show max 4 events
             }
           } else if (result.data.role === 'student') {
-            // For students, show registered events as "My Event"
+            // show registered events
             const eventsResult = await activitiesApi.getActivities();
             if (eventsResult.success && eventsResult.data) {
               const allEvents = eventsResult.data || [];
-              // For demo purposes, show some events. In real app, filter by user registrations
+              // demo
               setEvents(allEvents.slice(0, 4));
               setFavoriteEvents(allEvents.slice(4, 8));
             }
@@ -93,14 +93,14 @@ export default function Profile() {
   // Show loading state
   if (loading) {
     return (
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white">
+      <div className="relative">
+        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[99px]">
           <Image
-            src="/mountain.svg"
+            src="/images/wavewave.png"
             alt="mountain"
             width={1920}
             height={510}
-            className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90"
+            className="fixed w-full h-[310px] inset-0 -top-16 object-cover"
           />
         </div>
         <div className="relative p-6">
@@ -169,15 +169,16 @@ export default function Profile() {
   return (
     <div className="relative">
       {/* Background gradient */}
-      <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white" >
-        <Image
-          src="/mountain.svg"
-          alt="mountain"
-          width={1920}
-          height={510}
-          className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90  "
-        />
-      </div>
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[20vh]"></div>
+
+      {/* Mountain background */}
+      <Image
+        src="/mountain.svg"
+        alt="mountain"
+        width={1920}
+        height={510}
+        className="w-full h-[50vh] absolute inset-0 -top-26 object-cover"
+      />
 
       {/* content */}
       <div className="relative p-6">
@@ -199,11 +200,14 @@ export default function Profile() {
             Edit
         </Link>
         
-        {/* Profile card */}
-        <div className="flex flex-col sm:flex-row items-center p-8 mt-12
-                  space-y-4 sm:space-y-0 sm:space-x-8 
-                  ml-0 sm:ml-4 md:ml-8 lg:ml-16 
-                  transition-all duration-300">
+        {/* profile card */}
+        <div className="flex flex-col sm:flex-row items-center sm:items-start p-8 mt-12
+            space-y-4 sm:space-y-0 sm:space-x-8 
+            ml-0 sm:ml-4 md:ml-8 lg:ml-16 
+            transition-all duration-300">
+  
+        {/* profile image */}
+        <div className="flex-shrink-0">
           <Image
             src="/avatar.jpg"
             alt="profile"
@@ -211,101 +215,109 @@ export default function Profile() {
             height={120}
             className="p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
           />
-          <div>
-            <h2 className="font-extrabold text-2xl bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6]">{displayName}</h2>
+        </div>
+        
+        {/* name, Info container*/}
+        <div className="flex flex-col w-full items-center sm:items-start">
+          <div className="mb-6 text-center sm:text-left">
+            <h2 className="font-extrabold text-2xl bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6] inline-block">
+              {displayName}
+            </h2>
           </div>
-        </div>
+          
+          {/* user info*/}
+          <div className="w-full max-w-2xl p-4 sm:p-6 bg-white rounded-3xl ring-[2px] ring-[#B4DDB6]">
+            {user?.role === 'student' && user.profile && (
+              <div className="font-extrabold grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+                {/* Row 1 - Student ID */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Student ID</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
+                    {user.profile.student_id_external || 'N/A'}
+                  </b>
+                </div>
+                
+                {/* Row 2 - Year */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Year</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
+                    {user.profile.year || 'N/A'}
+                  </b>
+                </div>
+                
+                {/* Row 3 - Faculty */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Faculty</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
+                    {user.profile.faculty || 'N/A'}
+                  </b>
+                </div>
+                
+                {/* Row 4 - Major */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                  <span className="min-w-[100px]">Major</span>
+                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
+                    {user.profile.major || 'N/A'}
+                  </b>
+                </div>
+              </div>
+            )}
 
-        {/* Profile Information */}
-        <div className="flex flex-col w-full max-w-4xl mx-auto mb-8 p-6 
-                bg-gradient-to-b from-[#D7EBCA]/50 to-[#EDFFCC]/50 
-                rounded-3xl shadow-md">
-          {user?.role === 'student' && user.profile && (
-            <div className="font-extrabold ml-8 mr-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-4 text-sm">
-              {/* Row 1 */}
-              <div className="flex justify-between items-center">
-                <span>Student ID</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.profile.student_id_external || 'N/A'}
-                </b>
-              </div>
-              {/* Row 2 */}
-              <div className="flex justify-between items-center">
-                <span>Year</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.profile.year || 'N/A'}
-                </b>
-              </div>
-              {/* Row 3 */}
-              <div className="flex justify-between items-center">
-                <span>Faculty</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.profile.faculty || 'N/A'}
-                </b>
-              </div>
-              {/* Row 4 */}
-              <div className="flex justify-between items-center">
-                <span>Major</span>
-                <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.profile.major || 'N/A'}
-                </b>
-              </div>
-            </div>
-          )}
+                      {user?.role === 'organizer' && user.organizer_profile && (
+                        <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
+                          {/* Row 1 */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                            <span className="min-w-[140px]">Organization Type</span>
+                            <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                              {user.organizer_profile.organization_type === 'internal' ? 'Kasetsart University' : 
+                              user.organizer_profile.organization_type === 'external' ? 'External Organization' : 'N/A'}
+                            </b>
+                          </div>
+                          {/* Row 2 */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                            <span className="min-w-[140px]">Organization Name</span>
+                            <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                              {user.organizer_profile.organization_name || 'N/A'}
+                            </b>
+                          </div>
+                        </div>
+                      )}
 
-          {user?.role === 'organizer' && user.organizer_profile && (
-            <div className="font-extrabold ml-8 mr-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-4 text-sm">
-              {/* Row 1 */}
-              <div className="flex justify-between items-center">
-                <span>Organization Type</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.organizer_profile.organization_type === 'internal' ? 'Kasetsart University' : 
-                   user.organizer_profile.organization_type === 'external' ? 'External Organization' : 'N/A'}
-                </b>
-              </div>
-              {/* Row 2 */}
-              <div className="flex justify-between items-center">
-                <span>Organization Name</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.organizer_profile.organization_name || 'N/A'}
-                </b>
-              </div>
-            </div>
-          )}
-
-          {user?.role === 'admin' && (
-            <div className="font-extrabold ml-8 mr-4 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 gap-y-4 text-sm">
-              {/* Row 1 */}
-              <div className="flex justify-between items-center">
-                <span>Email</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.email}
-                </b>
-              </div>
-              {/* Row 2 */}
-              <div className="flex justify-between items-center">
-                <span>Role</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  Admin
-                </b>
-              </div>
-              {/* Row 3 */}
-              <div className="flex justify-between items-center">
-                <span>First Name</span>
-                <b className="w-48 h-7 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.first_name || 'N/A'}
-                </b>
-              </div>
-              {/* Row 4 */}
-              <div className="flex justify-between items-center">
-                <span>Last Name</span>
-                <b className="w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl mr-8">
-                  {user.last_name || 'N/A'}
-                </b>
-              </div>
-            </div>
-          )}
-        </div>
+                      {user?.role === 'admin' && (
+                        <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
+                          {/* Row 1 */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                            <span className="min-w-[100px]">Email</span>
+                            <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                              {user.email}
+                            </b>
+                          </div>
+                          {/* Row 2 */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                            <span className="min-w-[100px]">Role</span>
+                            <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left">
+                              Admin
+                            </b>
+                          </div>
+                          {/* Row 3 */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                            <span className="min-w-[100px]">First Name</span>
+                            <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                              {user.first_name || 'N/A'}
+                            </b>
+                          </div>
+                          {/* Row 4 */}
+                          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
+                            <span className="min-w-[100px]">Last Name</span>
+                            <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
+                              {user.last_name || 'N/A'}
+                            </b>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
 
         {/* My Event */}
         <section className="mb-6 px-6">
