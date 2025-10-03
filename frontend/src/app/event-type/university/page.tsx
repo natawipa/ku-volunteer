@@ -15,6 +15,7 @@ import SearchCard from "../../components/SearchCard";
 const transformActivityToEvent = (activity: Activity) => {
   if (!activity) {
     return {
+        id: 0,
       title: 'Unknown Activity',
       post: new Date().toLocaleDateString('en-GB'),
       dateStart: new Date().toLocaleDateString('en-GB'),
@@ -28,6 +29,7 @@ const transformActivityToEvent = (activity: Activity) => {
   }
 
   return {
+    id: activity.id,
     title: activity.title || 'Untitled Activity',
     post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
     dateStart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),

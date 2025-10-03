@@ -1,8 +1,10 @@
 import Image from "next/image";
+import Link from "next/link";
 import { EventCardProps } from "./EventCard";
 import { CalendarIcon, MapPinIcon, UserGroupIcon, ClockIcon } from "@heroicons/react/24/outline";
 
 const EventCardHorizontal: React.FC<EventCardProps> = ({
+  id,
   title,
   post,
   dateStart,
@@ -12,6 +14,7 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
   capacity,
 }) => {
   return (
+    <Link href={`/event-detail/${id}`}>
     <div className="flex items-center rounded-lg gap-4 min-w-[400px]">
       {/* Thumbnail */}
       <Image
@@ -58,6 +61,7 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
         </div>
       </div>
     </div>
+    </Link>
   );
 };
 

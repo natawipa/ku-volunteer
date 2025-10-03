@@ -35,7 +35,7 @@ function ActivityFormContent() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [debugInfo, setDebugInfo] = useState<string>("");
+  const [, setDebugInfo] = useState<string>("");
 
   // Check authentication on component mount
   useEffect(() => {

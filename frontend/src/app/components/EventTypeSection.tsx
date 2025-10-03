@@ -8,6 +8,7 @@ interface EventTypeSectionProps {
   color: string;
   backgroundBrain: string;
   events: Array<{
+    id: number;
     title: string;
     post: string;
     dateStart: string;

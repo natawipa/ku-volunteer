@@ -136,14 +136,14 @@ export default function Home() {
           </section>
         {/* -------------------------- */}
         
-        <section className="mb-6 mt-11">
+        {/* <section className="mb-6 mt-11">
             <h2 className="font-extrabold mb-2 text-2xl">Recent Pending Events</h2>
             <div className="flex gap-6 overflow-x-auto overflow-y-hidden pb-2 pt-2">
                 {events.map((event, idx) => (
                 <EventCard key={idx} {...event} />
                 ))}
             </div>
-        </section>
+        </section> */}
 
         <h2 className="font-bold mb-6 text-2xl pt-2">Status Events</h2>
         <Link href="/admin/events/pending">

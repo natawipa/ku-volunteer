@@ -3,6 +3,7 @@ import { CalendarIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 
 export interface EventCardProps {
+  id: number;
   title: string;
   post: string;
   dateStart: string;
@@ -21,14 +22,14 @@ const statusColors: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
-  "กิจกรรมมหาวิทยาลัย": "bg-[#B3E6FF]",
-  "เพื่อสังคม": "bg-[#FFBDBE]",
-  "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
+  "University Activities": "bg-[#B3E6FF]",
+  "Enhance Competencies": "bg-[#FFBDBE]",
+  "Social Engagement Activities": "bg-[#FFEA47]",
 };
 
-const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, category, imgSrc, status }) => {
-  return (
-    <Link href={`/events/${title}`}>
+const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, category, imgSrc, status 
+}) => {  return (
+    <Link href={`/event-detail/${id}`}>
       <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">
         <Image
           src={imgSrc}

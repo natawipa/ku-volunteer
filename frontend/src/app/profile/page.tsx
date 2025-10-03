@@ -261,7 +261,7 @@ export default function Profile() {
 
         
 
-        {/* My Event */}
+        {/* My Event
         <section className="mb-6">
           <h3 className="font-bold text-xl mb-2">My Event</h3>
           <div className="flex items-center">
@@ -276,7 +276,7 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* Favorite Event */}
+        {/* Favorite Event 
         <section>
           <h3 className="font-bold text-xl mb-2">
             Favorite Event <span>⭐</span>
@@ -291,7 +291,7 @@ export default function Profile() {
               <ChevronRightIcon className="w-5 h-5" />
             </button>
           </div>
-        </section>
+        </section> */}
       </div>
     </div>
   );
