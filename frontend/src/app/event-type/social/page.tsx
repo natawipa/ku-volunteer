@@ -227,7 +227,7 @@ export default function SocialEngagementActivities() {
               <MagnifyingGlassIcon className="text-black-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="ค้นหากิจกรรม"
+                placeholder="Find activities"
                 className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none"
                 onFocus={() => setIsOpen(true)}
               />

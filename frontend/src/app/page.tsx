@@ -10,6 +10,7 @@ import SearchCard from "./components/SearchCard";
 import ProfileCard from "./components/ProfileCard";
 
 import { useRef, useState, useEffect} from "react";
+import { useRouter } from "next/navigation";
 import { auth } from "../lib/utils";
 import { USER_ROLES } from "../lib/constants";
 import { activitiesApi } from "../lib/activities";
@@ -56,6 +57,7 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   // Check authentication and user role on component mount
   useEffect(() => {
@@ -64,6 +66,13 @@ export default function Home() {
     setIsAuthenticated(authenticated);
     setUserRole(role);
   }, []);
+
+  // Redirect admins to admin homepage
+  useEffect(() => {
+    if (isAuthenticated && userRole === USER_ROLES.ADMIN) {
+      router.replace("/admin");
+    }
+  }, [isAuthenticated, userRole, router]);
 
   // Fetch activities on component mount
   useEffect(() => {
@@ -435,7 +444,7 @@ export default function Home() {
               <MagnifyingGlassIcon className="text-black-400 w-5 h-5" />
               <input
                 type="text"
-                placeholder="ค้นหากิจกรรม"
+                placeholder="Find activities"
                 className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none"
                 onFocus={() => setIsOpen(true)}   // open when focused
               />

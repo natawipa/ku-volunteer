@@ -12,34 +12,36 @@ from config.utils import validate_activity_categories
 
 class Activity(models.Model):
     """Model representing a volunteer activity."""
-    
+
     organizer_profile = models.ForeignKey(
         'users.OrganizerProfile',
         on_delete=models.CASCADE,
         related_name='activities'
     )
     categories = models.JSONField(
-        default=list, 
-        blank=True, 
+        default=list,
+        blank=True,
         validators=[validate_activity_categories]
     )
     title = models.CharField(max_length=ValidationLimits.MAX_TITLE_LENGTH)
     description = models.TextField(blank=True)
     start_at = models.DateTimeField()
     end_at = models.DateTimeField()
-    location = models.CharField(max_length=ValidationLimits.MAX_LOCATION_LENGTH, blank=True)
+    location = models.CharField(
+        max_length=ValidationLimits.MAX_LOCATION_LENGTH, blank=True
+    )
     max_participants = models.PositiveIntegerField(null=True, blank=True)
     current_participants = models.PositiveIntegerField(default=0)
     status = models.CharField(
-        max_length=20, 
-        choices=ActivityStatus.CHOICES, 
+        max_length=20,
+        choices=ActivityStatus.CHOICES,
         default=ActivityStatus.PENDING
     )
     hours_awarded = models.DecimalField(
-        max_digits=5, 
-        decimal_places=2, 
-        null=True, 
-        blank=True, 
+        max_digits=5,
+        decimal_places=2,
+        null=True,
+        blank=True,
         validators=[MinValueValidator(0)]
     )
     # Reason provided by admin when an activity is rejected in moderation
@@ -58,27 +60,36 @@ class Activity(models.Model):
     def clean(self) -> None:
         """Validate the activity model."""
         super().clean()
-        
+
         if self.start_at and self.end_at and self.start_at >= self.end_at:
             raise ValidationError("Start time must be before end time.")
-            
+
         if self.max_participants is not None and self.max_participants <= 0:
             raise ValidationError("Maximum participants must be positive.")
-            
+
         if self.current_participants < 0:
             raise ValidationError("Current participants cannot be negative.")
 
     @property
     def requires_admin_for_delete(self) -> bool:
-        """Return True when organizer needs admin approval to delete (>= 1 participant)."""
+        """Return True when organizer needs admin approval to delete.
+
+        Returns True when activity has >= 1 participant.
+        """
         return (self.current_participants or 0) > 0
 
-    def request_deletion(self, user, reason: Optional[str] = None) -> 'ActivityDeletionRequest':
+    def request_deletion(
+        self, user, reason: Optional[str] = None
+    ) -> 'ActivityDeletionRequest':
         """Create a deletion request for this activity."""
         if not self.requires_admin_for_delete:
-            raise ValidationError("Deletion request not required: no participants; delete is allowed.")
+            raise ValidationError(
+                "Deletion request not required: no participants; delete is allowed."
+            )
         if not reason or not str(reason).strip():
-            raise ValidationError({"reason": "Reason is required when requesting deletion."})
+            raise ValidationError(
+                {"reason": "Reason is required when requesting deletion."}
+            )
         return ActivityDeletionRequest.objects.create(
             activity=self,
             reason=str(reason).strip(),
@@ -87,16 +98,16 @@ class Activity(models.Model):
 
     @property
     def capacity_reached(self) -> bool:
-        """Return True if current_participants has reached or exceeded max_participants."""
+        """Return True if current_participants has reached or exceeded max."""
         if self.max_participants is None:
             return False
         return (self.current_participants or 0) >= self.max_participants
-    
+
     @property
     def is_active(self) -> bool:
         """Return True if activity is currently active."""
         return self.status == ActivityStatus.OPEN
-    
+
     @property
     def is_past(self) -> bool:
         """Return True if activity has ended."""
@@ -105,12 +116,14 @@ class Activity(models.Model):
 
 class ActivityDeletionRequest(models.Model):
     """Model representing a request to delete an activity."""
-    
-    activity = models.ForeignKey(Activity, on_delete=models.CASCADE, related_name='deletion_requests')
+
+    activity = models.ForeignKey(
+        Activity, on_delete=models.CASCADE, related_name='deletion_requests'
+    )
     reason = models.TextField()
     status = models.CharField(
-        max_length=20, 
-        choices=DeletionRequestStatus.CHOICES, 
+        max_length=20,
+        choices=DeletionRequestStatus.CHOICES,
         default=DeletionRequestStatus.PENDING
     )
     requested_by = models.ForeignKey(
@@ -138,7 +151,7 @@ class ActivityDeletionRequest(models.Model):
 
     def __str__(self) -> str:
         return f"Deletion request for {self.activity_id} ({self.get_status_display()})"
-    
+
     def approve(self, reviewer, note: Optional[str] = None) -> None:
         """Approve the deletion request."""
         self.status = DeletionRequestStatus.APPROVED
@@ -146,7 +159,7 @@ class ActivityDeletionRequest(models.Model):
         self.reviewed_at = timezone.now()
         self.review_note = note or ""
         self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_note'])
-    
+
     def reject(self, reviewer, note: Optional[str] = None) -> None:
         """Reject the deletion request."""
         self.status = DeletionRequestStatus.REJECTED

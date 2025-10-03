@@ -1,5 +1,4 @@
 from django.conf import settings
-from django.shortcuts import redirect
 from django.core.cache import cache
 from .models import User
 import uuid
@@ -40,7 +39,7 @@ def require_existing_user(strategy, details, backend, user=None, *args, **kwargs
             'backend': backend.name,
             'strategy': strategy.__class__.__name__
         }, timeout=1800)  # 30 minutes
-        
+
         # Send them to role selection page with session key and prefilled email
         return strategy.redirect(f"{get_client_url()}/role?email={email}&oauth_session={session_key}")
 
@@ -53,7 +52,7 @@ def ensure_user_role(strategy, details, backend, user=None, *args, **kwargs):
     if user and not hasattr(user, '_created'):
         # This is an existing user, don't modify their role
         return {"user": user}
-    
+
     if user and hasattr(user, '_created') and user._created:
         # This is a newly created user, ensure they have the student role (default)
         if not user.role or user.role == 'admin':
@@ -61,7 +60,7 @@ def ensure_user_role(strategy, details, backend, user=None, *args, **kwargs):
             user.is_staff = False
             user.is_superuser = False
             user.save()
-    
+
     return {"user": user}
 
 

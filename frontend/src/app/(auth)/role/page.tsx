@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { ChevronDown } from "lucide-react";
 import { useRouter, useSearchParams } from 'next/navigation';
 import Card from '../../(auth)/components/Card';
+import { ROUTES, USER_ROLES } from '../../../lib/constants';
+import { auth } from '../../../lib/utils';
 
 interface FormErrors {
   [key: string]: string;
@@ -19,6 +21,14 @@ const RolePageContent: React.FC = () => {
   const [oauthSession, setOAuthSession] = useState('');
 
   const [errors, setErrors] = useState<FormErrors>({});
+
+  // If an authenticated admin lands here, redirect them away
+  useEffect(() => {
+    const role = auth.getUserRole();
+    if (auth.isAuthenticated() && role === USER_ROLES.ADMIN) {
+      router.replace(ROUTES.ADMIN_HOME);
+    }
+  }, [router]);
 
   useEffect(() => {
     // Get email and oauth session from URL parameters if coming from OAuth

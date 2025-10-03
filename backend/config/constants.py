@@ -7,7 +7,7 @@ class UserRoles:
     STUDENT = "student"
     ORGANIZER = "organizer"
     ADMIN = "admin"
-    
+
     CHOICES = [
         (STUDENT, "Student"),
         (ORGANIZER, "Organizer"),
@@ -22,7 +22,7 @@ class ActivityStatus:
     CLOSED = 'closed'
     CANCELLED = 'cancelled'
     REJECTED = 'rejected'
-    
+
     CHOICES = [
         (PENDING, 'Pending'),
         (OPEN, 'Open'),
@@ -36,7 +36,7 @@ class ActivityStatus:
 class OrganizationType:
     INTERNAL = "internal"
     EXTERNAL = "external"
-    
+
     CHOICES = [
         (INTERNAL, "Kasetsart University"),
         (EXTERNAL, "External Organization"),
@@ -47,7 +47,7 @@ class DeletionRequestStatus:
     PENDING = 'pending'
     APPROVED = 'approved'
     REJECTED = 'rejected'
-    
+
     CHOICES = [
         (PENDING, 'Pending'),
         (APPROVED, 'Approved'),

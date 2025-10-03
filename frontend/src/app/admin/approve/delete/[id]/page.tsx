@@ -5,7 +5,7 @@ import Image from "next/image";
 import React from "react";
 
 // Fetch Data from requestDelete.json
-import eventsData from "../../requestDelete.json";
+import eventsData from "../../../../requestDelete.json";
 
 const events = eventsData.events;
 
