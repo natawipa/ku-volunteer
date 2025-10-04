@@ -3,7 +3,7 @@ import { EyeIcon } from "@heroicons/react/24/outline";
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
-import organizations from "@/app/organizerExample.json";
+import organizations from "@/data/organizerExample.json";
 
 export default function Home() {
 

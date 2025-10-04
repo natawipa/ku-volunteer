@@ -3,8 +3,8 @@ import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 
-// Fetch Data from example.json
-import students from "@/app/studentExample.json";
+// Fetch Data from studentExample.json
+import students from "@/data/studentExample.json";
 
 
 export default function Home() {

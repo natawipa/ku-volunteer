@@ -2,15 +2,15 @@
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
-import React from "react";
+import { use } from "react";
 
 // Fetch Data from requestDelete.json
-import eventsData from "../../../../requestDelete.json";
+import eventsData from "@/data/requestDelete.json";
 
 const events = eventsData.events;
 
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = React.use(params);
+  const { id } = use(params);
   const eventId = parseInt(id, 10);
   const event = events.find((e) => e.id === eventId);
 

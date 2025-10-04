@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import AdminLayout from '../../components/AdminLayout';
-import data from '../../../requestDelete.json';
+import data from '@/data/requestDelete.json';
 import AdminDeletionRequestCard, { DeletionRequestEvent } from '../components/AdminDeletionRequestCard';
 
 // DeletionRequestEvent interface now imported from component file
