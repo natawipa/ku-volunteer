@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import React, { useState } from 'react';
 
 import Card from '../../(auth)/components/Card';
-import { API_ENDPOINTS, ENV, ERROR_MESSAGES, ROUTES } from '../../../lib/constants';
+import { API_ENDPOINTS, ENV, ERROR_MESSAGES, ROUTES, USER_ROLES } from '../../../lib/constants';
 import type { LoginFormData } from '../../../lib/types';
 import { auth, handleApiError, validation } from '../../../lib/utils';
 
@@ -57,9 +57,14 @@ const LoginPage: React.FC = () => {
       const response = await auth.login(formData.email, formData.password);
 
       if (response.success && response.data) {
-        // Redirect to the unified home page
-        // The home page will display appropriate content based on user role
-        router.push('/');
+        // Prefer redirecting admins straight to admin homepage
+        const role = auth.getUserRole();
+        if (role === USER_ROLES.ADMIN) {
+          router.replace(ROUTES.ADMIN_HOME);
+        } else {
+          // Redirect to the unified home page; it will render per-role content
+          router.push(ROUTES.HOME);
+        }
       } else {
         setApiError(handleApiError(response.error || ERROR_MESSAGES.INVALID_CREDENTIALS));
       }

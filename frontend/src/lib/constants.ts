@@ -21,6 +21,15 @@ export const API_ENDPOINTS = {
     UPDATE: (id: string | number) => `/api/users/${id}/update/`,
     DELETE: (id: string | number) => `/api/users/delete/${id}/`,
   },
+  ACTIVITIES: {
+    LIST: '/api/activities/list/',
+    CREATE: '/api/activities/create/',
+    DETAIL: (id: string | number) => `/api/activities/${id}/`,
+    UPDATE: (id: string | number) => `/api/activities/${id}/update/`,
+    DELETE: (id: string | number) => `/api/activities/delete/${id}/`,
+    METADATA: '/api/activities/metadata/',
+    MODERATION_REVIEW: (id: string | number) => `/api/activities/moderation/${id}/review/`,
+  },
   TOKEN: {
     OBTAIN: '/api/token/',
     REFRESH: '/api/token/refresh/',
@@ -56,10 +65,11 @@ export const ROUTES = {
   LOGIN: '/login',
   REGISTER: '/register',
   ROLE_SELECTION: '/role',
+  ADMIN_HOME: '/admin',
   PROFILE: '/profile',
   EVENT_DETAIL: (id: string | number) => `/events/${id}`,
   EVENT_TYPE: {
-    SKILL_BUILDING: '/event-type/skill-building',
+    ENHANCE: '/event-type/enhance',
     SOCIAL: '/event-type/social',
     UNIVERSITY: '/event-type/university',
   },

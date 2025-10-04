@@ -1,14 +1,11 @@
-from typing import Any
-
 from django.shortcuts import get_object_or_404
-from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from config.constants import ActivityStatus, StatusMessages, UserRoles
-from config.permissions import IsAdmin, IsOrganizer
+from config.permissions import IsAdmin
 from config.utils import get_activity_category_groups, is_admin_user
 from .models import Activity, ActivityDeletionRequest
 from .serializers import (
@@ -20,8 +17,10 @@ from .serializers import (
 
 class ActivityListCreateView(generics.ListCreateAPIView):
     """API view for listing and creating activities."""
-    
-    queryset = Activity.objects.all().select_related('organizer_profile', 'organizer_profile__user')
+
+    queryset = Activity.objects.all().select_related(
+        'organizer_profile', 'organizer_profile__user'
+    )
     permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
@@ -34,10 +33,11 @@ class ActivityListCreateView(generics.ListCreateAPIView):
         """Create activity with proper authorization."""
         user = self.request.user
         user_role = getattr(user, 'role', None)
-        
-        if user_role not in (UserRoles.ORGANIZER, UserRoles.ADMIN) and not user.is_superuser:
+
+        if (user_role not in (UserRoles.ORGANIZER, UserRoles.ADMIN) and
+                not user.is_superuser):
             self.permission_denied(
-                self.request, 
+                self.request,
                 message='Only organizers or admins can create activities'
             )
         serializer.save()
@@ -46,15 +46,17 @@ class ActivityListCreateView(generics.ListCreateAPIView):
         """Filter queryset based on user role."""
         user = self.request.user
         user_role = getattr(user, 'role', None)
-        
+
         if user_role == UserRoles.ORGANIZER:
             # Get user's organization name from their organizer profile
             try:
                 organizer_profile = user.organizer_profile
                 organization_name = organizer_profile.organization_name
                 # Show all activities from the same organization
-                return self.queryset.filter(organizer_profile__organization_name=organization_name)
-            except:
+                return self.queryset.filter(
+                    organizer_profile__organization_name=organization_name
+                )
+            except AttributeError:
                 # If no organizer profile found, show no activities
                 return self.queryset.none()
         if is_admin_user(user):
@@ -66,6 +68,16 @@ class ActivityListCreateView(generics.ListCreateAPIView):
 class ActivityListOnlyView(ActivityListCreateView):
     """API view for listing activities only."""
     http_method_names = ['get']
+    permission_classes = [permissions.AllowAny]
+
+    def get_queryset(self):
+        """Filter queryset based on user authentication and role."""
+        # If user is not authenticated, show only open activities
+        if not self.request.user.is_authenticated:
+            return self.queryset.filter(status=ActivityStatus.OPEN)
+
+        # For authenticated users, use the parent logic
+        return super().get_queryset()
 
 
 class ActivityCreateOnlyView(ActivityListCreateView):
@@ -75,8 +87,10 @@ class ActivityCreateOnlyView(ActivityListCreateView):
 
 class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
     """API view for retrieving and updating activities."""
-    
-    queryset = Activity.objects.all().select_related('organizer_profile', 'organizer_profile__user')
+
+    queryset = Activity.objects.all().select_related(
+        'organizer_profile', 'organizer_profile__user'
+    )
     permission_classes = [permissions.IsAuthenticated]
 
     def get_serializer_class(self):
@@ -90,7 +104,7 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         instance: Activity = self.get_object()
         user = self.request.user
         user_role = getattr(user, 'role', None)
-        
+
         # Check if organizer belongs to same organization
         if user_role == UserRoles.ORGANIZER:
             try:
@@ -98,12 +112,12 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
                 activity_org_name = instance.organizer_profile.organization_name
                 if user_org_name != activity_org_name:
                     self.permission_denied(
-                        self.request, 
+                        self.request,
                         message=StatusMessages.NOT_YOUR_ACTIVITY
                     )
-            except:
+            except AttributeError:
                 self.permission_denied(
-                    self.request, 
+                    self.request,
                     message=StatusMessages.NOT_YOUR_ACTIVITY
                 )
         serializer.save()
@@ -121,7 +135,7 @@ class ActivityUpdateOnlyView(ActivityRetrieveUpdateView):
 
 class ActivityDeleteView(APIView):
     """API view for deleting activities."""
-    
+
     permission_classes = [permissions.IsAuthenticated]
 
     def delete(self, request: Request, pk: int) -> Response:
@@ -129,7 +143,7 @@ class ActivityDeleteView(APIView):
         activity = get_object_or_404(Activity, pk=pk)
         user = request.user
         user_role = getattr(user, 'role', None)
-        
+
         # Admin can always delete
         if is_admin_user(user):
             activity.delete()
@@ -138,21 +152,21 @@ class ActivityDeleteView(APIView):
         # Organizer deletion rules - check if user belongs to same organization
         if user_role != UserRoles.ORGANIZER:
             return Response(
-                {'detail': StatusMessages.PERMISSION_DENIED}, 
+                {'detail': StatusMessages.PERMISSION_DENIED},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         try:
             user_org_name = user.organizer_profile.organization_name
             activity_org_name = activity.organizer_profile.organization_name
             if user_org_name != activity_org_name:
                 return Response(
-                    {'detail': StatusMessages.PERMISSION_DENIED}, 
+                    {'detail': StatusMessages.PERMISSION_DENIED},
                     status=status.HTTP_403_FORBIDDEN
                 )
-        except:
+        except AttributeError:
             return Response(
-                {'detail': StatusMessages.PERMISSION_DENIED}, 
+                {'detail': StatusMessages.PERMISSION_DENIED},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -169,7 +183,7 @@ class ActivityDeleteView(APIView):
 
 class ActivityRequestDeleteView(APIView):
     """API view for requesting activity deletion."""
-    
+
     permission_classes = [permissions.IsAuthenticated]
 
     def post(self, request: Request, pk: int) -> Response:
@@ -177,25 +191,25 @@ class ActivityRequestDeleteView(APIView):
         activity = get_object_or_404(Activity, pk=pk)
         user = request.user
         user_role = getattr(user, 'role', None)
-        
+
         # Check if user is organizer and belongs to same organization
         if user_role != UserRoles.ORGANIZER:
             return Response(
-                {'detail': StatusMessages.PERMISSION_DENIED}, 
+                {'detail': StatusMessages.PERMISSION_DENIED},
                 status=status.HTTP_403_FORBIDDEN
             )
-        
+
         try:
             user_org_name = user.organizer_profile.organization_name
             activity_org_name = activity.organizer_profile.organization_name
             if user_org_name != activity_org_name:
                 return Response(
-                    {'detail': StatusMessages.PERMISSION_DENIED}, 
+                    {'detail': StatusMessages.PERMISSION_DENIED},
                     status=status.HTTP_403_FORBIDDEN
                 )
-        except:
+        except AttributeError:
             return Response(
-                {'detail': StatusMessages.PERMISSION_DENIED}, 
+                {'detail': StatusMessages.PERMISSION_DENIED},
                 status=status.HTTP_403_FORBIDDEN
             )
 
@@ -204,27 +218,29 @@ class ActivityRequestDeleteView(APIView):
             deletion_request = activity.request_deletion(user, reason)
         except Exception as e:
             return Response(
-                {'detail': str(e)}, 
+                {'detail': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         return Response(
-            ActivityDeletionRequestSerializer(deletion_request).data, 
+            ActivityDeletionRequestSerializer(deletion_request).data,
             status=status.HTTP_201_CREATED
         )
 
 
 class ActivityDeletionRequestListView(generics.ListAPIView):
     """API view for listing activity deletion requests (admin only)."""
-    
+
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
-    queryset = ActivityDeletionRequest.objects.select_related('activity', 'requested_by')
+    queryset = ActivityDeletionRequest.objects.select_related(
+        'activity', 'requested_by'
+    )
     serializer_class = ActivityDeletionRequestSerializer
 
 
 class ActivityDeletionRequestReviewView(APIView):
     """API view for reviewing activity deletion requests (admin only)."""
-    
+
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
 
     def post(self, request: Request, pk: int) -> Response:
@@ -232,13 +248,13 @@ class ActivityDeletionRequestReviewView(APIView):
         deletion_request = get_object_or_404(ActivityDeletionRequest, pk=pk)
         action = request.data.get('action')  # 'approve' or 'reject'
         note = request.data.get('note', '')
-        
+
         if action not in ('approve', 'reject'):
             return Response(
-                {'detail': StatusMessages.INVALID_ACTION}, 
+                {'detail': StatusMessages.INVALID_ACTION},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         if action == 'approve':
             deletion_request.approve(request.user, note)
         else:
@@ -248,43 +264,48 @@ class ActivityDeletionRequestReviewView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             deletion_request.reject(request.user, note)
-        
-        return Response(ActivityDeletionRequestSerializer(deletion_request).data)
+
+        return Response(
+            ActivityDeletionRequestSerializer(deletion_request).data
+        )
 
 
 class ActivityMetadataView(APIView):
     """API view for activity metadata (categories, etc.)."""
-    
+
     permission_classes = [permissions.AllowAny]
 
     def get(self, request: Request) -> Response:
         """Return activity category configuration and metadata."""
         groups = get_activity_category_groups()
-        
+
         if groups and isinstance(groups, dict):
             # Header-only groups (empty list) are selectable top-level categories
             top_levels = [
-                name for name, items in groups.items() 
+                name for name, items in groups.items()
                 if isinstance(items, (list, tuple)) and not items
             ]
             # Non-empty groups are compound categories with sub-items
             compound = [
-                name for name, items in groups.items() 
+                name for name, items in groups.items()
                 if isinstance(items, (list, tuple)) and items
             ]
             subcategories = {
-                name: list(items) for name, items in groups.items() 
+                name: list(items) for name, items in groups.items()
                 if name in compound
             }
             payload = {
-                'top_levels': top_levels + compound,  # include umbrella names for selection
-                'compound_categories': compound,       # require choosing from subcategories
-                'subcategories': subcategories,        
+                'top_levels': top_levels + compound,
+                'compound_categories': compound,
+                'subcategories': subcategories,
                 'categories_max': 4,
             }
         else:
             payload = {
-                'error': 'Category configuration missing: set ACTIVITY_CATEGORY_GROUPS in settings.',
+                'error': (
+                    'Category configuration missing: '
+                    'set ACTIVITY_CATEGORY_GROUPS in settings.'
+                ),
                 'categories_max': 4,
             }
         return Response(payload)
@@ -296,7 +317,9 @@ class ActivityModerationListView(generics.ListAPIView):
     serializer_class = ActivitySerializer
 
     def get_queryset(self):
-        return Activity.objects.filter(status=ActivityStatus.PENDING).select_related('organizer_profile', 'organizer_profile__user')
+        return Activity.objects.filter(
+            status=ActivityStatus.PENDING
+        ).select_related('organizer_profile', 'organizer_profile__user')
 
 
 class ActivityModerationReviewView(APIView):
@@ -307,11 +330,17 @@ class ActivityModerationReviewView(APIView):
         activity = get_object_or_404(Activity, pk=pk)
         action = request.data.get('action')  # 'approve' or 'reject'
         if action not in ('approve', 'reject'):
-            return Response({'detail': StatusMessages.INVALID_ACTION}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': StatusMessages.INVALID_ACTION},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         # Only allow moderation from pending
         if activity.status != ActivityStatus.PENDING:
-            return Response({'detail': 'Only pending activities can be moderated.'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {'detail': 'Only pending activities can be moderated.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 
         if action == 'approve':
             activity.status = ActivityStatus.OPEN
@@ -321,8 +350,13 @@ class ActivityModerationReviewView(APIView):
         else:
             reason = (request.data.get('reason') or '').strip()
             if not reason:
-                return Response({'detail': 'Rejection reason is required.'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {'detail': 'Rejection reason is required.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
             activity.status = ActivityStatus.REJECTED
             activity.rejection_reason = reason
             activity.save(update_fields=['status', 'rejection_reason'])
-            return Response({'detail': 'Activity rejected with reason provided.'})
+            return Response(
+                {'detail': 'Activity rejected with reason provided.'}
+            )

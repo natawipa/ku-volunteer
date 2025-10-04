@@ -1,8 +1,10 @@
 import Image from "next/image";
 import { CalendarIcon } from "@heroicons/react/24/outline";
-import Link from "next/link";
+import { useRouter } from 'next/navigation';
+import { auth } from '../../lib/utils';
 
 export interface EventCardProps {
+  id: number;
   title: string;
   post: string;
   dateStart: string;
@@ -21,14 +23,28 @@ const statusColors: Record<string, string> = {
 };
 
 const categoryColors: Record<string, string> = {
-  "กิจกรรมมหาวิทยาลัย": "bg-[#B3E6FF]",
-  "เพื่อสังคม": "bg-[#FFBDBE]",
-  "เสริมสร้างสมรรถนะ": "bg-[#FFEA47]",
+  "University Activities": "bg-[#B3E6FF]",
+  "Enhance Competencies": "bg-[#FFBDBE]",
+  "Social Engagement Activities": "bg-[#FFEA47]",
 };
 
-const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, category, imgSrc, status }) => {
+const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, category, imgSrc, status 
+}) => {
+  const router = useRouter();
+
+  const handleClick = (e: React.MouseEvent) => {
+    // If user is not authenticated, redirect to login instead of going to detail
+    if (!auth.isAuthenticated()) {
+      e.preventDefault();
+      router.push('/login');
+      return;
+    }
+    // otherwise navigate to detail page
+    router.push(`/event-detail/${id}`);
+  };
+
   return (
-    <Link href={`/events/${title}`}>
+    <div onClick={handleClick} role="button" tabIndex={0} className="cursor-pointer">
       <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">
         <Image
           src={imgSrc}
@@ -70,8 +86,8 @@ const EventCard: React.FC<EventCardProps> = ({ title, dateStart, dateEnd, catego
           ))}
         </div>
       )}
+      </div>
     </div>
-    </Link>
   );
 }
 

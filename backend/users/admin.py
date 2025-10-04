@@ -10,21 +10,21 @@ class CustomUserAdmin(UserAdmin):
     list_filter = ['role', 'is_active', 'created_at']
     search_fields = ['email', 'first_name', 'last_name']
     ordering = ['-created_at']
-    
+
     fieldsets = (
         (None, {'fields': ('email', 'password')}),
         ('Personal Info', {'fields': ('title', 'first_name', 'last_name')}),
         ('Permissions', {'fields': ('is_active', 'is_staff', 'is_superuser', 'role')}),
         ('Important Dates', {'fields': ('last_login', 'created_at', 'updated_at')}),
     )
-    
+
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
             'fields': ('email', 'password1', 'password2', 'title', 'first_name', 'last_name', 'role', 'is_staff'),
         }),
     )
-    
+
     readonly_fields = ('created_at', 'updated_at', 'last_login')
 
 

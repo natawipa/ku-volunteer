@@ -1,0 +1,80 @@
+"use client";
+import { useEffect, useState, useMemo } from 'react';
+import { activitiesApi } from '../../../../lib/activities';
+import type { Activity } from '../../../../lib/types';
+import AdminEventPreviewCard from '../../components/AdminEventPreviewCard';
+import AdminLayout from '../../components/AdminLayout';
+
+export default function PendingEventsPage() {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState<Activity[]>([]);
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('All Categories');
+
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const res = await activitiesApi.getActivities();
+      if (res.success && Array.isArray(res.data)) {
+        setPending(res.data.filter(a => a.status === 'pending'));
+      } else {
+        setError(res.error || 'Failed to load activities');
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    pending.forEach(a => a.categories.forEach(c => set.add(c)));
+    return ['All Categories', ...Array.from(set.values())];
+  }, [pending]);
+
+  const filtered = useMemo(() => {
+    const term = search.toLowerCase();
+    return pending.filter((a: Activity) => {
+      const inCat = category === 'All Categories' || a.categories.includes(category);
+      if (!inCat) return false;
+      return (
+        a.title.toLowerCase().includes(term) ||
+        a.description.toLowerCase().includes(term) ||
+        a.location.toLowerCase().includes(term)
+      );
+    });
+  }, [pending, search, category]);
+
+  const count = filtered.length;
+  return (
+    <AdminLayout
+      hideTitle
+      title="Pending Events"
+      searchVariant="compact"
+      searchPlaceholder="Search pending events..."
+      onSearchChange={setSearch}
+      initialSearchValue={search}
+      searchCategoryOptions={categories}
+      searchSelectedCategory={category}
+      onSearchCategoryChange={setCategory}
+    >
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <h1 className="font-bold text-2xl mb-1">Pending Events</h1>
+        <span className="inline-flex items-center rounded-full bg-yellow-500/10 text-yellow-800 text-xs font-medium px-3 py-1 border border-yellow-500/20">
+          {loading ? 'Counting…' : `${count} event${count === 1 ? '' : 's'}`}
+        </span>
+      </div>
+      {loading && <div className="flex items-center gap-3 text-gray-600 mb-6"><span className="animate-spin h-6 w-6 border-b-2 border-yellow-600 rounded-full" /> Loading...</div>}
+      {error && <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded mb-6">{error}</div>}
+      {!loading && !error && (
+  count === 0 ? <p className="text-gray-600">No pending events{search || category !== 'All Categories' ? ' match your filters.' : '.'}</p> : (
+          <div className="space-y-6 mb-10">
+            {filtered.map((a: Activity) => (
+              <AdminEventPreviewCard key={a.id} activity={a} hrefOverride={`/admin/approve/create/${a.id}`} />
+            ))}
+          </div>
+        )
+      )}
+    </AdminLayout>
+  );
+}

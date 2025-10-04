@@ -15,8 +15,8 @@ from rest_framework.views import APIView
 from rest_framework_simplejwt.tokens import RefreshToken
 from social_django.models import UserSocialAuth
 
-from config.constants import StatusMessages, UserRoles
-from config.permissions import IsAdmin, IsOrganizer, IsOwnerOrAdmin, IsStudent
+from config.constants import StatusMessages
+from config.permissions import IsAdmin, IsOwnerOrAdmin
 from config.utils import get_client_url
 from .models import User
 from .serializers import UserRegisterSerializer, UserSerializer
@@ -24,7 +24,7 @@ from .serializers import UserRegisterSerializer, UserSerializer
 
 class UserRegisterView(generics.CreateAPIView):
     """API view for user registration."""
-    
+
     queryset = User.objects.all()
     serializer_class = UserRegisterSerializer
     permission_classes = [AllowAny]
@@ -32,7 +32,7 @@ class UserRegisterView(generics.CreateAPIView):
 
 class UserListView(generics.ListAPIView):
     """API view for listing all users (admin only)."""
-    
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -40,7 +40,7 @@ class UserListView(generics.ListAPIView):
 
 class UserDetailView(generics.RetrieveAPIView):
     """API view for retrieving user details."""
-    
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
@@ -48,7 +48,7 @@ class UserDetailView(generics.RetrieveAPIView):
 
 class UserUpdateView(generics.UpdateAPIView):
     """API view for updating user information."""
-    
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsOwnerOrAdmin]
@@ -56,7 +56,7 @@ class UserUpdateView(generics.UpdateAPIView):
 
 class UserDeleteView(generics.DestroyAPIView):
     """API view for deleting users (admin only)."""
-    
+
     queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
@@ -64,23 +64,23 @@ class UserDeleteView(generics.DestroyAPIView):
 
 class LoginView(APIView):
     """API view for user login with email and password."""
-    
+
     permission_classes = [AllowAny]
 
     def post(self, request: Request) -> Response:
         """Authenticate user and return JWT tokens."""
         email = request.data.get('email')
         password = request.data.get('password')
-        
+
         if not email or not password:
             return Response(
-                {'error': 'Email and password are required'}, 
+                {'error': 'Email and password are required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Authenticate using email and password
         user = authenticate(request, username=email, password=password)
-        
+
         if user and user.is_active:
             refresh = RefreshToken.for_user(user)
             return Response({
@@ -88,16 +88,16 @@ class LoginView(APIView):
                 'refresh': str(refresh),
                 'user': UserSerializer(user).data
             }, status=status.HTTP_200_OK)
-        
+
         return Response(
-            {'error': StatusMessages.INVALID_CREDENTIALS}, 
+            {'error': StatusMessages.INVALID_CREDENTIALS},
             status=status.HTTP_401_UNAUTHORIZED
         )
 
 
 class OAuthRegistrationView(APIView):
     """API view for OAuth registration completion."""
-    
+
     permission_classes = [AllowAny]
 
     def post(self, request: Request) -> Response:
@@ -105,30 +105,30 @@ class OAuthRegistrationView(APIView):
         oauth_session_key = request.data.get('oauth_session')
         if not oauth_session_key:
             return Response(
-                {'error': 'OAuth session key is required'}, 
+                {'error': 'OAuth session key is required'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Retrieve OAuth session data
         session_data = cache.get(f"oauth_session_{oauth_session_key}")
         if not session_data:
             return Response(
-                {'error': 'OAuth session expired or invalid'}, 
+                {'error': 'OAuth session expired or invalid'},
                 status=status.HTTP_400_BAD_REQUEST
             )
-        
+
         # Create user with registration data
         serializer = UserRegisterSerializer(data=request.data)
         if serializer.is_valid():
             # Ensure email matches OAuth session
             if serializer.validated_data.get('email') != session_data.get('email'):
                 return Response(
-                    {'error': 'Email must match OAuth session'}, 
+                    {'error': 'Email must match OAuth session'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
-            
+
             user = serializer.save()
-            
+
             # Create social auth association
             try:
                 social_auth = UserSocialAuth.create_social_auth(
@@ -142,14 +142,14 @@ class OAuthRegistrationView(APIView):
             except Exception:
                 # If social auth creation fails, still return success for user creation
                 pass
-            
+
             # Clear the session
             cache.delete(f"oauth_session_{oauth_session_key}")
-            
+
             # Generate tokens and redirect
             refresh = RefreshToken.for_user(user)
             client_url = get_client_url()
-            
+
             return Response({
                 'success': True,
                 'access': str(refresh.access_token),
@@ -157,9 +157,9 @@ class OAuthRegistrationView(APIView):
                 'user': UserSerializer(user).data,
                 'redirect_url': f"{client_url}/auth/callback?access={refresh.access_token}&refresh={refresh}&role={user.role}"
             }, status=status.HTTP_201_CREATED)
-        
+
         return Response(
-            {'error': serializer.errors}, 
+            {'error': serializer.errors},
             status=status.HTTP_400_BAD_REQUEST
         )
 
@@ -169,7 +169,7 @@ def google_jwt_redirect(request) -> JsonResponse:
     """Issue JWT for authenticated user and redirect (or return JSON in test mode)."""
     user = request.user
     refresh = RefreshToken.for_user(user)
-    
+
     # Optional testing mode: return JSON instead of redirect when ?json=1
     if request.GET.get('json') == '1':
         return JsonResponse({
@@ -177,7 +177,7 @@ def google_jwt_redirect(request) -> JsonResponse:
             'refresh': str(refresh),
             'user': UserSerializer(user).data,
         })
-    
+
     client_url = get_client_url()
     # Include user data in the callback URL for role-based redirection
     user_data = UserSerializer(user).data

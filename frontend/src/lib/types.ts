@@ -29,10 +29,12 @@ export interface Activity {
   current_participants: number;
   status: string;
   hours_awarded?: number;
+  rejection_reason?: string;
   created_at: string;
   updated_at: string;
   requires_admin_for_delete: boolean;
   capacity_reached: boolean;
+  cover_image_url?: string;
 }
 
 // Form types
