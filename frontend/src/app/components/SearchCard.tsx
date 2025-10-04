@@ -5,10 +5,14 @@ interface SearchCardProps {
   showCategory?: boolean;
   showDate?: boolean;
   categories?: string[];            // Optional override list
-  selectedCategory?: string;        // Controlled category value
-  selectedDate?: string;            // Controlled date value (YYYY-MM-DD)
-  onCategoryChange?: (value: string) => void;
-  onDateChange?: (value: string) => void;
+  query?: string;                   // Search query text
+  setQuery?: (query: string) => void;
+  category?: string;                // Selected category
+  setCategory?: (category: string) => void;
+  date?: string;                    // Selected date (YYYY-MM-DD)
+  setDate?: (date: string) => void;
+  onKeyDown?: (e: React.KeyboardEvent) => void; // Key down handler for input fields
+  onApply?: () => void;            // Called when search is applied
 }
 
 
@@ -24,18 +28,15 @@ export default function SearchCard({
   showCategory = true,
   showDate = true,
   categories,
-  selectedCategory,
-  selectedDate,
-  onCategoryChange,
-  onDateChange
+  query = "",
+  setQuery = () => {},
+  category = "All Categories",
+  setCategory = () => {},
+  date = "",
+  setDate = () => {},
+  onApply = () => {}
 }: SearchCardProps) {
-  const [ , setQuery] = useState("");
   const [history, setHistory] = useState<string[]>([]);
-  const [internalCategory, setInternalCategory] = useState("All Categories");
-  const [internalDate, setInternalDate] = useState("");
-
-  const effectiveCategory = selectedCategory ?? internalCategory;
-  const effectiveDate = selectedDate ?? internalDate;
   const categoryList = categories && categories.length ? categories : DEFAULT_CATEGORIES;
 
   useEffect(() => {
@@ -44,40 +45,45 @@ export default function SearchCard({
   }, []);
   
   const handleCategoryChange = (e: ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    if (selectedCategory === undefined) setInternalCategory(val);
-    onCategoryChange?.(val);
+    setCategory(e.target.value);
   };
 
   const handleDateChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const val = e.target.value;
-    if (selectedDate === undefined) setInternalDate(val);
-    onDateChange?.(val);
+    setDate(e.target.value);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      onApply();
+    }
   };
   
   return (
     <div className="bg-white shadow-md rounded-lg p-4 space-y-4">
 
       {/* History */}
-      <div className="max-h-20 overflow-y-auto space-y-1">
-        {history.map((item, idx) => (
-          <p
-            key={idx}
-            onClick={() => setQuery(item)}
-            className="cursor-pointer hover:underline"
-          >
-            {item}
-          </p>
-        ))}
-      </div>
-
-      <hr />
+      {history.length > 0 && (
+        <>
+          <div className="max-h-20 overflow-y-auto space-y-1">
+            {history.map((item, idx) => (
+              <p
+                key={idx}
+                onClick={() => setQuery(item)}
+                className="cursor-pointer hover:underline text-gray-600"
+              >
+                {item}
+              </p>
+            ))}
+          </div>
+          <hr />
+        </>
+      )}
 
       {showCategory && (
         <div>
           <label className="block text-sm font-bold text-gray-700">Category</label>
           <select
-            value={effectiveCategory}
+            value={category}
             onChange={handleCategoryChange}
             className="border p-2 rounded-lg w-full"
           >
@@ -91,14 +97,30 @@ export default function SearchCard({
       {showDate && (
         <div>
           <label className="block text-sm font-bold text-gray-700">Date</label>
-          <input
-            type="date"
-            value={effectiveDate}
-            onChange={handleDateChange}
-            className="border p-2 rounded-lg w-full"
-          />
+          <div className="space-y-2">
+            <input
+              type="date"
+              value={date}
+              onChange={handleDateChange}
+              onKeyDown={handleKeyDown}
+              className="border p-2 rounded-lg w-full"
+              min="2023-01-01"
+              max="2026-12-31"
+            />
+            <p className="text-xs text-gray-500">
+              Shows events that are active on this date (between start and end dates)
+            </p>
+          </div>
         </div>
       )}
+
+      {/* Apply button */}
+      <button
+        onClick={onApply}
+        className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors"
+      >
+        Search
+      </button>
     </div>
   );
 }
