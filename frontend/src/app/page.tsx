@@ -85,7 +85,7 @@ export default function Home() {
           setError(response.error || 'Failed to fetch activities');
           setActivities([]);
         }
-      } catch (err) {
+      } catch {
         setError('Network error occurred');
         setActivities([]);
       } finally {

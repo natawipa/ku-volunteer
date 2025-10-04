@@ -1,8 +1,8 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import students from "../studentExample.json";
-import organizations from "../organizerExample.json";
+import students from "@/data/studentExample.json";
+import organizations from "@/data/organizerExample.json";
 
 interface StudentExample { id: number; title?: string; first_name?: string; last_name?: string }
 interface OrganizationExample { id: number; organization_name: string }

@@ -1,6 +1,5 @@
 "use client";
 import Link from 'next/link';
-import React from 'react';
 
 export interface PublicEventCardData {
   id: string | number;
