@@ -1,6 +1,7 @@
 "use client";
 import EventCard from "./components/EventCard";
 import EventTypeSection from "./components/EventTypeSection";
+import SearchResults from "./components/SearchResults";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, PlusIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
@@ -58,6 +59,43 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchCategory, setSearchCategory] = useState("All Categories");
+  const [searchDate, setSearchDate] = useState("");
+  const [isSearchApplied, setIsSearchApplied] = useState(false);
+
+  // Filter events based on search criteria
+  const filterEvents = (events: typeof allEvents) => {
+    return events.filter(ev => {
+      // Text search across title and location
+      const q = searchQuery.toLowerCase().trim();
+      const matchesSearch = !q || 
+        ev.title.toLowerCase().includes(q) ||
+        ev.location.toLowerCase().includes(q);
+
+      // Category filter
+      const matchesCategory = searchCategory === "All Categories" ||
+        (Array.isArray(ev.category) && ev.category.some(c => {
+          if (searchCategory === "Social Impact") {
+            return c.includes("Social Engagement Activities");
+          }
+          return c.includes(searchCategory);
+        }));
+
+      // Date filter - check if searchDate falls within event dates or is before start
+      const matchesDate = !searchDate || (() => {
+        const searchDateObj = new Date(searchDate);
+        const startDateObj = new Date(ev.dateStart.split('/').reverse().join('-')); // Convert dd/mm/yyyy to yyyy-mm-dd
+        const endDateObj = new Date(ev.dateEnd.split('/').reverse().join('-'));
+        
+        // Check if search date is within event range or before start
+        return searchDateObj >= startDateObj && searchDateObj <= endDateObj;
+      })();
+
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  };
 
   // Check authentication and user role on component mount
   useEffect(() => {
@@ -97,9 +135,11 @@ export default function Home() {
   }, []);
 
   // Transform activities to events format with safety check
-  const events = Array.isArray(activities) 
+  const allEvents = Array.isArray(activities) 
     ? activities.map(transformActivityToEvent)
     : [];
+
+  console.log('🔍 Events array:', events);
 
   const eventTypes = [
     {
@@ -189,8 +229,95 @@ export default function Home() {
     );
   };
 
-  // Render sections for events on the homepage
+  // Render events in search results layout
+  const renderSearchResults = () => {
+    if (!events || events.length === 0) {
+      return (
+        <div className="text-center py-8">
+          <p className="text-gray-600">No events found matching your search.</p>
+        </div>
+      );
+    }
+
+    return (
+      <div className="mt-6">
+        <h2 className="font-semibold text-xl mb-4">Search Results ({events.length} events)</h2>
+        
+        <div className="space-y-4">
+          {events.map((event, idx) => (
+            <Link href={`/event-detail/${event.id}`} key={idx}>
+              <div className="bg-white rounded-lg shadow-md p-4 mb-8 flex gap-4 hover:shadow-lg hover:scale-103 transition-transform transition-shadow">
+                <div className="w-48 h-32 relative flex-shrink-0">
+                  <Image
+                    src={event.imgSrc}
+                    alt={event.title}
+                  fill
+                  className="rounded-md object-cover"
+                />
+              </div>
+
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
+                <div className="text-sm text-gray-600 space-y-1">
+                  <p>Location: {event.location}</p>
+                  <p>Date: {event.dateStart} - {event.dateEnd}</p>
+                  <div className="flex gap-2 mt-2">
+                    {event.category.map((cat, i) => (
+                      <span key={i} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                        {cat}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Link>
+          ))}
+        </div>
+      </div>
+    );
+  };
+
+  // Get appropriate sections based on user role
   const getSections = () => {
+    // If search is applied, show search results layout
+    if (isSearchApplied) {
+      return renderSearchResults();
+    }
+
+    // Loading state
+    if (loading) {
+      return (
+        <section className="mb-6 mt-18">
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <span className="ml-3 text-gray-600">Loading activities...</span>
+          </div>
+        </section>
+      );
+    }
+
+    // Error state
+    if (error) {
+      return (
+        <section className="mb-6 mt-18">
+          <div className="flex justify-center items-center h-48">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
+              <h3 className="text-red-800 font-semibold mb-2">Error Loading Activities</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // Empty state
     if (!events || events.length === 0) {
       return (
         <section className="mb-6">
@@ -246,35 +373,106 @@ export default function Home() {
           <Image src={getLogo()} alt="Big Logo" width={180} height={180} className="object-cover" />
         </div>
 
-        <section className={`mb-6 ${isAuthenticated && userRole === USER_ROLES.STUDENT ? `transition-all duration-300 z-40 ${isScrolled ? "sticky top-14 w-full px-4" : "relative flex justify-center"}` : "flex justify-center"}`}>
-          <div ref={wrapperRef} className={`${isAuthenticated && userRole === USER_ROLES.STUDENT ? `transition-all duration-300 ${isScrolled ? "max-w-md mx-auto scale-90" : "relative w-150"}` : "relative w-150"}`}>
-            <div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md" onClick={() => setIsOpen(true)}>
+        <section
+          className={`mb-6 ${
+            isAuthenticated && userRole === USER_ROLES.STUDENT
+              ? `transition-all duration-300 z-40 ${
+                  isScrolled
+                    ? "sticky top-14 w-full px-4"   // sticks below navbar
+                    : "relative flex justify-center"
+                }`
+              : "flex justify-center"
+          }`}
+        >
+          <div
+            ref={wrapperRef}
+            className={`${
+              isAuthenticated && userRole === USER_ROLES.STUDENT
+                ? `transition-all duration-300 ${
+                    isScrolled
+                      ? "max-w-md mx-auto scale-90" // smaller when scrolled
+                      : "relative w-150"
+                  }`
+                : "relative w-150"
+            }`}
+          >
+
+            <div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md"
+              onClick={() => { setIsOpen(true); setIsSearchApplied(true); }}
+            >
               <MagnifyingGlassIcon className="text-black-400 w-5 h-5" />
-              <input type="text" placeholder="Find activities" className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none" onFocus={() => setIsOpen(true)} />
+              <input
+                type="text"
+                placeholder="Search activities"
+                value={searchQuery}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  if (e.target.value === '') {
+                    setIsSearchApplied(false);
+                  }
+                }}
+                className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none"
+                onFocus={() => { setIsOpen(true); setIsSearchApplied(true); }}
+              />
+              {isSearchApplied && searchQuery && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setSearchQuery('');
+                    setSearchCategory('All Categories');
+                    setSearchDate('');
+                    setIsSearchApplied(false);
+                  }}
+                  className="text-sm text-gray-500 hover:text-gray-700 px-2"
+                >
+                  Clear
+                </button>
+              )}
               <div className="h-6 w-[1px] bg-gray-200 mx-2"></div>
               <ChevronDownIcon className="text-black-400 w-5 h-5 ml-2 opacity-50" />
             </div>
 
             {isOpen && (
-              <div className="absolute top-full mt-1 w-full z-50"><SearchCard /></div>
+              <div className="absolute top-full mt-1 w-full z-50">
+                <SearchCard
+                  query={searchQuery}
+                  setQuery={setSearchQuery}
+                  category={searchCategory}
+                  setCategory={setSearchCategory}
+                  date={searchDate}
+                  setDate={setSearchDate}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      setIsOpen(false);
+                      setIsSearchApplied(true);
+                    }
+                  }}
+                  onApply={() => {
+                    setIsOpen(false);
+                    setIsSearchApplied(true);
+                  }}
+                />
+              </div>
             )}
           </div>
         </section>
-
-        {loading ? (
-          <section className="mb-6 mt-18"><div className="flex justify-center items-center h-48"><div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div><span className="ml-3 text-gray-600">Loading activities...</span></div></section>
-        ) : error ? (
-          <section className="mb-6 mt-18"><div className="flex justify-center items-center h-48"><div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center"><h3 className="text-red-800 font-semibold mb-2">Error Loading Activities</h3><p className="text-red-600 mb-4">{error}</p><button onClick={() => window.location.reload()} className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Try Again</button></div></div></section>
-        ) : (
-          getSections()
+          
+        {/* -------------------------- */}
+        
+        {getSections()}
+            
+        {/* Show Event Types sections only when not in search mode */}
+        {!isSearchApplied && (
+          <>
+            <h2 className="font-bold mb-6 text-2xl py-2">Event Types</h2>
+            <div>
+              {eventTypes.map((type, idx) => (
+                <EventTypeSection key={idx} {...type} />
+              ))}
+            </div>
+          </>
         )}
 
-        <h2 className="font-bold mb-6 text-2xl py-2">Event Types</h2>
-        <div>
-          {eventTypes.map((type, idx) => (
-            <EventTypeSection key={idx} {...type} />
-          ))}
-        </div>
       </div>
     </div>
   );
