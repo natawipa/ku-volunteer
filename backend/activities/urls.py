@@ -17,6 +17,7 @@ from .views import (
     ApplicationsByActivityView,
     ApplicationCancelView,
     ApplicationReviewView,
+    StudentApprovedActivitiesView,
 )
 
 
@@ -43,4 +44,6 @@ urlpatterns = [
     path('applications/<int:pk>/cancel/', ApplicationCancelView.as_view(), name='application-cancel'),
     path('applications/<int:pk>/review/', ApplicationReviewView.as_view(), name='application-review'),
     path('<int:activity_id>/applications/', ApplicationsByActivityView.as_view(), name='applications-by-activity'),
+    # Student's approved activities
+    path('my-approved-activities/', StudentApprovedActivitiesView.as_view(), name='student-approved-activities'),
 ]

@@ -6,7 +6,7 @@ from rest_framework.views import APIView
 
 from config.constants import ActivityStatus, ApplicationStatus, StatusMessages, UserRoles
 from config.permissions import IsAdmin, IsStudent
-from config.utils import get_activity_category_groups, is_admin_user
+from config.utils import get_activity_category_groups, get_student_approved_activities, is_admin_user
 from .models import Activity, ActivityDeletionRequest, Application
 from .serializers import (
     ActivityDeletionRequestSerializer,
@@ -301,7 +301,7 @@ class ActivityMetadataView(APIView):
                 'top_levels': top_levels + compound,
                 'compound_categories': compound,
                 'subcategories': subcategories,
-                'categories_max': 4,
+                'categories_max': 3,
             }
         else:
             payload = {
@@ -309,7 +309,7 @@ class ActivityMetadataView(APIView):
                     'Category configuration missing: '
                     'set ACTIVITY_CATEGORY_GROUPS in settings.'
                 ),
-                'categories_max': 4,
+                'categories_max': 3,
             }
         return Response(payload)
 
@@ -562,3 +562,20 @@ class ApplicationReviewView(APIView):
                 {'detail': str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+
+
+class StudentApprovedActivitiesView(generics.ListAPIView):
+    """API view for students to get their approved activities.
+    
+    Returns list of activities where the student's application has been approved.
+    Only accessible by authenticated students.
+    """
+    
+    serializer_class = ActivitySerializer
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def get_queryset(self):
+        """Get all activities where student has approved applications."""
+        return get_student_approved_activities(self.request.user).select_related(
+            'organizer_profile', 'organizer_profile__user'
+        )

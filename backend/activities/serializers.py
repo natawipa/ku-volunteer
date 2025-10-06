@@ -8,18 +8,36 @@ class ActivitySerializer(serializers.ModelSerializer):
     organizer_profile_id = serializers.IntegerField(source='organizer_profile.id', read_only=True)
     organizer_email = serializers.EmailField(source='organizer_profile.user.email', read_only=True)
     organizer_name = serializers.CharField(source='organizer_profile.organization_name', read_only=True)
+    user_application_status = serializers.SerializerMethodField()
 
     class Meta:
         model = Activity
         fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'categories', 'title', 'description',
             'start_at', 'end_at', 'location', 'max_participants', 'current_participants',
-            'status', 'hours_awarded', 'rejection_reason', 'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached',
+            'status', 'hours_awarded', 'rejection_reason', 'created_at', 'updated_at', 
+            'requires_admin_for_delete', 'capacity_reached', 'user_application_status',
         ]
         read_only_fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'current_participants', 'status',
-            'rejection_reason', 'created_at', 'updated_at', 'requires_admin_for_delete', 'capacity_reached'
+            'rejection_reason', 'created_at', 'updated_at', 'requires_admin_for_delete', 
+            'capacity_reached', 'user_application_status'
         ]
+
+    def get_user_application_status(self, obj):
+        """Get the current user's application status for this activity."""
+        request = self.context.get('request')
+        if not request or not request.user or not request.user.is_authenticated:
+            return None
+        
+        from config.utils import get_student_application_status
+        from config.constants import UserRoles
+        
+        # Only return status for students
+        if getattr(request.user, 'role', None) == UserRoles.STUDENT:
+            return get_student_application_status(request.user, obj)
+        
+        return None
 
 
 class ActivityWriteSerializer(serializers.ModelSerializer):

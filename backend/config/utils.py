@@ -31,7 +31,7 @@ def validate_activity_categories(categories: Optional[List[str]]) -> None:
         return
 
     if not isinstance(categories, list):
-        raise ValidationError('categories must be a list of strings (1-4).')
+        raise ValidationError('categories must be a list of strings (1-3).')
 
     if not (ValidationLimits.CATEGORIES_MIN <= len(categories) <= ValidationLimits.CATEGORIES_MAX):
         raise ValidationError(
@@ -85,3 +85,44 @@ def is_admin_user(user: Any) -> bool:
         getattr(user, 'role', None) == UserRoles.ADMIN or
         getattr(user, 'is_superuser', False)
     )
+
+
+def get_student_approved_activities(student):
+    """
+    Get all activities that a student has been approved for.
+    
+    Args:
+        student: User object with role='student'
+        
+    Returns:
+        QuerySet of Activity objects where student has approved applications
+    """
+    from activities.models import Activity, Application
+    from config.constants import ApplicationStatus
+    
+    approved_activity_ids = Application.objects.filter(
+        student=student,
+        status=ApplicationStatus.APPROVED
+    ).values_list('activity_id', flat=True)
+    
+    return Activity.objects.filter(id__in=approved_activity_ids)
+
+
+def get_student_application_status(student, activity):
+    """
+    Get the application status of a student for a specific activity.
+    
+    Args:
+        student: User object with role='student'
+        activity: Activity object
+        
+    Returns:
+        str: Application status ('pending', 'approved', 'rejected', 'cancelled') or None if no application
+    """
+    from activities.models import Application
+    
+    try:
+        application = Application.objects.get(student=student, activity=activity)
+        return application.status
+    except Application.DoesNotExist:
+        return None
