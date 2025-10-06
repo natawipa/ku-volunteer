@@ -4,14 +4,17 @@ from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from config.constants import ActivityStatus, StatusMessages, UserRoles
-from config.permissions import IsAdmin
+from config.constants import ActivityStatus, ApplicationStatus, StatusMessages, UserRoles
+from config.permissions import IsAdmin, IsStudent
 from config.utils import get_activity_category_groups, is_admin_user
-from .models import Activity, ActivityDeletionRequest
+from .models import Activity, ActivityDeletionRequest, Application
 from .serializers import (
     ActivityDeletionRequestSerializer,
     ActivitySerializer,
     ActivityWriteSerializer,
+    ApplicationSerializer,
+    ApplicationCreateSerializer,
+    ApplicationReviewSerializer,
 )
 
 
@@ -359,4 +362,203 @@ class ActivityModerationReviewView(APIView):
             activity.save(update_fields=['status', 'rejection_reason'])
             return Response(
                 {'detail': 'Activity rejected with reason provided.'}
+            )
+
+
+class ApplicationCreateView(generics.CreateAPIView):
+    """API view for students to create applications."""
+    
+    queryset = Application.objects.all()
+    serializer_class = ApplicationCreateSerializer
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def perform_create(self, serializer):
+        """Create application with authenticated student."""
+        serializer.save()
+
+
+class ApplicationListView(generics.ListAPIView):
+    """API view for listing applications.
+    
+    - Students see their own applications
+    - Organizers see applications for their organization's activities
+    - Admins see all applications
+    """
+    
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter applications based on user role."""
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        if user_role == UserRoles.STUDENT:
+            # Students see their own applications
+            return Application.objects.filter(student=user).select_related(
+                'activity', 'student', 'decision_by'
+            )
+        elif user_role == UserRoles.ORGANIZER:
+            # Organizers see applications for their organization's activities
+            try:
+                organizer_profile = user.organizer_profile
+                organization_name = organizer_profile.organization_name
+                return Application.objects.filter(
+                    activity__organizer_profile__organization_name=organization_name
+                ).select_related('activity', 'student', 'decision_by')
+            except AttributeError:
+                return Application.objects.none()
+        elif is_admin_user(user):
+            # Admins see all applications
+            return Application.objects.all().select_related(
+                'activity', 'student', 'decision_by'
+            )
+        
+        return Application.objects.none()
+
+
+class ApplicationDetailView(generics.RetrieveAPIView):
+    """API view for retrieving a single application."""
+    
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Filter based on user role - same logic as list view."""
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        if user_role == UserRoles.STUDENT:
+            return Application.objects.filter(student=user)
+        elif user_role == UserRoles.ORGANIZER:
+            try:
+                organizer_profile = user.organizer_profile
+                organization_name = organizer_profile.organization_name
+                return Application.objects.filter(
+                    activity__organizer_profile__organization_name=organization_name
+                )
+            except AttributeError:
+                return Application.objects.none()
+        elif is_admin_user(user):
+            return Application.objects.all()
+        
+        return Application.objects.none()
+
+
+class ApplicationsByActivityView(generics.ListAPIView):
+    """API view for listing applications for a specific activity.
+    
+    Only accessible by organizers (same organization) and admins.
+    """
+    
+    serializer_class = ApplicationSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get applications for the specified activity."""
+        activity_id = self.kwargs.get('activity_id')
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        # Get the activity first
+        try:
+            activity = Activity.objects.get(pk=activity_id)
+        except Activity.DoesNotExist:
+            return Application.objects.none()
+
+        # Check permissions
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    return Application.objects.none()
+            except AttributeError:
+                return Application.objects.none()
+        elif not is_admin_user(user):
+            # Only organizers and admins can view applications by activity
+            return Application.objects.none()
+
+        return Application.objects.filter(activity_id=activity_id).select_related(
+            'activity', 'student', 'decision_by'
+        )
+
+
+class ApplicationCancelView(APIView):
+    """API view for students to cancel their own application."""
+    
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def post(self, request: Request, pk: int) -> Response:
+        """Cancel an application."""
+        # Get application and ensure it belongs to the student
+        application = get_object_or_404(Application, pk=pk, student=request.user)
+
+        try:
+            application.cancel()
+            return Response(
+                ApplicationSerializer(application).data,
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ApplicationReviewView(APIView):
+    """API view for organizers to approve/reject applications."""
+    
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request: Request, pk: int) -> Response:
+        """Review (approve or reject) an application."""
+        application = get_object_or_404(Application, pk=pk)
+        user = request.user
+        user_role = getattr(user, 'role', None)
+
+        # Check permissions - organizer must be from same organization or admin
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = application.activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    return Response(
+                        {'detail': StatusMessages.PERMISSION_DENIED},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            except AttributeError:
+                return Response(
+                    {'detail': StatusMessages.PERMISSION_DENIED},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif not is_admin_user(user):
+            return Response(
+                {'detail': StatusMessages.PERMISSION_DENIED},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Validate and process the review
+        serializer = ApplicationReviewSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+        action = serializer.validated_data['action']
+        
+        try:
+            if action == 'approve':
+                application.approve(user)
+            else:  # reject
+                reason = serializer.validated_data['reason']
+                application.reject(user, reason)
+            
+            return Response(
+                ApplicationSerializer(application).data,
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
             )

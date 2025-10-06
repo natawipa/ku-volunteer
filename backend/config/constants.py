@@ -32,6 +32,20 @@ class ActivityStatus:
         (REJECTED, 'Rejected'),
     ]
 
+# Application statuses
+class ApplicationStatus:
+    PENDING = 'pending'
+    APPROVED = 'approved'
+    REJECTED = 'rejected'
+    CANCELLED = 'cancelled'
+
+    CHOICES = [
+        (PENDING, 'Pending'),
+        (APPROVED, 'Approved'),
+        (REJECTED, 'Rejected'),
+        (CANCELLED, 'Cancelled'),
+    ]
+
 # Organization types
 class OrganizationType:
     INTERNAL = "internal"
