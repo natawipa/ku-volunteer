@@ -80,36 +80,36 @@ export default function Home() {
 
 
   // Filter events based on search criteria
-  // const filterEvents = (events: ReturnType<typeof transformActivityToEvent>[]) => {
-  // return events.filter(ev => {
-  //   const q = searchQuery.toLowerCase().trim();
-  //   const matchesSearch =
-  //     !q ||
-  //     ev.title.toLowerCase().includes(q) ||
-  //     ev.location.toLowerCase().includes(q);
+  const filterEvents = (events: ReturnType<typeof transformActivityToEvent>[]) => {
+  return events.filter(ev => {
+    const q = searchQuery.toLowerCase().trim();
+    const matchesSearch =
+      !q ||
+      ev.title.toLowerCase().includes(q) ||
+      ev.location.toLowerCase().includes(q);
 
-  //     // Category filter
-  //     const matchesCategory = searchCategory === "All Categories" ||
-  //       (Array.isArray(ev.category) && ev.category.some(c => {
-  //         if (searchCategory === "Social Impact") {
-  //           return c.includes("Social Engagement Activities");
-  //         }
-  //         return c.includes(searchCategory);
-  //       }));
+      // Category filter
+      const matchesCategory = searchCategory === "All Categories" ||
+        (Array.isArray(ev.category) && ev.category.some(c => {
+          if (searchCategory === "Social Impact") {
+            return c.includes("Social Engagement Activities");
+          }
+          return c.includes(searchCategory);
+        }));
 
-  //     // Date filter - check if searchDate falls within event dates or is before start
-  //     const matchesDate = !searchDate || (() => {
-  //       const searchDateObj = new Date(searchDate);
-  //       const startDateObj = new Date(ev.dateStart.split('/').reverse().join('-')); // Convert dd/mm/yyyy to yyyy-mm-dd
-  //       const endDateObj = new Date(ev.dateEnd.split('/').reverse().join('-'));
+      // Date filter - check if searchDate falls within event dates or is before start
+      const matchesDate = !searchDate || (() => {
+        const searchDateObj = new Date(searchDate);
+        const startDateObj = new Date(ev.dateStart.split('/').reverse().join('-')); // Convert dd/mm/yyyy to yyyy-mm-dd
+        const endDateObj = new Date(ev.dateEnd.split('/').reverse().join('-'));
         
-  //       // Check if search date is within event range or before start
-  //       return searchDateObj >= startDateObj && searchDateObj <= endDateObj;
-  //     })();
+        // Check if search date is within event range or before start
+        return searchDateObj >= startDateObj && searchDateObj <= endDateObj;
+      })();
 
-  //     return matchesSearch && matchesCategory && matchesDate;
-  //   });
-  // };
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  };
 
   // Check authentication and user role on component mount
   useEffect(() => {
@@ -252,14 +252,30 @@ export default function Home() {
   };
 
 
-  // Filter events based on searchQuery (case-insensitive, matches title or location)
+  // Filter events based on searchQuery and searchCategory
   const getFilteredEvents = () => {
     const q = searchQuery.toLowerCase().trim();
-    if (!q) return events;
-    return events.filter(ev =>
-      ev.title.toLowerCase().includes(q) ||
-      ev.location.toLowerCase().includes(q)
-    );
+    return events.filter(ev => {
+      const matchesSearch = !q ||
+        ev.title.toLowerCase().includes(q) ||
+        ev.location.toLowerCase().includes(q);
+      const matchesCategory = searchCategory === "All Categories" ||
+        (Array.isArray(ev.category) && ev.category.some(c => {
+          if (searchCategory === "Social Impact") {
+            return c.includes("Social Engagement Activities");
+          }
+          return c.includes(searchCategory);
+        }));
+      // Date filter: show events where event start date is on or after searchDate
+      const matchesDate = !searchDate || (() => {
+        // ev.dateStart is in dd/mm/yyyy, searchDate is yyyy-mm-dd
+        const [day, month, year] = ev.dateStart.split('/');
+        const eventStart = new Date(`${year}-${month}-${day}`);
+        const search = new Date(searchDate);
+        return eventStart >= search;
+      })();
+      return matchesSearch && matchesCategory && matchesDate;
+    });
   };
 
   // Render events in search results layout (filtered)
