@@ -2,11 +2,11 @@ from typing import Optional
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MinValueValidator
+from django.core.validators import MinValueValidator, MaxLengthValidator
 from django.db import models
 from django.utils import timezone
 
-from config.constants import ActivityStatus, DeletionRequestStatus, ValidationLimits
+from config.constants import ActivityStatus, ApplicationStatus, DeletionRequestStatus, ValidationLimits
 from config.utils import validate_activity_categories
 
 
@@ -167,3 +167,102 @@ class ActivityDeletionRequest(models.Model):
         self.reviewed_at = timezone.now()
         self.review_note = note or ""
         self.save(update_fields=['status', 'reviewed_by', 'reviewed_at', 'review_note'])
+
+
+class Application(models.Model):
+    """Model representing a student application to a volunteer activity."""
+
+    activity = models.ForeignKey(
+        Activity,
+        on_delete=models.CASCADE,
+        related_name='applications'
+    )
+    student = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name='applications',
+        limit_choices_to={'role': 'student'}
+    )
+    status = models.CharField(
+        max_length=20,
+        choices=ApplicationStatus.CHOICES,
+        default=ApplicationStatus.PENDING
+    )
+    submitted_at = models.DateTimeField(auto_now_add=True)
+    decision_at = models.DateTimeField(null=True, blank=True)
+    decision_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='application_decisions'
+    )
+    notes = models.CharField(
+        max_length=225,
+        blank=True,
+        help_text="Reason for rejection or other notes (max 225 characters)"
+    )
+
+    class Meta:
+        ordering = ['-submitted_at']
+        verbose_name = "Application"
+        verbose_name_plural = "Applications"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['activity', 'student'],
+                name='unique_activity_student_application'
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.student.email} -> {self.activity.title} ({self.get_status_display()})"
+
+    def clean(self) -> None:
+        """Validate the application model."""
+        super().clean()
+
+        # Ensure student is actually a student role
+        if hasattr(self, 'student') and self.student:
+            from config.constants import UserRoles
+            if getattr(self.student, 'role', None) != UserRoles.STUDENT:
+                raise ValidationError("Applications can only be made by students.")
+
+        # Validate rejection notes length
+        if self.notes and len(self.notes) > 225:
+            raise ValidationError("Notes cannot exceed 225 characters.")
+
+    def approve(self, reviewer) -> None:
+        """Approve the application."""
+        if self.status != ApplicationStatus.PENDING:
+            raise ValidationError("Only pending applications can be approved.")
+        
+        self.status = ApplicationStatus.APPROVED
+        self.decision_at = timezone.now()
+        self.decision_by = reviewer
+        self.notes = ""  # Clear any previous notes
+        self.save(update_fields=['status', 'decision_at', 'decision_by', 'notes'])
+
+    def reject(self, reviewer, reason: str) -> None:
+        """Reject the application with a reason."""
+        if self.status != ApplicationStatus.PENDING:
+            raise ValidationError("Only pending applications can be rejected.")
+        
+        if not reason or not reason.strip():
+            raise ValidationError("Rejection reason is required.")
+        
+        if len(reason) > 225:
+            raise ValidationError("Rejection reason cannot exceed 225 characters.")
+        
+        self.status = ApplicationStatus.REJECTED
+        self.decision_at = timezone.now()
+        self.decision_by = reviewer
+        self.notes = reason.strip()
+        self.save(update_fields=['status', 'decision_at', 'decision_by', 'notes'])
+
+    def cancel(self) -> None:
+        """Cancel the application (student action)."""
+        if self.status not in (ApplicationStatus.PENDING, ApplicationStatus.APPROVED):
+            raise ValidationError("Only pending or approved applications can be cancelled.")
+        
+        self.status = ApplicationStatus.CANCELLED
+        self.save(update_fields=['status'])
