@@ -65,6 +65,73 @@ POST http://localhost:8000/api/activities/applications/1/cancel/
 Authorization: Bearer YOUR_STUDENT_TOKEN
 ```
 
+### 🆕 Get My Approved Activities
+
+```http
+GET http://localhost:8000/api/activities/my-approved-activities/
+Authorization: Bearer YOUR_STUDENT_TOKEN
+```
+
+**Returns:** List of activities where student's application has been approved.
+
+**Response Example:**
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Beach Cleanup Day",
+    "status": "open",
+    "user_application_status": "approved",
+    "max_participants": 50,
+    "current_participants": 35
+    // ... other activity fields
+  }
+]
+```
+
+### 🆕 Browse Activities with Application Status
+
+```http
+GET http://localhost:8000/api/activities/list/
+Authorization: Bearer YOUR_STUDENT_TOKEN
+```
+
+**New Feature:** Each activity now includes `user_application_status` field!
+
+**Response Example:**
+
+```json
+[
+  {
+    "id": 1,
+    "title": "Beach Cleanup",
+    "user_application_status": "approved" // 👈 NEW!
+    // ... other fields
+  },
+  {
+    "id": 2,
+    "title": "Tree Planting",
+    "user_application_status": "pending" // 👈 Shows status!
+    // ... other fields
+  },
+  {
+    "id": 3,
+    "title": "Food Drive",
+    "user_application_status": null // 👈 Not applied yet
+    // ... other fields
+  }
+]
+```
+
+**Possible values for `user_application_status`:**
+
+- `"pending"` - Application submitted, awaiting review
+- `"approved"` - Application accepted
+- `"rejected"` - Application declined
+- `"cancelled"` - Student cancelled application
+- `null` - No application submitted
+
 ---
 
 ## 👔 Organizer Endpoints
@@ -122,8 +189,18 @@ Content-Type: application/json
    - Same organization as activity
 
 4. **Organizer rejects with valid reason**
+
    - Reason: 1-225 characters
    - Same organization as activity
+
+5. **🆕 Student fetches approved activities**
+
+   - Returns only activities where application is approved
+   - Empty array if no approved applications
+
+6. **🆕 Activity list shows application status**
+   - Each activity includes `user_application_status` field
+   - Shows current status: pending/approved/rejected/cancelled/null
 
 ---
 
@@ -232,38 +309,52 @@ Then use `{{token}}` in your Authorization headers.
    Login as Organizer → Save token
    ```
 
-2. **Student Flow:**
+2. **🆕 Browse Activities (Student):**
+
+   ```
+   GET /api/activities/list/ → Check user_application_status for each activity
+   → Activities with null status = can apply
+   → Activities with "pending" = waiting for review
+   → Activities with "approved" = already registered
+   ```
+
+3. **Student Flow:**
 
    ```
    Create Application → Check status: "pending"
    List Applications → Verify application appears
+   GET /api/activities/1/ → Verify user_application_status = "pending"
    ```
 
-3. **Organizer Flow:**
+4. **Organizer Flow:**
 
    ```
    List Applications for Activity → See pending applications
    Approve Application → Check status: "approved"
    ```
 
-4. **Student Verification:**
+5. **🆕 Student Verification:**
 
    ```
    List Applications → Verify status changed to "approved"
+   GET /api/activities/1/ → Verify user_application_status = "approved"
+   GET /api/activities/my-approved-activities/ → See approved activity in list
    ```
 
-5. **Rejection Flow:**
+6. **Rejection Flow:**
 
    ```
    (New Application) Create → Pending
    Organizer Reject with reason → Status: "rejected"
    Student views → See rejection reason in notes
+   GET /api/activities/1/ → Verify user_application_status = "rejected"
    ```
 
-6. **Cancellation Flow:**
+7. **Cancellation Flow:**
    ```
    Create Application → Pending
    Cancel Application → Status: "cancelled"
+   GET /api/activities/1/ → Verify user_application_status = "cancelled"
    ```
 
 ---
@@ -299,6 +390,8 @@ Then use `{{token}}` in your Authorization headers.
 3. **Create test data** before running tests
 4. **Use pre-request scripts** to setup test conditions
 5. **Chain requests** using variables from previous responses
+6. **🆕 Check `user_application_status`** in activity responses to show UI badges
+7. **🆕 Use `/my-approved-activities/`** for "My Activities" page instead of filtering manually
 
 ---
 
@@ -359,6 +452,32 @@ Save this as a Postman collection JSON:
           "raw": "{\n  \"activity\": 1\n}"
         },
         "url": "{{baseUrl}}/api/activities/applications/create/"
+      }
+    },
+    {
+      "name": "Get My Approved Activities",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/activities/my-approved-activities/"
+      }
+    },
+    {
+      "name": "Browse Activities (with status)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{token}}"
+          }
+        ],
+        "url": "{{baseUrl}}/api/activities/list/"
       }
     }
   ]
