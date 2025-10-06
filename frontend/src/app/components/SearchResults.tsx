@@ -1,6 +1,5 @@
 "use client";
 import Image from "next/image";
-import { useMemo } from "react";
 import Link from "next/link";
 
 interface Event {

@@ -136,11 +136,15 @@ export default function AdminLayout({
               {isOpen && (
                 <div className="absolute top-full mt-1 w-full z-50">
                   <SearchCard
+                    category={searchSelectedCategory}
+                    setCategory={(val: string) => {
+                      onSearchCategoryChange?.(val);
+                      setIsOpen(false);
+                    }}
+                    // Optionally pass categories if SearchCard supports it
+                    categories={searchCategoryOptions}
                     showCategory={true}
                     showDate={searchShowDate}
-                    categories={searchCategoryOptions}
-                    selectedCategory={searchSelectedCategory}
-                    onCategoryChange={onSearchCategoryChange}
                   />
                 </div>
               )}

@@ -1,7 +1,6 @@
 "use client";
 import EventCard from "./components/EventCard";
 import EventTypeSection from "./components/EventTypeSection";
-import SearchResults from "./components/SearchResults";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon, PlusIcon } from "@heroicons/react/20/solid";
 import Link from "next/link";
@@ -50,6 +49,7 @@ const transformActivityToEvent = (activity: Activity) => {
   };
 };
 
+
 export default function Home() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -59,43 +59,57 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
   const [searchCategory, setSearchCategory] = useState("All Categories");
   const [searchDate, setSearchDate] = useState("");
   const [isSearchApplied, setIsSearchApplied] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('searchHistory');
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
+  });
+
+  // Save search history to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+    }
+  }, [searchHistory]);
+
 
   // Filter events based on search criteria
-  const filterEvents = (events: typeof allEvents) => {
-    return events.filter(ev => {
-      // Text search across title and location
-      const q = searchQuery.toLowerCase().trim();
-      const matchesSearch = !q || 
-        ev.title.toLowerCase().includes(q) ||
-        ev.location.toLowerCase().includes(q);
+  // const filterEvents = (events: ReturnType<typeof transformActivityToEvent>[]) => {
+  // return events.filter(ev => {
+  //   const q = searchQuery.toLowerCase().trim();
+  //   const matchesSearch =
+  //     !q ||
+  //     ev.title.toLowerCase().includes(q) ||
+  //     ev.location.toLowerCase().includes(q);
 
-      // Category filter
-      const matchesCategory = searchCategory === "All Categories" ||
-        (Array.isArray(ev.category) && ev.category.some(c => {
-          if (searchCategory === "Social Impact") {
-            return c.includes("Social Engagement Activities");
-          }
-          return c.includes(searchCategory);
-        }));
+  //     // Category filter
+  //     const matchesCategory = searchCategory === "All Categories" ||
+  //       (Array.isArray(ev.category) && ev.category.some(c => {
+  //         if (searchCategory === "Social Impact") {
+  //           return c.includes("Social Engagement Activities");
+  //         }
+  //         return c.includes(searchCategory);
+  //       }));
 
-      // Date filter - check if searchDate falls within event dates or is before start
-      const matchesDate = !searchDate || (() => {
-        const searchDateObj = new Date(searchDate);
-        const startDateObj = new Date(ev.dateStart.split('/').reverse().join('-')); // Convert dd/mm/yyyy to yyyy-mm-dd
-        const endDateObj = new Date(ev.dateEnd.split('/').reverse().join('-'));
+  //     // Date filter - check if searchDate falls within event dates or is before start
+  //     const matchesDate = !searchDate || (() => {
+  //       const searchDateObj = new Date(searchDate);
+  //       const startDateObj = new Date(ev.dateStart.split('/').reverse().join('-')); // Convert dd/mm/yyyy to yyyy-mm-dd
+  //       const endDateObj = new Date(ev.dateEnd.split('/').reverse().join('-'));
         
-        // Check if search date is within event range or before start
-        return searchDateObj >= startDateObj && searchDateObj <= endDateObj;
-      })();
+  //       // Check if search date is within event range or before start
+  //       return searchDateObj >= startDateObj && searchDateObj <= endDateObj;
+  //     })();
 
-      return matchesSearch && matchesCategory && matchesDate;
-    });
-  };
+  //     return matchesSearch && matchesCategory && matchesDate;
+  //   });
+  // };
 
   // Check authentication and user role on component mount
   useEffect(() => {
@@ -135,35 +149,43 @@ export default function Home() {
   }, []);
 
   // Transform activities to events format with safety check
-  const allEvents = Array.isArray(activities) 
+  const events = Array.isArray(activities) 
     ? activities.map(transformActivityToEvent)
     : [];
-
-  console.log('🔍 Events array:', events);
 
   const eventTypes = [
     {
       title: "University Activities",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
       backgroundBrain: "/brainread.svg",
-      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => cat.includes("University Activities"))),
+      events: events.filter(e => {
+      return Array.isArray(e.category) && e.category.some(cat => 
+          cat.includes("University Activities")
+        );
+      }),
     },
     {
       title: "Enhance Competencies",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
       backgroundBrain: "/brainthink.svg",
-      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => (
-        cat.includes("Development of Morality") ||
-        cat.includes("Development of Thinking") ||
-        cat.includes("Development of Interpersonal") ||
-        cat.includes("Development of Health")
-      ))),
+      events: events.filter(e => {
+        return Array.isArray(e.category) && e.category.some(cat => 
+          cat.includes("Development of Morality") ||
+          cat.includes("Development of Thinking") ||
+          cat.includes("Development of Interpersonal") ||
+          cat.includes("Development of Health")
+        );
+      }),
     },
     {
       title: "Social Engagement Activities",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
       backgroundBrain: "/brainlove.svg",
-      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => cat.includes("Social Engagement Activities"))),
+      events: events.filter(e => {
+        return Array.isArray(e.category) && e.category.some(cat => 
+          cat.includes("Social Engagement Activities")
+        );
+      }),
     },
   ];
 
@@ -229,9 +251,21 @@ export default function Home() {
     );
   };
 
-  // Render events in search results layout
+
+  // Filter events based on searchQuery (case-insensitive, matches title or location)
+  const getFilteredEvents = () => {
+    const q = searchQuery.toLowerCase().trim();
+    if (!q) return events;
+    return events.filter(ev =>
+      ev.title.toLowerCase().includes(q) ||
+      ev.location.toLowerCase().includes(q)
+    );
+  };
+
+  // Render events in search results layout (filtered)
   const renderSearchResults = () => {
-    if (!events || events.length === 0) {
+    const filteredEvents = getFilteredEvents();
+    if (!filteredEvents || filteredEvents.length === 0) {
       return (
         <div className="text-center py-8">
           <p className="text-gray-600">No events found matching your search.</p>
@@ -241,37 +275,35 @@ export default function Home() {
 
     return (
       <div className="mt-6">
-        <h2 className="font-semibold text-xl mb-4">Search Results ({events.length} events)</h2>
-        
+        <h2 className="font-semibold text-xl mb-4">Search Results ({filteredEvents.length} events)</h2>
         <div className="space-y-4">
-          {events.map((event, idx) => (
+          {filteredEvents.map((event, idx) => (
             <Link href={`/event-detail/${event.id}`} key={idx}>
               <div className="bg-white rounded-lg shadow-md p-4 mb-8 flex gap-4 hover:shadow-lg hover:scale-103 transition-transform transition-shadow">
                 <div className="w-48 h-32 relative flex-shrink-0">
                   <Image
                     src={event.imgSrc}
                     alt={event.title}
-                  fill
-                  className="rounded-md object-cover"
-                />
-              </div>
-
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
-                <div className="text-sm text-gray-600 space-y-1">
-                  <p>Location: {event.location}</p>
-                  <p>Date: {event.dateStart} - {event.dateEnd}</p>
-                  <div className="flex gap-2 mt-2">
-                    {event.category.map((cat, i) => (
-                      <span key={i} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                        {cat}
-                      </span>
-                    ))}
+                    fill
+                    className="rounded-md object-cover"
+                  />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
+                  <div className="text-sm text-gray-600 space-y-1">
+                    <p>Location: {event.location}</p>
+                    <p>Date: {event.dateStart} - {event.dateEnd}</p>
+                    <div className="flex gap-2 mt-2">
+                      {event.category.map((cat, i) => (
+                        <span key={i} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                          {cat}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Link>
+            </Link>
           ))}
         </div>
       </div>
@@ -407,13 +439,56 @@ export default function Home() {
                 value={searchQuery}
                 onChange={(e) => {
                   setSearchQuery(e.target.value);
-                  if (e.target.value === '') {
+                  const trimmed = e.target.value.trim();
+                  if (trimmed === '') {
                     setIsSearchApplied(false);
+                  } else {
+                    setIsSearchApplied(true);
                   }
                 }}
                 className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none"
                 onFocus={() => { setIsOpen(true); setIsSearchApplied(true); }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    setIsOpen(false);
+                    setIsSearchApplied(true);
+                    // Add to search history if not empty and not duplicate
+                    const trimmed = searchQuery.trim();
+                    if (trimmed && !searchHistory.includes(trimmed)) {
+                      setSearchHistory([trimmed, ...searchHistory].slice(0, 10)); // keep max 10
+                    }
+                  }
+                }}
               />
+              {/* Search history dropdown */}
+              {isOpen && searchHistory.length > 0 && (
+                <div className="absolute left-0 right-0 top-full mt-1 bg-white border border-gray-200 rounded shadow z-50 max-h-48 overflow-y-auto">
+                  {searchHistory.map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 cursor-pointer">
+                      <span
+                        onClick={() => {
+                          setSearchQuery(item);
+                          setIsSearchApplied(true);
+                          setIsOpen(false);
+                        }}
+                        className="flex-1 text-left"
+                      >
+                        {item}
+                      </span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSearchHistory(searchHistory.filter((h) => h !== item));
+                        }}
+                        className="ml-2 text-xs text-red-500 hover:text-red-700"
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
               {isSearchApplied && searchQuery && (
                 <button
                   onClick={(e) => {
@@ -441,15 +516,32 @@ export default function Home() {
                   setCategory={setSearchCategory}
                   date={searchDate}
                   setDate={setSearchDate}
+                  history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
+                  setHistory={(h) => setSearchHistory(h.map(item => item.query))}
+                  onSelectHistory={(item) => {
+                    setSearchQuery(item.query);
+                    setIsSearchApplied(true);
+                    setIsOpen(false);
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       setIsOpen(false);
                       setIsSearchApplied(true);
+                      // Add to search history if not empty and not duplicate
+                      const trimmed = searchQuery.trim();
+                      if (trimmed && !searchHistory.includes(trimmed)) {
+                        setSearchHistory([trimmed, ...searchHistory].slice(0, 10));
+                      }
                     }
                   }}
                   onApply={() => {
                     setIsOpen(false);
                     setIsSearchApplied(true);
+                    // Add to search history if not empty and not duplicate
+                    const trimmed = searchQuery.trim();
+                    if (trimmed && !searchHistory.includes(trimmed)) {
+                      setSearchHistory([trimmed, ...searchHistory].slice(0, 10));
+                    }
                   }}
                 />
               </div>
