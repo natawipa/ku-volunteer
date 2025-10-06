@@ -11,6 +11,12 @@ from .views import (
     ActivityMetadataView,
     ActivityModerationListView,
     ActivityModerationReviewView,
+    ApplicationCreateView,
+    ApplicationListView,
+    ApplicationDetailView,
+    ApplicationsByActivityView,
+    ApplicationCancelView,
+    ApplicationReviewView,
 )
 
 
@@ -30,4 +36,11 @@ urlpatterns = [
     # Admin moderation of activities
     path('moderation/pending/', ActivityModerationListView.as_view(), name='activity-moderation-list'),
     path('moderation/<int:pk>/review/', ActivityModerationReviewView.as_view(), name='activity-moderation-review'),
+    # Application endpoints
+    path('applications/create/', ApplicationCreateView.as_view(), name='application-create'),
+    path('applications/list/', ApplicationListView.as_view(), name='application-list'),
+    path('applications/<int:pk>/', ApplicationDetailView.as_view(), name='application-detail'),
+    path('applications/<int:pk>/cancel/', ApplicationCancelView.as_view(), name='application-cancel'),
+    path('applications/<int:pk>/review/', ApplicationReviewView.as_view(), name='application-review'),
+    path('<int:activity_id>/applications/', ApplicationsByActivityView.as_view(), name='applications-by-activity'),
 ]

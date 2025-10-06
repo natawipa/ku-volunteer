@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.conf import settings
-from .models import Activity, ActivityDeletionRequest
+from .models import Activity, ActivityDeletionRequest, Application
 from users.models import OrganizerProfile
 
 
@@ -132,3 +132,51 @@ class ActivityDeletionRequestAdmin(admin.ModelAdmin):
 
     approve_requests.short_description = 'Approve selected requests'
     reject_requests.short_description = 'Reject selected requests'
+
+
+@admin.register(Application)
+class ApplicationAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'get_student_email', 'get_student_name', 'get_activity_title',
+        'status', 'submitted_at', 'decision_at', 'get_decision_by_email'
+    )
+    list_filter = ('status', 'submitted_at', 'decision_at')
+    search_fields = (
+        'student__email', 'student__first_name', 'student__last_name',
+        'activity__title', 'notes', 'decision_by__email'
+    )
+    readonly_fields = ('submitted_at',)
+    
+    fieldsets = (
+        ('Application Info', {
+            'fields': ('activity', 'student', 'status')
+        }),
+        ('Decision', {
+            'fields': ('decision_at', 'decision_by', 'notes')
+        }),
+        ('Metadata', {
+            'classes': ('collapse',),
+            'fields': ('submitted_at',)
+        }),
+    )
+    
+    def get_student_email(self, obj: Application):
+        return obj.student.email if obj.student else '-'
+    get_student_email.short_description = 'Student Email'
+    get_student_email.admin_order_field = 'student__email'
+    
+    def get_student_name(self, obj: Application):
+        if obj.student and obj.student.first_name and obj.student.last_name:
+            return f"{obj.student.first_name} {obj.student.last_name}"
+        return '-'
+    get_student_name.short_description = 'Student Name'
+    
+    def get_activity_title(self, obj: Application):
+        return obj.activity.title if obj.activity else '-'
+    get_activity_title.short_description = 'Activity'
+    get_activity_title.admin_order_field = 'activity__title'
+    
+    def get_decision_by_email(self, obj: Application):
+        return obj.decision_by.email if obj.decision_by else '-'
+    get_decision_by_email.short_description = 'Decided By'
+    get_decision_by_email.admin_order_field = 'decision_by__email'
