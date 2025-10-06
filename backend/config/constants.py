@@ -82,8 +82,9 @@ DEFAULT_ACTIVITY_CATEGORY_GROUPS = {
 
 # Validation limits
 class ValidationLimits:
+    """Validation limits for activities."""
     CATEGORIES_MIN = 1
-    CATEGORIES_MAX = 4
+    CATEGORIES_MAX = 3
     MAX_TITLE_LENGTH = 255
     MAX_ORGANIZATION_NAME_LENGTH = 255
     MAX_USER_NAME_LENGTH = 100

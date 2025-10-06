@@ -121,8 +121,9 @@ class ConstantsTest(TestCase):
 
     def test_validation_limits_constants(self):
         """Test ValidationLimits constants."""
+        # Verify ValidationLimits
         self.assertEqual(ValidationLimits.CATEGORIES_MIN, 1)
-        self.assertEqual(ValidationLimits.CATEGORIES_MAX, 4)
+        self.assertEqual(ValidationLimits.CATEGORIES_MAX, 3)
         self.assertIsInstance(ValidationLimits.MAX_TITLE_LENGTH, int)
         self.assertGreater(ValidationLimits.MAX_TITLE_LENGTH, 0)
 
