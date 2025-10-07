@@ -241,6 +241,7 @@ export default function Home() {
             isSearchActive={isSearchActive}
             setIsSearchActive={setIsSearchActive}
             searchInputRef={searchInputRef}
+            isScrolled={isScrolled}
           />
         )}
 
