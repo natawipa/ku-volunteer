@@ -40,9 +40,10 @@ interface SearchLayoutProps {
 	isSearchActive: boolean;
 	setIsSearchActive: (active: boolean) => void;
 	searchInputRef: React.RefObject<HTMLInputElement | null>;
+    isScrolled: boolean;
 }
 
-export default function SearchLayout({ activities, isSearchActive, setIsSearchActive, searchInputRef }: SearchLayoutProps) {
+export default function SearchLayout({ activities, isSearchActive, setIsSearchActive, searchInputRef, isScrolled }: SearchLayoutProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchSelectedCategory, setSearchSelectedCategory] = useState<string[]>([]);
@@ -139,7 +140,9 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 		<section className="mb-6">
 			<div
 				ref={wrapperRef}
-				className="relative w-150 justify-center mx-auto"
+				className={`transition-all duration-300 ${
+					isScrolled ? "max-w-md mx-auto scale-90" : "relative w-150"
+				} justify-center mx-auto`}
 			>
 				<div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md"
 					onClick={() => { setIsOpen(true); setIsSearchApplied(true); }}
