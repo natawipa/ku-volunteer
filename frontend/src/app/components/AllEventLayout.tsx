@@ -135,8 +135,8 @@ export default function AdminLayout({
                     categories={searchCategoryOptions}
                     query={searchValue}
                     setQuery={setSearchValue}
-                    category={searchSelectedCategory || "All Categories"}
-                    setCategory={onSearchCategoryChange || (() => {})}
+                    categoriesSelected={searchSelectedCategory ? [searchSelectedCategory] : []}
+                    setCategoriesSelected={val => onSearchCategoryChange?.(val[0] || '')}
                   />
                 </div>
               )}
