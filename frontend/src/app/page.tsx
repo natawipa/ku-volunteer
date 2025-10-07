@@ -8,6 +8,7 @@ import Image from "next/image";
 
 import SearchCard from "./components/SearchCard";
 import ProfileCard from "./components/ProfileCard";
+import SearchResults from "./components/SearchResults";
 
 import { useRef, useState, useEffect} from "react";
 import { auth } from "../lib/utils";
@@ -16,6 +17,7 @@ import { activitiesApi } from "../lib/activities";
 import type { Activity } from "../lib/types";
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminContent from "./admin/AdminContent";
+import { set } from "zod";
 
 // Transform Activity to EventCard format with better error handling
 const transformActivityToEvent = (activity: Activity) => {
@@ -60,8 +62,9 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchCategory, setSearchCategory] = useState("All Categories");
-  const [searchDate, setSearchDate] = useState("");
+  const [searchSelectedCategory, setSearchSelectedCategory] = useState<string[]>([]);
+  const [searchStartDate, setSearchStartDate] = useState("");
+  const [searchEndDate, setSearchEndDate] = useState("");
   const [isSearchApplied, setIsSearchApplied] = useState(false);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     if (typeof window !== 'undefined') {
@@ -77,39 +80,6 @@ export default function Home() {
       localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
     }
   }, [searchHistory]);
-
-
-  // Filter events based on search criteria
-  const filterEvents = (events: ReturnType<typeof transformActivityToEvent>[]) => {
-  return events.filter(ev => {
-    const q = searchQuery.toLowerCase().trim();
-    const matchesSearch =
-      !q ||
-      ev.title.toLowerCase().includes(q) ||
-      ev.location.toLowerCase().includes(q);
-
-      // Category filter
-      const matchesCategory = searchCategory === "All Categories" ||
-        (Array.isArray(ev.category) && ev.category.some(c => {
-          if (searchCategory === "Social Impact") {
-            return c.includes("Social Engagement Activities");
-          }
-          return c.includes(searchCategory);
-        }));
-
-      // Date filter - check if searchDate falls within event dates or is before start
-      const matchesDate = !searchDate || (() => {
-        const searchDateObj = new Date(searchDate);
-        const startDateObj = new Date(ev.dateStart.split('/').reverse().join('-')); // Convert dd/mm/yyyy to yyyy-mm-dd
-        const endDateObj = new Date(ev.dateEnd.split('/').reverse().join('-'));
-        
-        // Check if search date is within event range or before start
-        return searchDateObj >= startDateObj && searchDateObj <= endDateObj;
-      })();
-
-      return matchesSearch && matchesCategory && matchesDate;
-    });
-  };
 
   // Check authentication and user role on component mount
   useEffect(() => {
@@ -259,19 +229,24 @@ export default function Home() {
       const matchesSearch = !q ||
         ev.title.toLowerCase().includes(q) ||
         ev.location.toLowerCase().includes(q);
-      const matchesCategory = searchCategory === "All Categories" ||
+      const matchesCategory =
+        searchSelectedCategory.length === 0 ||
+        searchSelectedCategory.includes("All Categories") ||
         (Array.isArray(ev.category) && ev.category.some(c => {
-          if (searchCategory === "Social Impact") {
+          // If "Social Impact" is selected, match "Social Engagement Activities"
+          if (searchSelectedCategory.includes("Social Impact")) {
             return c.includes("Social Engagement Activities");
           }
-          return c.includes(searchCategory);
+          // Match any selected category
+          return searchSelectedCategory.some(sel => c.includes(sel));
         }));
-      // Date filter: show events where event start date is on or after searchDate
-      const matchesDate = !searchDate || (() => {
-        // ev.dateStart is in dd/mm/yyyy, searchDate is yyyy-mm-dd
+        
+      // Date filter: show events where event start date is on or after searchStartDate
+      const matchesDate = !searchStartDate || (() => {
+        // ev.dateStart is in dd/mm/yyyy, searchStartDate is yyyy-mm-dd
         const [day, month, year] = ev.dateStart.split('/');
         const eventStart = new Date(`${year}-${month}-${day}`);
-        const search = new Date(searchDate);
+        const search = new Date(searchStartDate);
         return eventStart >= search;
       })();
       return matchesSearch && matchesCategory && matchesDate;
@@ -281,50 +256,15 @@ export default function Home() {
   // Render events in search results layout (filtered)
   const renderSearchResults = () => {
     const filteredEvents = getFilteredEvents();
-    if (!filteredEvents || filteredEvents.length === 0) {
-      return (
-        <div className="text-center py-8">
-          <p className="text-gray-600">No events found matching your search.</p>
-        </div>
-      );
-    }
-
+    // Use the SearchResults component and wire up the Back button
+    // ...existing code...
     return (
-      <div className="mt-6">
-        <h2 className="font-semibold text-xl mb-4">Search Results ({filteredEvents.length} events)</h2>
-        <div className="space-y-4">
-          {filteredEvents.map((event, idx) => (
-            <Link href={`/event-detail/${event.id}`} key={idx}>
-              <div className="bg-white rounded-lg shadow-md p-4 mb-8 flex gap-4 hover:shadow-lg hover:scale-103 transition-transform transition-shadow">
-                <div className="w-48 h-32 relative flex-shrink-0">
-                  <Image
-                    src={event.imgSrc}
-                    alt={event.title}
-                    fill
-                    className="rounded-md object-cover"
-                  />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-2">{event.title}</h3>
-                  <div className="text-sm text-gray-600 space-y-1">
-                    <p>Location: {event.location}</p>
-                    <p>Date: {event.dateStart} - {event.dateEnd}</p>
-                    <div className="flex gap-2 mt-2">
-                      {event.category.map((cat, i) => (
-                        <span key={i} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                          {cat}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Link>
-          ))}
-        </div>
-      </div>
+      <SearchResults
+        events={filteredEvents}
+        onBack={() => setIsSearchApplied(false)}
+      />
     );
-  };
+  }
 
   // Get appropriate sections based on user role
   const getSections = () => {
@@ -510,8 +450,9 @@ export default function Home() {
                   onClick={(e) => {
                     e.stopPropagation();
                     setSearchQuery('');
-                    setSearchCategory('All Categories');
-                    setSearchDate('');
+                    setSearchSelectedCategory([]);
+                    setSearchStartDate('');
+                    setSearchEndDate('');
                     setIsSearchApplied(false);
                   }}
                   className="text-sm text-gray-500 hover:text-gray-700 px-2"
@@ -528,10 +469,12 @@ export default function Home() {
                 <SearchCard
                   query={searchQuery}
                   setQuery={setSearchQuery}
-                  category={searchCategory}
-                  setCategory={setSearchCategory}
-                  date={searchDate}
-                  setDate={setSearchDate}
+                  categoriesSelected={searchSelectedCategory}
+                  setCategoriesSelected={setSearchSelectedCategory}
+                  dateStart={searchStartDate}
+                  setStartDate={setSearchStartDate}
+                  dateEnd={searchEndDate}
+                  setEndDate={setSearchEndDate}
                   history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
                   setHistory={(h) => setSearchHistory(h.map(item => item.query))}
                   onSelectHistory={(item) => {
@@ -551,7 +494,7 @@ export default function Home() {
                     }
                   }}
                   onApply={() => {
-                    setIsOpen(false);
+                    setIsOpen(true);
                     setIsSearchApplied(true);
                     // Add to search history if not empty and not duplicate
                     const trimmed = searchQuery.trim();
