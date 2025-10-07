@@ -236,13 +236,15 @@ export default function Home() {
 
         {/* Only show SearchLayout if not loading or error */}
         {!loading && !error && (
-          <SearchLayout
-            activities={activities}
-            isSearchActive={isSearchActive}
-            setIsSearchActive={setIsSearchActive}
-            searchInputRef={searchInputRef}
-            isScrolled={isScrolled}
-          />
+          <section className="sticky top-10 z-[101]">
+            <SearchLayout
+              activities={activities}
+              isSearchActive={isSearchActive}
+              setIsSearchActive={setIsSearchActive}
+              searchInputRef={searchInputRef}
+              isScrolled={isScrolled}
+            />
+          </section>
         )}
 
         {/* Only show Upcoming Events and Event Types if not searching */}
