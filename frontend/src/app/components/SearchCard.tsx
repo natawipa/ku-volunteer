@@ -22,6 +22,9 @@ interface SearchCardProps {
   dateEnd?: string;                      // Selected end date (YYYY-MM-DD)
   setStartDate?: (date: string) => void;
   setEndDate?: (date: string) => void;
+  endAfterChecked?: boolean;            // Whether "end after" is checked
+  setEndAfterChecked?: (checked: boolean) => void;
+  // Event handlers
   onKeyDown?: (e: React.KeyboardEvent) => void; // Key down handler for input fields
   onApply?: () => void;            // Called when search is applied
   history?: HistoryItem[];         // optional controlled history (list of queries + meta)
@@ -30,11 +33,12 @@ interface SearchCardProps {
 }
 
 const DEFAULT_CATEGORIES = [
-  'All Categories',
   'University Activities',
-  'Social Impact',
-  'Environmental',
-  'Education'
+  'Morality and Ethics',
+  'Thinking and Learning Skills',
+  'Interpersonal Skills and Relationship Building',
+  'Health and Well-being',
+  'Social Engagement Activities'
 ];
 
 export default function SearchCard({
@@ -48,6 +52,8 @@ export default function SearchCard({
   setStartDate = () => {},
   dateEnd = "",
   setEndDate = () => {},
+  endAfterChecked = false,
+  setEndAfterChecked = () => {},
   onApply = () => {},
   history,
   setHistory,
@@ -290,6 +296,19 @@ export default function SearchCard({
           </p>
         </div>
       )}
+
+      {/* End after checkbox */}
+      <div className="flex items-center gap-2 mt-2">
+        <input
+          type="checkbox"
+          id="endAfterCheckbox"
+          checked={endAfterChecked}
+          onChange={e => setEndAfterChecked(e.target.checked)}
+        />
+        <label htmlFor="endAfterCheckbox" className="text-sm">
+          Include events that end after selected end date
+        </label>
+      </div>
 
       {/* Apply button */}
       <button

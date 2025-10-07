@@ -19,50 +19,51 @@ interface SearchResultsProps {
 }
 
 export default function SearchResults({ events, onBack }: SearchResultsProps) {
+  // Use event.status and style like EventCard
   const renderEventStatus = (event: Event) => {
-    const startDate = new Date(event.dateStart.split('/').reverse().join('-'));
-    const endDate = new Date(event.dateEnd.split('/').reverse().join('-'));
-    const now = new Date();
-    
-    let status: 'Upcoming' | 'Past' | 'Ongoing';
-    if (startDate > now) {
-      status = 'Upcoming';
-    } else if (endDate < now) {
-      status = 'Past';
-    } else {
-      status = 'Ongoing';
+    let colorClass = '';
+    switch (event.status) {
+      case 'upcoming':
+        colorClass = 'bg-red-100 text-red-800';
+        break;
+      case 'ongoing':
+        colorClass = 'bg-green-100 text-green-800';
+        break;
+      case 'past':
+        colorClass = 'bg-gray-100 text-gray-800';
+        break;
+      default:
+        colorClass = 'bg-gray-100 text-gray-800';
     }
-
-    const statusColors: Record<'Upcoming' | 'Past' | 'Ongoing', string> = {
-      Upcoming: 'bg-blue-100 text-blue-800',
-      Past: 'bg-gray-100 text-gray-800',
-      Ongoing: 'bg-green-100 text-green-800'
-    };
-
+    // Capitalize first letter
+    const label = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : '';
     return (
-      <span className={`${statusColors[status]} text-xs px-2 py-1 rounded-full`}>
-        {status}
+      <span className={`${colorClass} text-xs px-2 py-1 rounded-full font-semibold`}>
+        {label}
       </span>
     );
   };
 
   if (!events || events.length === 0) {
     return (
-      <div className="text-center py-8">
-        <button
-          className="mb-4 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
-          onClick={onBack}
-        >
-          ← Back
-        </button>
-        <p className="text-gray-600">No events found matching your search.</p>
+      <div className="mt-6">
+        <div className="flex items-center justify-between mb-4">
+          <button
+            className="text-green-600 border-b border-green-600 hover:border-green-700 hover:text-green-700 cursor-pointer"
+            onClick={onBack}
+          >
+            ← Back
+          </button>
+          <span />
+        </div>
+        <p className="text-center text-gray-600">No events found matching your search.</p>
       </div>
     );
   }
 
   return (
     
-    <div className="mt-6">
+    <div className="mt-6 mb-10">
       <button
         className="mb-4 text-green-600 border-b border-green-600 hover:border-green-700 hover:text-green-700 cursor-pointer"
         onClick={onBack}> ← Back
