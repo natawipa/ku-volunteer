@@ -15,9 +15,10 @@ interface Event {
 
 interface SearchResultsProps {
   events: Event[];
+  onBack?: () => void;
 }
 
-export default function SearchResults({ events }: SearchResultsProps) {
+export default function SearchResults({ events, onBack }: SearchResultsProps) {
   const renderEventStatus = (event: Event) => {
     const startDate = new Date(event.dateStart.split('/').reverse().join('-'));
     const endDate = new Date(event.dateEnd.split('/').reverse().join('-'));
@@ -48,18 +49,30 @@ export default function SearchResults({ events }: SearchResultsProps) {
   if (!events || events.length === 0) {
     return (
       <div className="text-center py-8">
+        <button
+          className="mb-4 px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200"
+          onClick={onBack}
+        >
+          ← Back
+        </button>
         <p className="text-gray-600">No events found matching your search.</p>
       </div>
     );
   }
 
   return (
+    
     <div className="mt-6">
+      <button
+        className="mb-4 text-green-600 border-b border-green-600 hover:border-green-700 hover:text-green-700 cursor-pointer"
+        onClick={onBack}> ← Back
+      </button>
+
       <h2 className="font-semibold text-xl mb-4">Search Results ({events.length} events)</h2>
       <div className="space-y-4">
         {events.map((event, idx) => (
           <Link href={`/event-detail/${event.id}`} key={idx}>
-            <div className="bg-white rounded-lg shadow-md p-4 flex gap-4 hover:shadow-lg transition-shadow cursor-pointer">
+            <div className="bg-white rounded-lg shadow-md p-4 mt-4 flex gap-4 hover:shadow-lg transition-shadow cursor-pointer">
               <div className="w-48 h-32 relative flex-shrink-0">
                 <Image
                   src={event.imgSrc}
