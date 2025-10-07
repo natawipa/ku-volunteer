@@ -65,7 +65,7 @@ POST http://localhost:8000/api/activities/applications/1/cancel/
 Authorization: Bearer YOUR_STUDENT_TOKEN
 ```
 
-### 🆕 Get My Approved Activities
+### Get My Approved Activities
 
 ```http
 GET http://localhost:8000/api/activities/my-approved-activities/
@@ -90,7 +90,7 @@ Authorization: Bearer YOUR_STUDENT_TOKEN
 ]
 ```
 
-### 🆕 Browse Activities with Application Status
+### Browse Activities with Application Status
 
 ```http
 GET http://localhost:8000/api/activities/list/
@@ -191,12 +191,12 @@ Content-Type: application/json
    - Reason: 1-225 characters
    - Same organization as activity
 
-5. **🆕 Student fetches approved activities**
+5. **Student fetches approved activities**
 
    - Returns only activities where application is approved
    - Empty array if no approved applications
 
-6. **🆕 Activity list shows application status**
+6. **Activity list shows application status**
    - Each activity includes `user_application_status` field
    - Shows current status: pending/approved/rejected/cancelled/null
 
@@ -251,21 +251,6 @@ Content-Type: application/json
    ```
    Expected: 403 Forbidden
    ```
-
----
-
-## 📝 Postman Collection Variables
-
-Set these in your collection:
-
-| Variable            | Value                   | Usage                |
-| ------------------- | ----------------------- | -------------------- |
-| `baseUrl`           | `http://localhost:8000` | Base API URL         |
-| `studentToken`      | `eyJ0eXAiOi...`         | Student auth token   |
-| `organizerToken`    | `eyJ0eXAiOi...`         | Organizer auth token |
-| `adminToken`        | `eyJ0eXAiOi...`         | Admin auth token     |
-| `testActivityId`    | `1`                     | Test activity ID     |
-| `testApplicationId` | `1`                     | Test application ID  |
 
 ---
 
