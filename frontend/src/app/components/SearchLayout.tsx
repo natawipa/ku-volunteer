@@ -137,10 +137,10 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 	};
 
 	return (
-		<section className="mb-6">
+	    <section className="mb-6">
 			<div
 				ref={wrapperRef}
-				className={`transition-all duration-300 ${
+				className={`sticky top-10 z-[101] transition-all duration-300 ${
 					isScrolled ? "max-w-md mx-auto scale-90" : "relative w-150"
 				} justify-center mx-auto`}
 			>
