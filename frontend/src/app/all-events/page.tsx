@@ -5,7 +5,6 @@ import EventLayout from '../components/AllEventLayout';
 import PublicEventHorizontalCard, { PublicEventCardData } from '../components/PublicEventHorizontalCard';
 import { activitiesApi } from "../../lib/activities";
 import type { Activity } from "../../lib/types";
-import { string } from 'zod';
 
 interface Event {
   id: string;
