@@ -239,7 +239,7 @@ export default function SearchCard({
           </div>
 
           {/* Selected chips */}
-          {selectedCategories.length > 0 && (
+          {selectedCategories.length > 0 ? (
             <div className="flex flex-wrap gap-2 mt-2">
               {selectedCategories.map(cat => (
                 <span
@@ -261,7 +261,7 @@ export default function SearchCard({
                 </span>
               ))}
             </div>
-          )}
+          ) : null}
 
           {/* Dropdown menu */}
           {categoryDropdownOpen && (
