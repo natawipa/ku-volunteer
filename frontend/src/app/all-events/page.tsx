@@ -3,13 +3,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import EventLayout from '../components/AllEventLayout';
 import PublicEventHorizontalCard, { PublicEventCardData } from '../components/PublicEventHorizontalCard';
+import { activitiesApi } from "../../lib/activities";
+import type { Activity } from "../../lib/types";
+import { string } from 'zod';
 
 interface Event {
   id: string;
   title: string;
   description: string;
   category: string;
-  date: string;
+  dateStart: string;
+  dateEnd: string;
   location: string;
   organizer: string;
   image_url?: string;
@@ -20,70 +24,86 @@ interface Event {
 const AllEventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('all');
+  const [filter, setFilter] = useState<string>('');
   const [searchTerm, setSearchTerm] = useState('');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
+
+
 
   useEffect(() => {
-    // Simulate API call for now - replace with actual API call
     const fetchEvents = async () => {
       setLoading(true);
-      // Mock data for demonstration
-      const mockEvents: Event[] = [
-        {
-          id: '1',
-          title: 'Community Garden Project',
-          description: 'Help build a sustainable community garden in the local park',
-          category: 'Environmental',
-          date: '2024-02-15',
-          location: 'Central Park, Bangkok',
-          organizer: 'Green Earth Foundation',
-          participants_count: 15,
-          max_participants: 30,
-        },
-        {
-          id: '2',
-          title: 'Education Support Program',
-          description: 'Tutor underprivileged children in mathematics and science',
-          category: 'Education',
-          date: '2024-02-20',
-          location: 'Community Center, Nonthaburi',
-          organizer: 'Learning for All',
-          participants_count: 8,
-          max_participants: 20,
-        },
-        {
-          id: '3',
-          title: 'Beach Cleanup Initiative',
-          description: 'Join us in cleaning up the beautiful beaches of Pattaya',
-          category: 'Environmental',
-          date: '2024-02-25',
-          location: 'Pattaya Beach, Chonburi',
-          organizer: 'Ocean Guardians',
-          participants_count: 25,
-          max_participants: 50,
-        },
-      ];
-      
-      setTimeout(() => {
-        setEvents(mockEvents);
+      try {
+        const result = await activitiesApi.getActivities();
+        if (result.success && result.data) {
+          // Map Activity to Event type
+          const mappedEvents: Event[] = result.data.map((activity: Activity) => ({
+            id: activity.id.toString(),
+            title: activity.title,
+            description: activity.description,
+            category: activity.categories?.[0] || '',
+            dateStart: (activity.start_at || '').split('T')[0],
+            dateEnd: (activity.end_at || '').split('T')[0],
+            location: activity.location,
+            organizer: activity.organizer_name || activity.organizer_email || '',
+            image_url: activity.cover_image_url,
+            participants_count: activity.current_participants,
+            max_participants: activity.max_participants || 0,
+          }));
+          setEvents(mappedEvents);
+        } else {
+          setEvents([]);
+        }
+      } catch (error) {
+        console.error('Error fetching activities:', error);
+        setEvents([]);
+      } finally {
         setLoading(false);
-      }, 1000);
+      }
     };
-
     fetchEvents();
   }, []);
 
-  const filteredEvents = events.filter(event => {
-    const matchesFilter = filter === 'all' || event.category.toLowerCase() === filter.toLowerCase();
-    const matchesSearch = event.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         event.description.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesFilter && matchesSearch;
-  });
+  const filteredEvents = useMemo(() => {
+    return events.filter(event => {
+      // Category filter logic
+      const selectedCategories = Array.isArray(filter) ? filter : filter ? [filter] : [];
+      const eventCategories = Array.isArray(event.category) ? event.category : [event.category];
+      const matchesCategory =
+        selectedCategories.length === 0 ||
+        selectedCategories.includes('All Categories') ||
+        eventCategories.some(c => {
+          if (selectedCategories.includes('Social Impact')) {
+            return c.includes('Social Engagement Activities');
+          }
+          return selectedCategories.some(sel => c && c === sel);
+        });
 
-  const categoryOptions = useMemo(() => {
-    const base = ['all', 'Environmental', 'Education', 'Health', 'Social'];
-    return ['All Categories', ...base.filter(c => c !== 'all')];
-  }, []);
+      // Search term filter
+      const term = searchTerm.trim().toLowerCase();
+      const matchesSearch =
+        term === '' ||
+        event.title.toLowerCase().includes(term) ||
+        event.description.toLowerCase().includes(term);
+
+      // Date filter
+      let matchesDate = true;
+      if (dateStart) {
+        const eventStart = new Date(event.dateStart);
+        const filterStart = new Date(dateStart);
+        matchesDate = eventStart >= filterStart;
+      }
+      if (matchesDate && dateEnd) {
+        const eventEnd = new Date(event.dateEnd);
+        const filterEnd = new Date(dateEnd);
+        matchesDate = eventEnd <= filterEnd;
+      }
+
+      return matchesCategory && matchesSearch && matchesDate;
+    });
+  }, [events, filter, searchTerm, dateStart, dateEnd]);
+
 
   return (
     <EventLayout
@@ -91,12 +111,18 @@ const AllEventsPage: React.FC = () => {
       hideTitle={false}
       searchVariant="compact"
       searchPlaceholder="Search events..."
-      onSearchChange={setSearchTerm}
+      searchSelectedCategories={[filter || '']}
       initialSearchValue={searchTerm}
-      searchCategoryOptions={categoryOptions}
-      searchSelectedCategory={filter === 'all' ? 'All Categories' : filter}
-      onSearchCategoryChange={(val) => setFilter(val === 'All Categories' ? 'all' : val)}
-      searchShowDate={false}
+      searchShowDate={true}
+      onDateStartChange={setDateStart}
+      onDateEndChange={setDateEnd}
+      onSearchApply={({ searchValue, selectedCategories, dateStart: ds, dateEnd: de }) => {
+        setSearchTerm(searchValue);
+        const val = selectedCategories?.[0];
+        setFilter(val === 'All Categories' ? '' : (val || ''));
+        setDateStart(ds || '');
+        setDateEnd(de || '');
+      }}
     >
       {/* Events Section */}
       {loading ? (
