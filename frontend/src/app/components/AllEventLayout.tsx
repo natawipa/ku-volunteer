@@ -5,6 +5,7 @@ import Link from 'next/link';
 import SearchCard from '@/app/components/SearchCard';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlusIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { set } from 'zod';
 
 interface AdminLayoutProps {
   title?: string;
@@ -67,9 +68,17 @@ export default function AdminLayout({
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>(searchSelectedCategories || []);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(Array.isArray(searchSelectedCategories) && searchSelectedCategories.filter(Boolean).length > 0 ? searchSelectedCategories.filter(Boolean) : []);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
+  const [endAfterChecked, setEndAfterChecked] = useState(true);
+  const [searchHistory, setSearchHistory] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      const stored = localStorage.getItem("searchHistory");
+      return stored ? JSON.parse(stored) : [];
+    }
+    return [];
+  });
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Scroll effect for shrinking search bar (only needed for compact)
@@ -90,27 +99,76 @@ export default function AdminLayout({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [hideSearch]);
 
-  const handleSearchChange = (val: string) => {
-    setSearchValue(val);
-    onSearchChange?.(val);
-  };
-
   const handleCategoriesChange = (categories: string[]) => {
     setSelectedCategories(categories);
     onSearchCategoriesChange?.(categories);
+
+    // Instantly apply search filters when category changes
+    onSearchApply?.({
+      searchValue,
+      selectedCategories: categories,
+      dateStart,
+      dateEnd,
+    });
   };
 
-  const handleApply = () => {
+  const handleSearchChange = (val: string) => {
+    setSearchValue(val);
+    onSearchChange?.(val);
+
+    // Instantly apply search too
+    onSearchApply?.({
+      searchValue: val,
+      selectedCategories,
+      dateStart,
+      dateEnd,
+    });
+  };
+
+  const handleDateStartChange = (date: string) => {
+    setDateStart(date);
+    onDateStartChange?.(date);
+
+    // Instantly apply filters when start date changes
+    onSearchApply?.({
+      searchValue,
+      selectedCategories,
+      dateStart: date,
+      dateEnd,
+    });
+  };
+
+// When changing end date
+const handleDateEndChange = (date: string) => {
+    setDateEnd(date);
+    onDateEndChange?.(date);
+
+    // Instantly apply filters when end date changes
+    onSearchApply?.({
+      searchValue,
+      selectedCategories,
+      dateStart,
+      dateEnd: date,
+    });
+  };
+
+  const handleApply = (value?: string) => {
     setIsOpen(false);
+    const appliedValue = value !== undefined ? value : searchValue;
+    // Add to history
+    const trimmed = appliedValue.trim();
+    if (trimmed && !searchHistory.includes(trimmed)) {
+      setSearchHistory([trimmed, ...searchHistory].slice(0, 10));
+      localStorage.setItem("searchHistory", JSON.stringify([trimmed, ...searchHistory].slice(0, 10)));
+    }
     // Trigger individual callbacks
-    onSearchChange?.(searchValue);
+    onSearchChange?.(appliedValue);
     onSearchCategoriesChange?.(selectedCategories);
     onDateStartChange?.(dateStart);
     onDateEndChange?.(dateEnd);
-    
     // Trigger combined search apply callback
     onSearchApply?.({
-      searchValue,
+      searchValue: appliedValue,
       selectedCategories,
       dateStart,
       dateEnd,
@@ -162,32 +220,53 @@ export default function AdminLayout({
                   placeholder={searchPlaceholder}
                   className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none text-sm"
                   onFocus={() => setIsOpen(true)}
+                  onKeyDown={e => {
+                    if (e.key === 'Enter') {
+                      handleApply();
+                    }
+                  }}
                 />
+                {searchValue && (
+                  <button
+                    type="button"
+                    aria-label="Clear search"
+                    className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none"
+                    onClick={() => {
+                      handleSearchChange("");
+                      handleApply();
+                    }}
+                  >
+                    &#10005;
+                  </button>
+                )}
                 <div className="h-6 w-[1px] bg-gray-200 mx-2" />
                 <ChevronDownIcon className="text-gray-400 w-5 h-5 ml-2 opacity-60" />
               </div>
               {isOpen && (
                 <div className="absolute top-full mt-1 w-full z-50">
                   <SearchCard
-                    showCategory={true}
-                    showDate={searchShowDate}
-                    showEndAfterCheckbox={false}
-                    categories={searchCategoryOptions}
                     query={searchValue}
                     setQuery={setSearchValue}
                     categoriesSelected={selectedCategories}
                     setCategoriesSelected={handleCategoriesChange}
                     dateStart={dateStart}
-                    setStartDate={(date) => {
-                      setDateStart(date);
-                      onDateStartChange?.(date);
-                    }}
+                    setStartDate={handleDateStartChange}
                     dateEnd={dateEnd}
-                    setEndDate={(date) => {
-                      setDateEnd(date);
-                      onDateEndChange?.(date);
+                    setEndDate={handleDateEndChange}
+                    endAfterChecked={endAfterChecked}
+                    setEndAfterChecked={setEndAfterChecked}
+                    history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
+                    setHistory={h => setSearchHistory(h.map(item => item.query))}
+                    onSelectHistory={item => {
+                      setSearchValue(item.query);
+                      handleApply(item.query);
+                      setIsOpen(false);
                     }}
-                    onApply={handleApply}
+                    
+                    onApply={() => {
+                      setIsOpen(false);
+                      handleApply();
+                    }}
                   />
                 </div>
               )}
