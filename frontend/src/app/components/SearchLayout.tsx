@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useMemo } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import SearchCard from "./SearchCard";
@@ -25,8 +25,8 @@ const transformActivityToEvent = (activity: Activity) => {
 		id: activity.id || 0,
 		title: activity.title || "Untitled Activity",
 		post: new Date(activity.created_at || new Date()).toLocaleDateString("en-GB"),
-		dateStart: new Date(activity.start_at || new Date()).toLocaleDateString("en-GB"),
-		dateEnd: new Date(activity.end_at || new Date()).toLocaleDateString("en-GB"),
+		dateStart: activity.start_at ? activity.start_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
+		dateEnd: activity.end_at ? activity.end_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
 		location: activity.location || "Unknown Location",
 		category: activity.categories || [],
 		imgSrc: "/titleExample.jpg",
@@ -87,49 +87,49 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 			: [];
 
 	// Filter events based on searchQuery and searchCategory
-		const getFilteredEvents = () => {
-			const q = searchQuery.toLowerCase().trim();
-			return events.filter(ev => {
-				if (!ev) return false;
-				const matchesSearch = !q ||
-					ev.title.toLowerCase().includes(q) ||
-					ev.location.toLowerCase().includes(q);
-				const matchesCategory =
-					searchSelectedCategory.length === 0 ||
-					searchSelectedCategory.includes("All Categories") ||
-					(Array.isArray(ev.category) && ev.category.some(c => {
+	const filteredEvents = useMemo(() => {
+		const q = searchQuery.toLowerCase().trim();
+
+		return events.filter(ev => {
+			const matchesSearch =
+				!q ||
+				ev.title.toLowerCase().includes(q) ||
+				ev.location.toLowerCase().includes(q);
+
+			const matchesCategory =
+				searchSelectedCategory.length === 0 ||
+				searchSelectedCategory.includes("All Categories") ||
+				(Array.isArray(ev.category) &&
+					ev.category.some(c => {
 						if (searchSelectedCategory.includes("Social Impact")) {
 							return c.includes("Social Engagement Activities");
 						}
 						return searchSelectedCategory.some(sel => c.includes(sel));
 					}));
-				const matchesDate = !searchStartDate || (() => {
-					if (!ev.dateStart) return true;
-					const [day, month, year] = ev.dateStart.split("/");
-					const eventStart = new Date(`${year}-${month}-${day}`);
-					const search = new Date(searchStartDate);
-					return eventStart >= search;
-				})();
-				const matchesEndDate = !searchEndDate || (() => {
-					if (!ev.dateEnd) return true;
-					const [day, month, year] = ev.dateEnd.split("/");
-					const eventEnd = new Date(`${year}-${month}-${day}`);
-					const searchEnd = new Date(searchEndDate);
-					if (endAfterChecked) {
-						// When checked: include all events (both before and after the end date)
-						return true;
-					} else {
-						// When unchecked: only include events that end on or before the selected end date
-						return eventEnd <= searchEnd;
-					}
-				})();
-				return matchesSearch && matchesCategory && matchesDate && matchesEndDate;
-			});
-		};
+
+			let matchesDate = true;
+			const eventStart = new Date(ev.dateStart + "T00:00:00");
+			const eventEnd = new Date(ev.dateEnd + "T00:00:00");
+
+			if (searchStartDate && searchEndDate) {
+				const filterStart = new Date(searchStartDate + "T00:00:00");
+				const filterEnd = new Date(searchEndDate + "T00:00:00");
+
+				if (endAfterChecked) {
+					// Show events that end after filterStart and start before filterEnd (overlap)
+					matchesDate = eventEnd >= filterStart && eventStart <= filterEnd;
+				} else {
+					// Show events that overlap and end before filterEnd
+					matchesDate = eventEnd <= filterEnd && eventStart <= filterEnd && eventEnd >= filterStart;
+				}
+			}
+
+			return matchesCategory && matchesSearch && matchesDate;
+		});
+	}, [events, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
 
 	// Render events in search results layout (filtered)
 	const renderSearchResults = () => {
-		const filteredEvents = getFilteredEvents();
 		return (
 			<SearchResults
 				events={filteredEvents}
