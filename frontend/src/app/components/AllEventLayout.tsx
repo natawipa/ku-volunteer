@@ -23,12 +23,23 @@ interface AdminLayoutProps {
   initialSearchValue?: string;
   /** Category options to surface inside the dropdown search card */
   searchCategoryOptions?: string[];
-  /** Currently selected category (controlled) */
-  searchSelectedCategory?: string;
-  /** Callback when category changes */
-  onSearchCategoryChange?: (value: string) => void;
+  /** Currently selected categories (controlled) */
+  searchSelectedCategories?: string[];
+  /** Callback when categories change */
+  onSearchCategoriesChange?: (values: string[]) => void;
   /** Whether to show a date picker in the dropdown (default false for admin) */
   searchShowDate?: boolean;
+  /** Callback when date start changes */
+  onDateStartChange?: (date: string) => void;
+  /** Callback when date end changes */
+  onDateEndChange?: (date: string) => void;
+  /** Callback when search is applied with all current filters */
+  onSearchApply?: (filters: {
+    searchValue: string;
+    selectedCategories: string[];
+    dateStart: string;
+    dateEnd: string;
+  }) => void;
 }
 
 /**
@@ -46,13 +57,19 @@ export default function AdminLayout({
   onSearchChange,
   initialSearchValue = '',
   searchCategoryOptions,
-  searchSelectedCategory,
-  onSearchCategoryChange,
+  searchSelectedCategories,
+  onSearchCategoriesChange,
   searchShowDate = true,
+  onDateStartChange,
+  onDateEndChange,
+  onSearchApply,
 }: AdminLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>(searchSelectedCategories || []);
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Scroll effect for shrinking search bar (only needed for compact)
@@ -76,6 +93,28 @@ export default function AdminLayout({
   const handleSearchChange = (val: string) => {
     setSearchValue(val);
     onSearchChange?.(val);
+  };
+
+  const handleCategoriesChange = (categories: string[]) => {
+    setSelectedCategories(categories);
+    onSearchCategoriesChange?.(categories);
+  };
+
+  const handleApply = () => {
+    setIsOpen(false);
+    // Trigger individual callbacks
+    onSearchChange?.(searchValue);
+    onSearchCategoriesChange?.(selectedCategories);
+    onDateStartChange?.(dateStart);
+    onDateEndChange?.(dateEnd);
+    
+    // Trigger combined search apply callback
+    onSearchApply?.({
+      searchValue,
+      selectedCategories,
+      dateStart,
+      dateEnd,
+    });
   };
 
   return (
@@ -132,11 +171,23 @@ export default function AdminLayout({
                   <SearchCard
                     showCategory={true}
                     showDate={searchShowDate}
+                    showEndAfterCheckbox={false}
                     categories={searchCategoryOptions}
                     query={searchValue}
                     setQuery={setSearchValue}
-                    categoriesSelected={searchSelectedCategory ? [searchSelectedCategory] : []}
-                    setCategoriesSelected={val => onSearchCategoryChange?.(val[0] || '')}
+                    categoriesSelected={selectedCategories}
+                    setCategoriesSelected={handleCategoriesChange}
+                    dateStart={dateStart}
+                    setStartDate={(date) => {
+                      setDateStart(date);
+                      onDateStartChange?.(date);
+                    }}
+                    dateEnd={dateEnd}
+                    setEndDate={(date) => {
+                      setDateEnd(date);
+                      onDateEndChange?.(date);
+                    }}
+                    onApply={handleApply}
                   />
                 </div>
               )}

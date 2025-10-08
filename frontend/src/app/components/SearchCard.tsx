@@ -1,5 +1,6 @@
 "use client";
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, useRef } from "react";
+import { ChevronDownIcon } from "@heroicons/react/20/solid";
 
 interface HistoryItem {
   query: string;
@@ -10,6 +11,7 @@ interface HistoryItem {
 interface SearchCardProps {
   showCategory?: boolean;
   showDate?: boolean;
+  showEndAfterCheckbox?: boolean;
   categories?: string[];
   query?: string;                   // Current search query
   setQuery?: (query: string) => void;
@@ -44,6 +46,7 @@ const DEFAULT_CATEGORIES = [
 export default function SearchCard({
   showCategory = true,
   showDate = true,
+  showEndAfterCheckbox = true,
   categories,
   setQuery = () => {},
   categoriesSelected = [],
@@ -61,6 +64,8 @@ export default function SearchCard({
 }: SearchCardProps) {
   // local fallback history now stores only the query strings
   const [localHistory, setLocalHistory] = useState<string[]>([]);
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
 
   const isControlledCategories = Array.isArray(categoriesSelected) && typeof setCategoriesSelected === 'function';
   const [internalSelected, setInternalSelected] = useState<string[]>(() => (isControlledCategories ? categoriesSelected : []));
@@ -146,6 +151,17 @@ export default function SearchCard({
       onApply();
     }
   };
+
+  // Close category dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setCategoryDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
   
   return (
     <div className="bg-white shadow-md rounded-lg p-4 space-y-4">
@@ -197,27 +213,47 @@ export default function SearchCard({
       )}
 
       {showCategory && (
-        <div onMouseDown={(e) => e.stopPropagation()} /* prevent parent from closing on mousedown */>
+        <div 
+          ref={categoryDropdownRef}
+          onMouseDown={(e) => e.stopPropagation()} /* prevent parent from closing on mousedown */
+          className="relative"
+        >
           <label className="block text-sm font-bold text-gray-700 mb-2">Categories</label>
+
+          {/* Dropdown trigger */}
+          <div
+            onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+            className="flex items-center justify-between w-full px-3 py-2 border border-gray-300 rounded-lg bg-white cursor-pointer hover:border-gray-400 transition-colors"
+          >
+            <span className="text-gray-700">
+              {selectedCategories.length > 0 
+                ? `${selectedCategories.length} selected`
+                : "Select categories..."
+              }
+            </span>
+            <ChevronDownIcon 
+              className={`w-5 h-5 text-gray-400 transition-transform ${
+                categoryDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </div>
 
           {/* Selected chips */}
           {selectedCategories.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2 mt-2">
               {selectedCategories.map(cat => (
                 <span
                   key={cat}
-                  className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm"
+                  className="flex items-center bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs"
                 >
-                  <span className="truncate max-w-[10rem] inline-block">{cat}</span>
-
+                  <span className="truncate max-w-[8rem] inline-block">{cat}</span>
                   <button
                     type="button"
-                    onMouseDown={(e) => {
+                    onClick={(e) => {
                       e.stopPropagation();
-                      e.preventDefault();                      
                       updateSelectedCategories(selectedCategories.filter(c => c !== cat));
                     }}
-                    className="ml-2 text-green-700 hover:text-green-900"
+                    className="ml-1 text-green-700 hover:text-green-900"
                     aria-label={`Remove ${cat}`}
                   >
                     ×
@@ -227,37 +263,36 @@ export default function SearchCard({
             </div>
           )}
 
-          {/* Multi-select buttons */}
-          <div className="flex flex-wrap gap-2">
-            {(categories?.length ? categories : DEFAULT_CATEGORIES).map(cat => {
-              const isSelected = selectedCategories.includes(cat);
-              return (
-                <button
-                  key={cat}
-                  type="button"
-                  onMouseDown={(e) => {
-                    // use mousedown so we act before parent blurs/closes the dropdown
-                    e.preventDefault();
-                    e.stopPropagation();
-
-                    if (isSelected) {
-                      updateSelectedCategories(selectedCategories.filter(c => c !== cat));
-                    } else {
-                      updateSelectedCategories([...selectedCategories, cat]);
-                    }
-                  }}
-                  className={`px-3 py-1 rounded-full border text-sm transition-colors ${
-                    isSelected
-                      ? "bg-green-600 text-white border-green-600"
-                      : "bg-white text-gray-700 border-gray-300 hover:bg-green-50"
-                  }`}
-                  aria-pressed={isSelected}
-                >
-                  {cat}
-                </button>
-              );
-            })}
-          </div>
+          {/* Dropdown menu */}
+          {categoryDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+              {(categories?.length ? categories : DEFAULT_CATEGORIES).map(cat => {
+                const isSelected = selectedCategories.includes(cat);
+                return (
+                  <div
+                    key={cat}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSelected) {
+                        updateSelectedCategories(selectedCategories.filter(c => c !== cat));
+                      } else {
+                        updateSelectedCategories([...selectedCategories, cat]);
+                      }
+                    }}
+                    className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      readOnly
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">{cat}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       )}
 
@@ -298,17 +333,19 @@ export default function SearchCard({
       )}
 
       {/* End after checkbox */}
-      <div className="flex items-center gap-2 mt-2">
-        <input
-          type="checkbox"
-          id="endAfterCheckbox"
-          checked={endAfterChecked}
-          onChange={e => setEndAfterChecked(e.target.checked)}
-        />
-        <label htmlFor="endAfterCheckbox" className="text-sm">
-          Include events that end after selected end date
-        </label>
-      </div>
+      {showEndAfterCheckbox && (
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="checkbox"
+            id="endAfterCheckbox"
+            checked={endAfterChecked}
+            onChange={e => setEndAfterChecked(e.target.checked)}
+          />
+          <label htmlFor="endAfterCheckbox" className="text-sm">
+            Include events that end after selected end date
+          </label>
+        </div>
+      )}
 
       {/* Apply button */}
       <button

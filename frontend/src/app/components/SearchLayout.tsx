@@ -116,8 +116,10 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 					const eventEnd = new Date(`${year}-${month}-${day}`);
 					const searchEnd = new Date(searchEndDate);
 					if (endAfterChecked) {
-						return eventEnd >= searchEnd;
+						// When checked: include all events (both before and after the end date)
+						return true;
 					} else {
+						// When unchecked: only include events that end on or before the selected end date
 						return eventEnd <= searchEnd;
 					}
 				})();
@@ -252,7 +254,7 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 								}
 							}}
 							onApply={() => {
-								setIsOpen(true);
+								setIsOpen(false);
 								setIsSearchApplied(true);
 								const trimmed = searchQuery.trim();
 								if (trimmed && !searchHistory.includes(trimmed)) {
