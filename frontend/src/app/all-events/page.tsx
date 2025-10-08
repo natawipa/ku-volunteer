@@ -12,8 +12,8 @@ interface Event {
   title: string;
   description: string;
   category: string;
-  dateStart: string;
-  dateEnd: string;
+  dateStart: string; // ISO date string
+  dateEnd: string; // ISO date string
   location: string;
   organizer: string;
   image_url?: string;
@@ -28,6 +28,7 @@ const AllEventsPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
+  const [endAfterChecked, setEndAfterChecked] = useState(true);
 
 
 
@@ -89,21 +90,27 @@ const AllEventsPage: React.FC = () => {
 
       // Date filter
       let matchesDate = true;
-      if (dateStart) {
-        const eventStart = new Date(event.dateStart);
+      const eventStart = new Date(event.dateStart);
+      const eventEnd = new Date(event.dateEnd);
+
+      if (dateStart && dateEnd) {
         const filterStart = new Date(dateStart);
-        matchesDate = eventStart >= filterStart;
-      }
-      if (matchesDate && dateEnd) {
-        const eventEnd = new Date(event.dateEnd);
         const filterEnd = new Date(dateEnd);
-        matchesDate = eventEnd <= filterEnd;
+
+        // Start date must be within the selected range
+        const startInRange = eventStart >= filterStart && eventStart <= filterEnd;
+
+        // End date can be after selected range if checkbox is true
+        const endInRange = endAfterChecked
+          ? eventEnd >= filterStart // allow any event that starts within or ends after range
+          : eventEnd <= filterEnd;
+
+        matchesDate = startInRange && endInRange;
       }
 
       return matchesCategory && matchesSearch && matchesDate;
     });
-  }, [events, filter, searchTerm, dateStart, dateEnd]);
-
+}, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked]);
 
   return (
     <EventLayout
@@ -116,6 +123,8 @@ const AllEventsPage: React.FC = () => {
       searchShowDate={true}
       onDateStartChange={setDateStart}
       onDateEndChange={setDateEnd}
+      endAfterChecked={endAfterChecked}
+      setEndAfterChecked={setEndAfterChecked}
       onSearchApply={({ searchValue, selectedCategories, dateStart: ds, dateEnd: de }) => {
         setSearchTerm(searchValue);
         const val = selectedCategories?.[0];
