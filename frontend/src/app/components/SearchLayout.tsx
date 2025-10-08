@@ -37,13 +37,12 @@ const transformActivityToEvent = (activity: Activity) => {
 
 interface SearchLayoutProps {
 	activities: Activity[];
-	isSearchActive: boolean;
 	setIsSearchActive: (active: boolean) => void;
 	searchInputRef: React.RefObject<HTMLInputElement | null>;
     isScrolled: boolean;
 }
 
-export default function SearchLayout({ activities, isSearchActive, setIsSearchActive, searchInputRef, isScrolled }: SearchLayoutProps) {
+export default function SearchLayout({ activities, setIsSearchActive, isScrolled }: SearchLayoutProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchSelectedCategory, setSearchSelectedCategory] = useState<string[]>([]);
@@ -81,13 +80,13 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 		setIsSearchActive(isSearchApplied);
 	}, [isSearchApplied, setIsSearchActive]);
 
-	// Transform activities to events format
-		const events: Event[] = Array.isArray(activities)
-			? activities.map(transformActivityToEvent).filter((e): e is Event => e !== null)
-			: [];
+
 
 	// Filter events based on searchQuery and searchCategory
 	const filteredEvents = useMemo(() => {
+		const events: Event[] = Array.isArray(activities)
+			? activities.map(transformActivityToEvent).filter((e): e is Event => e !== null)
+			: [];
 		const q = searchQuery.toLowerCase().trim();
 
 		return events.filter(ev => {
@@ -126,7 +125,7 @@ export default function SearchLayout({ activities, isSearchActive, setIsSearchAc
 
 			return matchesCategory && matchesSearch && matchesDate;
 		});
-	}, [events, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
+	}, [activities, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
 
 	// Render events in search results layout (filtered)
 	const renderSearchResults = () => {

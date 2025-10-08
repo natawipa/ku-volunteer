@@ -1,5 +1,6 @@
 "use client";
 import Link from 'next/link';
+import Image from 'next/image';
 import { MapPinIcon } from '@heroicons/react/20/solid'
 
 export interface PublicEventCardData {
@@ -32,10 +33,13 @@ export default function PublicEventHorizontalCard({ event, onJoin }: Props) {
         {/* Event image on the left */}
         <div className="flex-shrink-0 w-28 h-28 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
           {/* Replace with event.image if available, fallback to a default */}
-          <img
+          <Image
             src={event.imgSrc || "/titleExample.jpg"}
             alt={event.title}
+            width={112}
+            height={112}
             className="object-cover w-full h-full"
+            style={{ objectFit: 'cover' }}
           />
         </div>
         {/* Decorative background accent */}

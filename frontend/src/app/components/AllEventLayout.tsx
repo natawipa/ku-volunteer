@@ -5,7 +5,6 @@ import Link from 'next/link';
 import SearchCard from '@/app/components/SearchCard';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlusIcon, UserCircleIcon } from '@heroicons/react/24/solid';
-import { set } from 'zod';
 
 interface AdminLayoutProps {
   title?: string;
@@ -108,7 +107,7 @@ export default function AdminLayout({
       dateStart,
       dateEnd,
     });
-  }, [endAfterChecked]);
+  }, [endAfterChecked, searchValue, selectedCategories, dateStart, dateEnd, onSearchApply]);
 
   const handleCategoriesChange = (categories: string[]) => {
     setSelectedCategories(categories);
