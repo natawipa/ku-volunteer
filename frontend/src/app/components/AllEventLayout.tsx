@@ -35,6 +35,9 @@ interface AdminLayoutProps {
   /** Callback when date end changes */
   onDateEndChange?: (date: string) => void;
   /** Callback when search is applied with all current filters */
+  endAfterChecked: boolean;
+  setEndAfterChecked: (val: boolean) => void;
+
   onSearchApply?: (filters: {
     searchValue: string;
     selectedCategories: string[];
@@ -57,12 +60,12 @@ export default function AdminLayout({
   searchPlaceholder = 'Search events name, description',
   onSearchChange,
   initialSearchValue = '',
-  searchCategoryOptions,
   searchSelectedCategories,
   onSearchCategoriesChange,
-  searchShowDate = true,
   onDateStartChange,
   onDateEndChange,
+  endAfterChecked,
+  setEndAfterChecked,
   onSearchApply,
 }: AdminLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -71,7 +74,6 @@ export default function AdminLayout({
   const [selectedCategories, setSelectedCategories] = useState<string[]>(Array.isArray(searchSelectedCategories) && searchSelectedCategories.filter(Boolean).length > 0 ? searchSelectedCategories.filter(Boolean) : []);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(true);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("searchHistory");
@@ -98,6 +100,15 @@ export default function AdminLayout({
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [hideSearch]);
+
+  useEffect(() => {
+    onSearchApply?.({
+      searchValue,
+      selectedCategories,
+      dateStart,
+      dateEnd,
+    });
+  }, [endAfterChecked]);
 
   const handleCategoriesChange = (categories: string[]) => {
     setSelectedCategories(categories);
