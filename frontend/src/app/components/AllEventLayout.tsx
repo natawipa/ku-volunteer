@@ -133,8 +133,10 @@ export default function AdminLayout({
                     showCategory={true}
                     showDate={searchShowDate}
                     categories={searchCategoryOptions}
-                    selectedCategory={searchSelectedCategory}
-                    onCategoryChange={onSearchCategoryChange}
+                    query={searchValue}
+                    setQuery={setSearchValue}
+                    category={searchSelectedCategory || "All Categories"}
+                    setCategory={onSearchCategoryChange || (() => {})}
                   />
                 </div>
               )}
