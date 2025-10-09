@@ -16,14 +16,15 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
   return (
     <Link href={`/event-detail/${id}`}>
     <div className="flex items-center rounded-lg gap-4 min-w-[400px]">
-      {/* Thumbnail */}
-      <Image
-        src={imgSrc}
-        alt={title}
-        width={150} 
-        height={120} 
-        className="rounded-lg object-cover"
-      />
+      <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden"> {/* 32 * 4 = 128px */}
+        <Image
+          src={imgSrc}
+          alt={title}
+          width={128}
+          height={128}
+          className="w-full h-full object-cover"
+        />
+    </div>
 
       {/* Content */}
       <div className="flex flex-col flex-1 gap-2 w-[1000px]">

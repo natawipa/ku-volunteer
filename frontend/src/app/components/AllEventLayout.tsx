@@ -5,6 +5,8 @@ import Link from 'next/link';
 import SearchCard from '@/app/components/SearchCard';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlusIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { USER_ROLES } from '@/lib/constants';
+import ProfileCard from './ProfileCard';
 
 interface AdminLayoutProps {
   title?: string;
@@ -21,10 +23,13 @@ interface AdminLayoutProps {
   onSearchChange?: (value: string) => void;
   /** Initial search value (for controlled external hydration) */
   initialSearchValue?: string;
+  searchStatusOptions?: string[];
+  searchSelectedStatus?: string[];
   /** Category options to surface inside the dropdown search card */
   searchCategoryOptions?: string[];
   /** Currently selected categories (controlled) */
   searchSelectedCategories?: string[];
+  onSearchStatusChange?: (values: string[]) => void;
   /** Callback when categories change */
   onSearchCategoriesChange?: (values: string[]) => void;
   /** Whether to show a date picker in the dropdown (default false for admin) */
@@ -39,6 +44,7 @@ interface AdminLayoutProps {
 
   onSearchApply?: (filters: {
     searchValue: string;
+    selectedStatus?: string[];
     selectedCategories: string[];
     dateStart: string;
     dateEnd: string;
@@ -59,6 +65,8 @@ export default function AdminLayout({
   searchPlaceholder = 'Search events name, description',
   onSearchChange,
   initialSearchValue = '',
+  searchSelectedStatus,
+  onSearchStatusChange,
   searchSelectedCategories,
   onSearchCategoriesChange,
   onDateStartChange,
@@ -68,11 +76,13 @@ export default function AdminLayout({
   onSearchApply,
 }: AdminLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(Array.isArray(searchSelectedCategories) && searchSelectedCategories.filter(Boolean).length > 0 ? searchSelectedCategories.filter(Boolean) : []);
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<string[]>(Array.isArray(searchSelectedStatus) && searchSelectedStatus.filter(Boolean).length > 0 ? searchSelectedStatus.filter(Boolean) : []);
   const [searchHistory, setSearchHistory] = useState<string[]>(() => {
     if (typeof window !== "undefined") {
       const stored = localStorage.getItem("searchHistory");
@@ -103,11 +113,12 @@ export default function AdminLayout({
   useEffect(() => {
     onSearchApply?.({
       searchValue,
+      selectedStatus,
       selectedCategories,
       dateStart,
       dateEnd,
     });
-  }, [endAfterChecked, searchValue, selectedCategories, dateStart, dateEnd, onSearchApply]);
+  }, [endAfterChecked, searchValue, selectedStatus, selectedCategories, dateStart, dateEnd, onSearchApply]);
 
   const handleCategoriesChange = (categories: string[]) => {
     setSelectedCategories(categories);
@@ -116,11 +127,29 @@ export default function AdminLayout({
     // Instantly apply search filters when category changes
     onSearchApply?.({
       searchValue,
+      selectedStatus,
       selectedCategories: categories,
       dateStart,
       dateEnd,
     });
   };
+
+  const handleStatusChange = (status: string[]) => {
+    setSelectedStatus(status);
+    onSearchStatusChange?.(status);
+
+    // Instantly apply search filters when status changes
+    onSearchApply?.({
+      searchValue,
+      selectedStatus: status,
+      selectedCategories,
+      dateStart,
+      dateEnd,
+    });
+  };
+
+  ////// TODOOOOOOOOOO //////
+
 
   const handleSearchChange = (val: string) => {
     setSearchValue(val);
@@ -129,6 +158,7 @@ export default function AdminLayout({
     // Instantly apply search too
     onSearchApply?.({
       searchValue: val,
+      selectedStatus,
       selectedCategories,
       dateStart,
       dateEnd,
@@ -142,6 +172,7 @@ export default function AdminLayout({
     // Instantly apply filters when start date changes
     onSearchApply?.({
       searchValue,
+      selectedStatus,
       selectedCategories,
       dateStart: date,
       dateEnd,
@@ -156,6 +187,7 @@ const handleDateEndChange = (date: string) => {
     // Instantly apply filters when end date changes
     onSearchApply?.({
       searchValue,
+      selectedStatus,
       selectedCategories,
       dateStart,
       dateEnd: date,
@@ -173,12 +205,14 @@ const handleDateEndChange = (date: string) => {
     }
     // Trigger individual callbacks
     onSearchChange?.(appliedValue);
+    onSearchStatusChange?.(selectedStatus);
     onSearchCategoriesChange?.(selectedCategories);
     onDateStartChange?.(dateStart);
     onDateEndChange?.(dateEnd);
     // Trigger combined search apply callback
     onSearchApply?.({
       searchValue: appliedValue,
+      selectedStatus,
       selectedCategories,
       dateStart,
       dateEnd,
@@ -198,12 +232,22 @@ const handleDateEndChange = (date: string) => {
           <Image src="/Logo_Kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
           <nav className="flex items-center space-x-8">
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-            <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
-              <div className="flex items-center"><PlusIcon className="w-4 h-4 mr-2" /><span className="mr-1">New</span></div>
-            </Link>
-            <Link href="/profile"><UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" /></Link>
-          </nav>
+            <Link href="/all-events" 
+              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
+              {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT) ? "My Event" : "All Event"}
+            </Link>        
+              {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN && (
+              <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+                        hover:bg-[#00361C]
+                        transition-all duration-200">
+                <div className="flex items-center">
+                <PlusIcon className="w-4 h-4 mr-2" />
+                <span className="mr-1">New</span>
+                </div>
+              </Link>
+        )}
+        <ProfileCard/>
+      </nav>
         </header>
 
         {/* Center Logo */}
@@ -259,6 +303,8 @@ const handleDateEndChange = (date: string) => {
                     setQuery={setSearchValue}
                     categoriesSelected={selectedCategories}
                     setCategoriesSelected={handleCategoriesChange}
+                    statusSelected={selectedStatus}
+                    setStatusSelected={handleStatusChange}
                     dateStart={dateStart}
                     setStartDate={handleDateStartChange}
                     dateEnd={dateEnd}
