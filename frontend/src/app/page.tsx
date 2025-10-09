@@ -239,7 +239,6 @@ export default function Home() {
           <section className="sticky top-10 z-[101]">
             <SearchLayout
               activities={activities}
-              isSearchActive={isSearchActive}
               setIsSearchActive={setIsSearchActive}
               searchInputRef={searchInputRef}
               isScrolled={isScrolled}
