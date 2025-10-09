@@ -19,7 +19,7 @@ class ActivityAdminForm(forms.ModelForm):
         required=False,
         choices=(),
         widget=forms.CheckboxSelectMultiple,
-        help_text='Select up to 4 categories'
+        help_text='Select up to 3 categories'
     )
 
     class Meta:
@@ -56,10 +56,10 @@ class ActivityAdminForm(forms.ModelForm):
 
     def clean_categories(self):
         value = self.cleaned_data.get('categories') or []
-        # Ensure list and enforce max 4 (model validator will also check)
+        # Ensure list and enforce max 3 (model validator will also check)
         value = list(value)
-        if len(value) > 4:
-            raise forms.ValidationError('Select at most 4 categories')
+        if len(value) > 3:
+            raise forms.ValidationError('Select at most 3 categories')
         return value
 
 
