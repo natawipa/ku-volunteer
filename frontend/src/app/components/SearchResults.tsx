@@ -21,6 +21,11 @@ interface SearchResultsProps {
   onBack?: () => void;
 }
 
+const formatDate = (iso: string) => {
+  try { return new Date(iso).toLocaleDateString('en-GB'); } catch { return iso; }
+};
+
+
 export default function SearchResults({ events, onBack }: SearchResultsProps) {
   // Use event.status and style like EventCard
   const renderEventStatus = (event: Event) => {
@@ -91,8 +96,8 @@ export default function SearchResults({ events, onBack }: SearchResultsProps) {
                   {renderEventStatus(event)}
                 </div>
                 <div className="text-sm text-gray-600 mt-2 space-y-1">
-                  <p><MapPinIcon className="inline-block text-red-500 w-4 h-4 mr-1" /> {event.location}</p>
-                  <p><Calendar className="inline-block w-4 h-4 mr-1" /> {event.dateStart} - {event.dateEnd}</p>
+                  <p><MapPinIcon className="inline-block text-red-500 w-4 h-4 mr-1 -mt-1" /> {event.location}</p>
+                  <p><Calendar className="inline-block w-4 h-4 mr-1 -mt-1" /> {formatDate(event.dateStart)} - {formatDate(event.dateEnd)}</p>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {event.category.map((cat, i) => (
                       <span key={i} className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">
