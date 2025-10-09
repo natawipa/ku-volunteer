@@ -2,11 +2,11 @@
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { activitiesApi } from "../../../lib/activities";
-import type { Activity } from "../../../lib/types";
+import type { Activity, ActivityApplication, CreateApplicationRequest } from "../../../lib/types";
 import { auth } from "../../../lib/utils";
-import { USER_ROLES } from "../../../lib/constants";
+import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
 
 export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
   const [event, setEvent] = useState<Activity | null>(null);
@@ -14,9 +14,40 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [userApplication, setUserApplication] = useState<ActivityApplication | null>(null);
+  const [applying, setApplying] = useState(false);
+  const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
   
   const { id } = React.use(params);
   const eventId = parseInt(id, 10);
+
+  // Check if user has already applied to this activity - FIXED: useCallback
+  const checkUserApplication = useCallback(async () => {
+    try {
+      console.log('📋 Checking user applications...');
+      const applicationsResponse = await activitiesApi.getUserApplications();
+      
+      if (applicationsResponse.success && applicationsResponse.data) {
+        console.log('📋 User applications:', applicationsResponse.data);
+        
+        // Find application for this specific activity
+        const userApp = applicationsResponse.data.find(
+          (app: ActivityApplication) => app.activity === eventId
+        );
+        
+        if (userApp) {
+          console.log('✅ Found existing application:', userApp);
+          setUserApplication(userApp);
+          setApplicationStatus(userApp.status);
+        } else {
+          console.log('ℹ️ No application found for this activity');
+          setApplicationStatus(null);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error checking user application:', error);
+    }
+  }, [eventId]);
 
   // Check authentication
   useEffect(() => {
@@ -24,7 +55,11 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     const role = auth.getUserRole();
     setIsAuthenticated(authenticated);
     setUserRole(role);
-  }, []);
+
+    if (authenticated && role === USER_ROLES.STUDENT) {
+      checkUserApplication();
+    }
+  }, [eventId, checkUserApplication]); // FIXED: Added checkUserApplication to dependencies
 
   // Fetch event data
   useEffect(() => {
@@ -55,6 +90,155 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     }
   }, [eventId]);
 
+  const handleApply = async () => {
+    if (!isAuthenticated || userRole !== USER_ROLES.STUDENT) {
+      alert('Please login as a student to apply for activities.');
+      return;
+    }
+
+    try {
+      setApplying(true);
+      console.log('🚀 Applying to activity:', eventId);
+      
+      const applicationData: CreateApplicationRequest = {
+        activity: eventId
+      };
+
+      const response = await activitiesApi.createApplication(applicationData);
+      
+      if (response.success && response.data) {
+        console.log('✅ Application submitted successfully:', response.data);
+        setApplicationStatus(APPLICATION_STATUS.PENDING);
+        setUserApplication(response.data);
+        
+        alert('Application submitted successfully! You can track your application status in &quot;My Events&quot;.');
+        
+        await checkUserApplication();
+        
+      } else {
+        console.error('❌ Application failed:', response.error);
+        alert(`Application failed: ${response.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('❌ Application error:', error);
+      alert('An error occurred while submitting your application. Please try again.');
+    } finally {
+      setApplying(false);
+    }
+  };
+
+  const handleCancelApplication = async () => {
+    if (!userApplication) return;
+
+    try {
+      const response = await activitiesApi.cancelApplication(userApplication.id);
+      
+      if (response.success) {
+        console.log('✅ Application cancelled successfully');
+        setApplicationStatus(null);
+        setUserApplication(null);
+        alert('Application cancelled successfully.');
+      } else {
+        console.error('❌ Cancellation failed:', response.error);
+        alert(`Cancellation failed: ${response.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('❌ Cancellation error:', error);
+      alert('An error occurred while cancelling your application. Please try again.');
+    }
+  };
+  
+  const renderApplicationStatus = () => {
+    if (!applicationStatus) return null;
+
+    const statusConfig = {
+      [APPLICATION_STATUS.PENDING]: {
+        text: 'Pending Review',
+        color: 'bg-yellow-100 text-yellow-800 border-yellow-300'
+      },
+      [APPLICATION_STATUS.APPROVED]: {
+        text: 'Approved 🎉',
+        color: 'bg-green-100 text-green-800 border-green-300'
+      },
+      [APPLICATION_STATUS.REJECTED]: {
+        text: 'Rejected',
+        color: 'bg-red-100 text-red-800 border-red-300'
+      },
+      [APPLICATION_STATUS.CANCELLED]: {
+        text: 'Cancelled',
+        color: 'bg-gray-100 text-gray-800 border-gray-300'
+      }
+    };
+
+    const statusKey = applicationStatus as keyof typeof statusConfig;
+    const config = statusConfig[statusKey] || statusConfig[APPLICATION_STATUS.PENDING];
+
+    return (
+      <div className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium border ${config.color}`}>
+        {config.text}
+      </div>
+    );
+  };
+
+  // Render apply/cancel button based on application status
+  const renderActionButton = () => {
+    if (!isAuthenticated || userRole !== USER_ROLES.STUDENT) {
+      return null;
+    }
+
+    if (applicationStatus === APPLICATION_STATUS.PENDING) {
+      return (
+        <button
+          onClick={handleCancelApplication}
+          disabled={applying}
+          className="bg-yellow-600 text-white px-8 py-3 rounded-lg hover:bg-yellow-700 cursor-pointer transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {applying ? 'Cancelling...' : 'Cancel Application'}
+        </button>
+      );
+    }
+
+    if (applicationStatus === APPLICATION_STATUS.APPROVED) {
+      return (
+        <div className="text-center">
+          <div className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium">
+            You&apos;re Approved! 🎉
+          </div>
+          <p className="text-sm text-gray-600 mt-2">
+            Check &quot;My Events&quot; for details
+          </p>
+        </div>
+      );
+    }
+
+    if (applicationStatus === APPLICATION_STATUS.REJECTED) {
+      return (
+        <button
+          disabled
+          className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium"
+        >
+          Application Rejected
+        </button>
+      );
+    }
+
+    // No application or cancelled application - show apply button
+    const canApply = !event?.capacity_reached && event?.status === ACTIVITY_STATUS.OPEN;
+    return (
+      <button
+        onClick={handleApply}
+        disabled={applying || !canApply}
+        className={`px-8 py-3 rounded-lg cursor-pointer transition-all duration-200 font-medium ${
+          !canApply
+            ? 'bg-gray-400 text-white cursor-not-allowed'
+            : 'bg-green-600 text-white hover:bg-green-700'
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
+      >
+        {applying ? 'Applying...' : 'Apply Now'}
+      </button>
+    );
+  };
+
   // Transform activity data
   const transformActivityData = (activity: Activity) => {
     return {
@@ -66,10 +250,11 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
       location: activity.location || 'Unknown Location',
       category: activity.categories || [],
       capacity: activity.max_participants || 0,
+      currentParticipants: activity.current_participants || 0,
       organizer: activity.organizer_name || 'Unknown Organizer',
       description: activity.description || 'No description available',
-      image: "/titleExample.jpg", // Default image since backend might not have images yet
-      additionalImages: ["/titleExample.jpg", "/titleExample.jpg", "/titleExample.jpg"] // Placeholder images
+      image: "/titleExample.jpg",
+      additionalImages: ["/titleExample.jpg", "/titleExample.jpg", "/titleExample.jpg"]
     };
   };
 
@@ -142,7 +327,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
             <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
             {isAuthenticated && userRole === USER_ROLES.ORGANIZER && (
-              <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+              <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
                     hover:bg-[#00361C]
                     transition-all duration-200">
                 <div className="flex items-center">
@@ -159,7 +344,30 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
-          <h1 className="text-3xl font-bold mb-4 text-center">{transformedEvent.title}</h1>
+          {/* Application Status Badge */}
+          <div className="flex justify-between items-center mb-4">
+            <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
+            {renderApplicationStatus()}
+          </div>
+          
+          <h2 className="text-xl font-light mb-4 text-center">Detail | Participant</h2>
+          
+          {/* Activity Status Warnings */}
+          {event.status !== ACTIVITY_STATUS.OPEN && (
+            <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 px-4 py-3 rounded mb-4">
+              {event.status === ACTIVITY_STATUS.PENDING && 'This event is pending approval'}
+              {event.status === ACTIVITY_STATUS.FULL && 'This event is full'}
+              {event.status === ACTIVITY_STATUS.CLOSED && 'This event is closed'}
+              {event.status === ACTIVITY_STATUS.CANCELLED && 'This event has been cancelled'}
+            </div>
+          )}
+
+          {event.capacity_reached && event.status === ACTIVITY_STATUS.OPEN && (
+            <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">
+              This event has reached maximum capacity
+            </div>
+          )}
+
           <Image
             src={transformedEvent.image}
             alt={transformedEvent.title}
@@ -178,7 +386,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
                 <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
                 <p><strong>Location:</strong> {transformedEvent.location}</p>
                 <p><strong>Type:</strong> {transformedEvent.category.join(", ")}</p>
-                <p><strong>Capacity:</strong> {transformedEvent.capacity} people</p>
+                <p><strong>Capacity:</strong> {transformedEvent.currentParticipants} / {transformedEvent.capacity} people</p>
                 <p><strong>Organizer:</strong> {transformedEvent.organizer}</p>
               </div>
             </div>
@@ -208,53 +416,72 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
               <p className="text-gray-700 whitespace-pre-wrap">{transformedEvent.description}</p>
             </div>
 
-            <div className="flex justify-between pt-4 border-t mt-11">
-            <Link 
-              href="/" 
-              className="flex items-center text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-200"
-            >
-              Back to Home
-            </Link>
-
-            {isAuthenticated ? (
-              userRole === USER_ROLES.STUDENT ? (
-                // Student - Apply button
-                <button className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium">
-                  Apply Now
-                </button>
-                // Organizer - Edit button
-              ) : userRole === USER_ROLES.ORGANIZER ? (
-                <Link 
-                  href={{
-                    pathname: '/new',
-                    query: { 
-                      edit: eventId,
-                      activityData: encodeURIComponent(JSON.stringify(event))
-                    }
-                  }}
-                  className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 cursor-pointer transition-all duration-200 font-medium text-center"
-                >
-                  Edit Event
-                </Link>
-              ) : (
-                // Other roles
-                <button className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium" disabled>
-                  Not Available
-                </button>
-              )
-            ) : (
-              // Not authenticated
-              <Link
-                href="/login"
-                className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium text-center"
+            <div className="flex justify-between items-center pt-4 border-t mt-11">
+              <Link 
+                href="/" 
+                className="flex items-center text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-200"
               >
-                Login to Apply
+                Back to Home
               </Link>
+
+              {isAuthenticated ? (
+                userRole === USER_ROLES.STUDENT ? (
+                  // Student - Use dynamic button renderer
+                  renderActionButton()
+                ) : userRole === USER_ROLES.ORGANIZER ? (
+                  // Organizer - Edit button
+                  <Link 
+                    href={{
+                      pathname: '/new-event',
+                      query: { 
+                        edit: eventId,
+                        activityData: encodeURIComponent(JSON.stringify(event))
+                      }
+                    }}
+                    className="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium text-center"
+                  >
+                    Edit Event
+                  </Link>
+                ) : (
+                  // Other roles
+                  <button className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium" disabled>
+                    Not Available
+                  </button>
+                )
+              ) : (
+                // Not authenticated
+                <Link
+                  href="/login"
+                  className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all duration-200 font-medium text-center"
+                >
+                  Login to Apply
+                </Link>
+              )}
+            </div>
+
+            {/* Application info for students */}
+            {isAuthenticated && userRole === USER_ROLES.STUDENT && applicationStatus && (
+              <div className="mt-4 p-4 bg-blue-50 rounded-lg">
+                <h3 className="font-semibold text-blue-800 mb-2">Application Status</h3>
+                <p className="text-blue-700">
+                  {applicationStatus === APPLICATION_STATUS.PENDING && 
+                    "Your application is pending review by the organizer. You can cancel your application if needed."}
+                  {applicationStatus === APPLICATION_STATUS.APPROVED && 
+                    "Congratulations! Your application has been approved. Check &quot;My Events&quot; for more details."}
+                  {applicationStatus === APPLICATION_STATUS.REJECTED && 
+                    "Your application was not approved for this event. You can explore other events."}
+                </p>
+                <Link 
+                  href="/all-events" 
+                  className="inline-block mt-2 text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  My Events →
+                </Link>
+              </div>
             )}
           </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

@@ -1,6 +1,3 @@
-
-
-// User types
 export interface User {
   id: number;
   email: string;
@@ -35,6 +32,49 @@ export interface Activity {
   requires_admin_for_delete: boolean;
   capacity_reached: boolean;
   cover_image_url?: string;
+}
+
+export interface ActivityApplication {
+  id: number;
+  activity: number; // Activity ID
+  activity_id?: number; // serialized data
+  activity_title?: string; 
+  studentid: number;
+  student_email?: string; // For serialized data
+  student_name?: string; // For serialized data
+  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  submitted_at: string;
+  decision_at?: string;
+  decision_by?: number; 
+  decision_by_email?: string; // For serialized data
+  notes?: string; // Matches your backend 'notes' field (was review_note)
+}
+
+export interface CreateApplicationRequest {
+  activity: number; 
+}
+
+// Application review request (for organizers)
+export interface ReviewApplicationRequest {
+  action: 'approve' | 'reject';
+  reason?: string;
+}
+
+export interface ActivityApplicationWithUser extends ActivityApplication {
+  student_details: {
+    id: number;
+    email: string;
+    first_name: string;
+    last_name: string;
+    student_id_external?: string;
+    faculty?: string;
+    major?: string;
+    year?: number;
+  };
+}
+
+export interface ActivityWithApplicationStatus extends Activity {
+  user_application_status: 'pending' | 'approved' | 'rejected' | 'cancelled' | null;
 }
 
 // Form types
@@ -131,6 +171,18 @@ export interface FormState<T> {
   errors: Record<keyof T, string>;
   isSubmitting: boolean;
   isValid: boolean;
+}
+
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type ApplicationAction = 'approve' | 'reject';
+
+// may be add the stat but later
+export interface ApplicationStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
 }
 
 // Event types for form handlers

@@ -120,7 +120,7 @@ function DeleteConfirmationContent() {
             <Link href="/all-activities" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
               All Activities
             </Link>
-            <Link href="/new" className="btn bg-[#215701] text-white px-3 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
+            <Link href="/new-event" className="btn bg-[#215701] text-white px-3 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
               + New
             </Link>
             <Link href="/profile">

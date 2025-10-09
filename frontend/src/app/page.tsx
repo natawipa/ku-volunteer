@@ -142,46 +142,45 @@ export default function Home() {
   };
 
   // Get appropriate navigation for authenticated users
-  const getNavigation = () => {
-    if (!isAuthenticated) {
-      return (
-        <nav className="space-x-8">
-          <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-          <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-            {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT) ? 
-            "My Event" : "All Event"}
-          </Link>
-          <Link href="/login" 
-          className="btn bg-[#215701] text-white px-4 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-            Sign In
-          </Link>
-        </nav>
-      );
-    }
-
+  // Get appropriate navigation for authenticated users - FIXED VERSION
+const getNavigation = () => {
+  if (!isAuthenticated) {
     return (
-      <nav className="flex items-center space-x-8">
+      <nav className="space-x-8">
         <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-        <Link href="/all-events" 
-          className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-          {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT) ? "My Event" : "All Event"}
-        </Link>        
-      {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN && (
-          <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-            <div className="flex items-center">
-            <PlusIcon className="w-4 h-4 mr-2" />
-            <span className="mr-1">New</span>
-            </div>
-          </Link>
-        )}
-        <ProfileCard/>
+        <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
+        <Link href="/login" 
+        className="btn bg-[#215701] text-white px-4 py-2 rounded 
+                  hover:bg-[#00361C]
+                  transition-all duration-200">
+          Sign In
+        </Link>
       </nav>
     );
-  };
+  }
+
+  return (
+    <nav className="flex items-center space-x-8">
+      <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
+      <Link href="/all-events" 
+        className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
+        {/* FIX: Only show "My Event" for organizers, students see "All Event" */}
+        {userRole === USER_ROLES.ORGANIZER ? "My Event" : "All Event"}
+      </Link>        
+      {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN) && (
+        <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+                  hover:bg-[#00361C]
+                  transition-all duration-200">
+          <div className="flex items-center">
+            <PlusIcon className="w-4 h-4 mr-2" />
+            <span className="mr-1">New</span>
+          </div>
+        </Link>
+      )}
+      <ProfileCard/>
+    </nav>
+  );
+};
 
   // Render sections for events on the homepage
   const getSections = () => {

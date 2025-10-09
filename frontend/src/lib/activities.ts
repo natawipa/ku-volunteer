@@ -1,7 +1,12 @@
 // lib/activities.ts
 import { httpClient } from './utils';
 import { API_ENDPOINTS } from './constants';
-import type { Activity, ApiResponse } from './types';
+import type { 
+  Activity, 
+  ApiResponse, 
+  CreateApplicationRequest,
+  ReviewApplicationRequest,
+  ActivityApplication} from './types';
 
 // Create activity data type that matches your backend serializer
 export interface CreateActivityData {
@@ -14,7 +19,6 @@ export interface CreateActivityData {
   hours_awarded?: number;
   categories: string[];
 }
-
 // Activities metadata type
 interface ActivityMetadata {
   top_levels: string[];
@@ -126,5 +130,35 @@ export const activitiesApi = {
       return { ...result, data: filteredData };
     }
     return result;
+  },
+
+  // student applications
+  async createApplication(data: CreateApplicationRequest): Promise<ApiResponse<ActivityApplication>> {
+    return httpClient.post<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.APPLY, data);
+  },
+
+  async getUserApplications(): Promise<ApiResponse<ActivityApplication[]>> {
+    return httpClient.get<ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.GETAPPLICATIONS);
+  },
+
+  async getApplicationDetail(id: string | number): Promise<ApiResponse<ActivityApplication>> {
+    return httpClient.get<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.APPLICATION_DETAIL(id));
+  },
+
+  async cancelApplication(id: string | number): Promise<ApiResponse<void>> {
+    return httpClient.post<void>(API_ENDPOINTS.ACTIVITIES.CANCELAPPLICATION(id));
+  },
+
+  async getApprovedActivities(): Promise<ApiResponse<Activity[]>> {
+    return httpClient.get<Activity[]>(API_ENDPOINTS.ACTIVITIES.APPROVEDAPPLICATION);
+  },
+
+  // organizer application reviews
+  async getActivityApplications(activityId: string | number): Promise<ApiResponse<ActivityApplication[]>> {
+    return httpClient.get<ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.EVENTAPPLICANTS(activityId));
+  },
+
+  async reviewApplication(applicationId: string | number, data: ReviewApplicationRequest): Promise<ApiResponse<ActivityApplication>> {
+    return httpClient.post<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.REVIEWAPPLICATION(applicationId), data);
   },
 };

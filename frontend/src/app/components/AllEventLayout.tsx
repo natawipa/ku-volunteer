@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import SearchCard from '@/app/components/SearchCard';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { PlusIcon, UserCircleIcon } from '@heroicons/react/24/solid';
+import { PlusIcon } from '@heroicons/react/24/solid';
 import { USER_ROLES } from '@/lib/constants';
 import ProfileCard from './ProfileCard';
 
@@ -237,7 +237,7 @@ const handleDateEndChange = (date: string) => {
               {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT) ? "My Event" : "All Event"}
             </Link>        
               {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN && (
-              <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+              <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
                         hover:bg-[#00361C]
                         transition-all duration-200">
                 <div className="flex items-center">

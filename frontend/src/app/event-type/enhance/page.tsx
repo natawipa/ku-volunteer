@@ -148,7 +148,7 @@ export default function EnhanceCompetenciesPage() {
         <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
         <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
         {userRole === USER_ROLES.ORGANIZER && (
-          <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+          <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
                     hover:bg-[#00361C]
                     transition-all duration-200">
             <div className="flex items-center">
@@ -304,7 +304,7 @@ export default function EnhanceCompetenciesPage() {
                 <h3 className="text-gray-800 font-semibold mb-2 text-xl">No Enhance Competencies Activities Found</h3>
                 <p className="text-gray-600">There are currently no Enhance Competencies activities available.</p>
                 {userRole === USER_ROLES.ORGANIZER && (
-                  <Link href="/new" className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C] mt-4 inline-block">
+                  <Link href="/new-event" className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C] mt-4 inline-block">
                     Create Enhance Competencies Activity
                   </Link>
                 )}
