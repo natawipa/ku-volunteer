@@ -135,9 +135,12 @@ export default function AdminLayout({
               {isOpen && (
                 <div className="absolute top-full mt-1 w-full z-50">
                   <SearchCard
-                    onSearchChange={handleSearchChange}
-                    onCategoryChange={onSearchCategoryChange}
-                    onDateRangeChange={() => {}} // optional, if not used
+                    category={searchSelectedCategory}
+                    setCategory={(val: string) => {
+                      onSearchCategoryChange?.(val);
+                      setIsOpen(false);
+                    }}
+                    // Optionally pass categories if SearchCard supports it
                     categories={searchCategoryOptions}
                     showCategory={true}
                     showDate={searchShowDate}
