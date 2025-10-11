@@ -7,7 +7,7 @@ from rest_framework.views import APIView
 from config.constants import ActivityStatus, ApplicationStatus, StatusMessages, UserRoles
 from config.permissions import IsAdmin, IsStudent
 from config.utils import get_activity_category_groups, get_student_approved_activities, is_admin_user
-from .models import Activity, ActivityDeletionRequest, Application
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
 from .serializers import (
     ActivityDeletionRequestSerializer,
     ActivitySerializer,
@@ -15,6 +15,7 @@ from .serializers import (
     ApplicationSerializer,
     ApplicationCreateSerializer,
     ApplicationReviewSerializer,
+    ActivityPosterImageSerializer,
 )
 
 
@@ -579,3 +580,93 @@ class StudentApprovedActivitiesView(generics.ListAPIView):
         return get_student_approved_activities(self.request.user).select_related(
             'organizer_profile', 'organizer_profile__user'
         )
+
+
+class ActivityPosterImageListCreateView(generics.ListCreateAPIView):
+    """API view for managing activity poster images."""
+    
+    serializer_class = ActivityPosterImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get poster images for the specified activity."""
+        activity_id = self.kwargs.get('activity_id')
+        return ActivityPosterImage.objects.filter(activity_id=activity_id)
+
+    def perform_create(self, serializer):
+        """Create poster image with proper authorization."""
+        activity_id = self.kwargs.get('activity_id')
+        activity = get_object_or_404(Activity, pk=activity_id)
+        
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        # Check permissions - organizer must be from same organization or admin
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    self.permission_denied(
+                        self.request,
+                        message=StatusMessages.PERMISSION_DENIED
+                    )
+            except AttributeError:
+                self.permission_denied(
+                    self.request,
+                    message=StatusMessages.PERMISSION_DENIED
+                )
+        elif not is_admin_user(user):
+            self.permission_denied(
+                self.request,
+                message=StatusMessages.PERMISSION_DENIED
+            )
+
+        serializer.save(activity=activity)
+
+
+class ActivityPosterImageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """API view for retrieving, updating, and deleting individual poster images."""
+    
+    serializer_class = ActivityPosterImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get poster images for the specified activity."""
+        activity_id = self.kwargs.get('activity_id')
+        return ActivityPosterImage.objects.filter(activity_id=activity_id)
+
+    def perform_update(self, serializer):
+        """Update poster image with proper authorization."""
+        self._check_permissions(serializer.instance.activity)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Delete poster image with proper authorization."""
+        self._check_permissions(instance.activity)
+        instance.delete()
+
+    def _check_permissions(self, activity):
+        """Check if user has permission to modify this activity's images."""
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    self.permission_denied(
+                        self.request,
+                        message=StatusMessages.PERMISSION_DENIED
+                    )
+            except AttributeError:
+                self.permission_denied(
+                    self.request,
+                    message=StatusMessages.PERMISSION_DENIED
+                )
+        elif not is_admin_user(user):
+            self.permission_denied(
+                self.request,
+                message=StatusMessages.PERMISSION_DENIED
+            )

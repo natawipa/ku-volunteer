@@ -7,6 +7,11 @@ from django.utils import timezone
 from config.constants import OrganizationType, UserRoles, ValidationLimits
 
 
+def user_profile_image_path(instance, filename):
+    """Generate file path for user profile images."""
+    return f'users/{instance.id}/profile/{filename}'
+
+
 class UserManager(BaseUserManager):
     """Custom user manager for email-based authentication."""
 
@@ -49,6 +54,12 @@ class User(AbstractBaseUser, PermissionsMixin):
         max_length=20,
         choices=UserRoles.CHOICES,
         default=UserRoles.STUDENT
+    )
+    profile_image = models.ImageField(
+        upload_to=user_profile_image_path,
+        blank=True,
+        null=True,
+        help_text="Profile picture for the user"
     )
 
     # Django-required fields

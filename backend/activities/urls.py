@@ -18,6 +18,8 @@ from .views import (
     ApplicationCancelView,
     ApplicationReviewView,
     StudentApprovedActivitiesView,
+    ActivityPosterImageListCreateView,
+    ActivityPosterImageDetailView,
 )
 
 
@@ -46,4 +48,7 @@ urlpatterns = [
     path('<int:activity_id>/applications/', ApplicationsByActivityView.as_view(), name='applications-by-activity'),
     # Student's approved activities
     path('my-approved-activities/', StudentApprovedActivitiesView.as_view(), name='student-approved-activities'),
+    # Poster image endpoints
+    path('<int:activity_id>/posters/', ActivityPosterImageListCreateView.as_view(), name='activity-poster-images'),
+    path('<int:activity_id>/posters/<int:pk>/', ActivityPosterImageDetailView.as_view(), name='activity-poster-image-detail'),
 ]

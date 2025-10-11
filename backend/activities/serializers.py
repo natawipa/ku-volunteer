@@ -1,5 +1,14 @@
 from rest_framework import serializers
-from .models import Activity, ActivityDeletionRequest, Application
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
+
+
+class ActivityPosterImageSerializer(serializers.ModelSerializer):
+    """Serializer for activity poster images."""
+    
+    class Meta:
+        model = ActivityPosterImage
+        fields = ['id', 'image', 'order', 'created_at']
+        read_only_fields = ['id', 'created_at']
 
 
 class ActivitySerializer(serializers.ModelSerializer):
@@ -9,19 +18,20 @@ class ActivitySerializer(serializers.ModelSerializer):
     organizer_email = serializers.EmailField(source='organizer_profile.user.email', read_only=True)
     organizer_name = serializers.CharField(source='organizer_profile.organization_name', read_only=True)
     user_application_status = serializers.SerializerMethodField()
+    poster_images = ActivityPosterImageSerializer(many=True, read_only=True)
 
     class Meta:
         model = Activity
         fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'categories', 'title', 'description',
             'start_at', 'end_at', 'location', 'max_participants', 'current_participants',
-            'status', 'hours_awarded', 'rejection_reason', 'created_at', 'updated_at', 
+            'status', 'hours_awarded', 'cover_image', 'poster_images', 'rejection_reason', 'created_at', 'updated_at', 
             'requires_admin_for_delete', 'capacity_reached', 'user_application_status',
         ]
         read_only_fields = [
             'id', 'organizer_profile_id', 'organizer_email', 'organizer_name', 'current_participants', 'status',
             'rejection_reason', 'created_at', 'updated_at', 'requires_admin_for_delete', 
-            'capacity_reached', 'user_application_status'
+            'capacity_reached', 'user_application_status', 'poster_images'
         ]
 
     def get_user_application_status(self, obj):
@@ -45,7 +55,7 @@ class ActivityWriteSerializer(serializers.ModelSerializer):
         model = Activity
         fields = [
             'id', 'categories', 'title', 'description', 'start_at', 'end_at', 'location',
-            'max_participants', 'hours_awarded'
+            'max_participants', 'hours_awarded', 'cover_image'
         ]
 
     def create(self, validated_data):
