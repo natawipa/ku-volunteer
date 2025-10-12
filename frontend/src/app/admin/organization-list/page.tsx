@@ -4,6 +4,7 @@ import { EyeIcon, PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { apiService, User } from "@/lib/api";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 export default function OrganizationList() {
   const [organizations, setOrganizations] = useState<User[]>([]);
@@ -98,15 +99,20 @@ export default function OrganizationList() {
               onChange={e => setSearch(e.target.value)}
               className="border rounded px-3 py-2 w-full md:w-1/2"
             />
-            <select
-              value={orgType}
-              onChange={e => setOrgType(e.target.value)}
-              className="border rounded px-3 py-2 w-full md:w-1/4"
-            >
-              <option value="all">All</option>
-              <option value="internal">Kasetsart University</option>
-              <option value="external">External</option>
-            </select>
+            <div className="relative w-full md:w-1/4">
+              <select
+                value={orgType}
+                onChange={e => setOrgType(e.target.value)}
+                className="border border-gray-300 rounded-lg px-3 py-2 w-full appearance-none pr-10"
+              >
+                <option value="all" className="text-gray-700">All</option>
+                <option value="internal" className="text-gray-700">Kasetsart University</option>
+                <option value="external" className="text-gray-700">External Organizations</option>
+              </select>
+              <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                <ChevronDownIcon className="h-5 w-5 text-gray-500" style={{ marginLeft: '-5px' }} />
+              </div>
+            </div>
           </div>
         <div className="flex flex-col gap-4">
           {organizations

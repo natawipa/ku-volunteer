@@ -9,6 +9,7 @@ export default function StudentList() {
   const [students, setStudents] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
       let mounted = true;
@@ -91,7 +92,16 @@ export default function StudentList() {
         {!loading && !error && students.length === 0 && (
           <p className="text-gray-500">No students found.</p>
         )}
-        {students.slice().reverse().map((s) => (
+        <input
+          type="text"
+          placeholder="Search students..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="border rounded p-2 mb-4"
+        />
+        {students.slice().reverse().filter((student) =>
+            `${student.title} ${student.first_name} ${student.last_name}`.toLowerCase().includes(search.toLowerCase())
+          ).map((s) => (
           <div key={s.id} className="flex justify-between items-center border-b pb-2">
             <p className="flex-1">
               {s.title} {s.first_name} {s.last_name}

@@ -2,10 +2,10 @@
 import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import SearchCard from '@/app/components/SearchCard';
 import ProfileCard from "@/app/components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlusIcon } from '@heroicons/react/24/solid';
+import SearchCard from '@/app/components/SearchCard';
 
 interface AdminLayoutProps {
   title?: string;
@@ -30,6 +30,13 @@ interface AdminLayoutProps {
   onSearchCategoryChange?: (value: string) => void;
   /** Whether to show a date picker in the dropdown (default false for admin) */
   searchShowDate?: boolean;
+  /** Callback when search is applied */
+  onSearchApply?: (params: {
+    searchValue: string;
+    selectedCategories: string[];
+    dateStart: string;
+    dateEnd: string;
+  }) => void;
 }
 
 /**
@@ -46,13 +53,16 @@ export default function AdminLayout({
   searchPlaceholder = 'Search events name, description',
   onSearchChange,
   initialSearchValue = '',
-  searchCategoryOptions,
+  searchCategoryOptions = [],
+  searchSelectedCategory = '',
   onSearchCategoryChange,
-  searchShowDate = false
+  searchShowDate = false,
+  onSearchApply
 }: AdminLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   // Scroll effect for shrinking search bar (only needed for compact)
@@ -67,7 +77,9 @@ export default function AdminLayout({
   useEffect(() => {
     if (hideSearch) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setIsOpen(false);
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -76,6 +88,16 @@ export default function AdminLayout({
   const handleSearchChange = (val: string) => {
     setSearchValue(val);
     onSearchChange?.(val);
+  };
+
+  const handleSearchApply = (params: {
+    searchValue: string;
+    selectedCategories: string[];
+    dateStart: string;
+    dateEnd: string;
+  }) => {
+    onSearchApply?.(params);
+    setIsOpen(false); // Close dropdown after applying search
   };
 
   return (
@@ -122,6 +144,7 @@ export default function AdminLayout({
               >
                 <MagnifyingGlassIcon className="text-gray-400 w-5 h-5" />
                 <input
+                  ref={searchInputRef}
                   type="text"
                   value={searchValue}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
@@ -135,15 +158,14 @@ export default function AdminLayout({
               {isOpen && (
                 <div className="absolute top-full mt-1 w-full z-50">
                   <SearchCard
-                    category={searchSelectedCategory}
-                    setCategory={(val: string) => {
-                      onSearchCategoryChange?.(val);
-                      setIsOpen(false);
-                    }}
-                    // Optionally pass categories if SearchCard supports it
-                    categories={searchCategoryOptions}
-                    showCategory={true}
-                    showDate={searchShowDate}
+                    searchValue={searchValue}
+                    onSearchChange={handleSearchChange}
+                    categoryOptions={searchCategoryOptions}
+                    selectedCategory={searchSelectedCategory}
+                    onCategoryChange={onSearchCategoryChange}
+                    showDatePicker={searchShowDate}
+                    onApply={handleSearchApply}
+                    placeholder={searchPlaceholder}
                   />
                 </div>
               )}

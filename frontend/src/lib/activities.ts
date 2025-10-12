@@ -1,3 +1,4 @@
+import type { DeletionRequestEvent } from '@/app/admin/events/components/AdminDeletionRequestCard';
 // lib/activities.ts
 import { httpClient } from './utils';
 import { API_ENDPOINTS } from './constants';
@@ -88,6 +89,67 @@ export const activitiesApi = {
         data: [],
         error: error instanceof Error ? error.message : 'Unknown error' 
       };
+    }
+  },
+
+   // Get Deletion Requests
+  async getDeletionRequests(): Promise<ApiResponse<DeletionRequestEvent[]>> {
+    try {
+      const response = await httpClient.get<unknown>(API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS);
+
+      if (response.success && response.data) {
+        const data: any = response.data;
+        const rawArray: any[] =
+          (typeof data === 'object' && data !== null && 'results' in data && Array.isArray((data as any).results))
+            ? (data as any).results
+            : Array.isArray(data)
+              ? data
+              : [];
+
+        if (rawArray.length === 0) {
+          if (!(Array.isArray(data) || (typeof data === 'object' && data !== null && 'results' in data))) {
+            console.error('Unexpected deletion request response format:', data);
+          }
+        }
+
+        // Fetch activity details for each deletion request
+        const activityIds = rawArray.map((item) => item.activity).filter((id) => id !== undefined);
+        const activityResults = await Promise.all(activityIds.map((id) => this.getActivity(id)));
+        const activityMap: Record<number | string, Activity> = {};
+        activityResults.forEach((res, i) => {
+          if (res.success && res.data) {
+            activityMap[activityIds[i]] = res.data;
+          }
+        });
+
+        // Map each item to DeletionRequestEvent shape
+        const mapped: DeletionRequestEvent[] = rawArray.map((item: any) => {
+          const activity = item.activity !== undefined ? activityMap[item.activity] : undefined;
+          return {
+            id: item.id ?? 0,
+            activity: item.activity ?? 0,
+            title: item.activity_title ?? activity?.title ?? '',
+            description: activity?.description ?? '',
+            category: activity?.categories ?? [],
+            post: activity?.organizer_name ?? '',
+            datestart: activity?.start_at ?? '',
+            dateend: activity?.end_at ?? '',
+            location: activity?.location ?? '',
+            organizer: activity?.organizer_name ?? '',
+            image: activity?.cover_image_url ?? '',
+            reason: item?.reason ?? '',
+            capacity: activity?.max_participants ?? 0,
+            additionalImages: [],
+          } as DeletionRequestEvent;
+        });
+
+        return { success: true, data: mapped };
+      }
+
+      return { success: false, data: [], error: response.error };
+    } catch (error) {
+      console.error('❌ Error in getDeletionRequests:', error);
+      return { success: false, data: [], error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
 

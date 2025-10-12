@@ -29,6 +29,7 @@ export const API_ENDPOINTS = {
     DELETE: (id: string | number) => `/api/activities/delete/${id}/`,
     METADATA: '/api/activities/metadata/',
     MODERATION_REVIEW: (id: string | number) => `/api/activities/moderation/${id}/review/`,
+    DELETION_REQUESTS: '/api/activities/deletion-requests/',
   },
   TOKEN: {
     OBTAIN: '/api/token/',

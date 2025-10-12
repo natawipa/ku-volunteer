@@ -66,6 +66,20 @@ export default function AdminContent() {
     load();
   }, []);
 
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const res = await activitiesApi.getDeletionRequests();
+      if (res.success && Array.isArray(res.data)) {
+        setDeletionRequestCount(res.data.length);
+      } else {
+        setError(res.error || 'Failed to load deletion requests');
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
   return (
     <>
       {/* Status Navigation */}
@@ -104,6 +118,9 @@ export default function AdminContent() {
       <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-orange-300/25 to-amber-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
         <h3 className="font-semibold text-xl ">
           Deletion Request
+          {deletionRequestCount > 0 && (
+            <span className="text-gray-800 bg-orange-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{deletionRequestCount}</span>
+          )}
         </h3>
       </div>
       </Link>
@@ -120,8 +137,7 @@ export default function AdminContent() {
             {loading && <p>Loading students...</p>}
             {error && <p className="text-red-600">{error}</p>}
             {!loading && !error && 
-            
-            students.slice().reverse().map((s, index) => (
+            students.slice().reverse().slice(0, 2).map((s, index) => (
                <div
                   key={s.id}
                   className={`flex justify-between items-center border-b pb-2 ${

@@ -3,12 +3,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import AdminDeletionRequestCard, { DeletionRequestEvent } from '../components/AdminDeletionRequestCard';
-import { apiService } from '@/lib/api';
-
-// DeletionRequestEvent interface now imported from component file
-
-type RequestDeleteJson = { events: DeletionRequestEvent[] };
-const rawEvents = (data as RequestDeleteJson).events;
+import { activitiesApi } from '@/lib/activities';
 
 export default function DeletionRequestListPage() {
   const [search, setSearch] = useState('');
@@ -20,20 +15,29 @@ export default function DeletionRequestListPage() {
   useEffect(() => {
     let mounted = true;
     async function fetchRequests() {
-      setLoading(true);
-      setError(null);
       try {
-        // Replace with your actual API call
-        const result = await apiService.getDeletionRequests();
-        if (!mounted) return;
-        if (result.success && result.data) {
-          setEvents(result.data);
-        } else {
-          setError(result.error || "Failed to load deletion requests");
-        }
-      } catch (err: unknown) {
-        if (!mounted) return;
-        setError("Failed to load deletion requests");
+        const reqRes = await activitiesApi.getDeletionRequests();
+        if (!reqRes.success || !Array.isArray(reqRes.data)) return;
+
+        // Fetch all activities
+        const actRes = await activitiesApi.getActivities();
+        const activities = Array.isArray(actRes.data) ? actRes.data : [];
+
+        // Merge by foreign key
+        const merged = reqRes.data.map((req: any) => {
+          const act = activities.find(a => a.id === req.activity);
+          return {
+            ...req,
+            title: act?.title || req.title || "Untitled Event",
+            location: act?.location || req.location || "Unknown Location",
+            startDate: act?.start_at || null,
+            endDate: act?.end_at || null,
+          };
+        });
+
+        if (mounted) setEvents(merged);
+      } catch (err) {
+        setError("Failed to load data");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -42,23 +46,35 @@ export default function DeletionRequestListPage() {
     return () => { mounted = false; };
   }, []);
 
+
   const categories = useMemo(() => {
+    if (!Array.isArray(events)) return ['All Categories'];
     const set = new Set<string>();
-    events.forEach(ev => ev.category.forEach((c: string) => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
+    events.forEach(ev => {
+      ev.category?.forEach?.((c: string) => set.add(c));
+    });
+    return ['All Categories', ...Array.from(set)];
   }, [events]);
 
-  const filtered = events.filter(ev => {
-    const term = search.toLowerCase();
-    const isAll = category === 'All Categories' || category === 'all';
-    const matchesCat = isAll || ev.category.includes(category);
-    const matchesSearch = (
-      ev.title.toLowerCase().includes(term) ||
-      ev.description.toLowerCase().includes(term) ||
-      ev.reason.toLowerCase().includes(term)
-    );
-    return matchesCat && matchesSearch;
-  });
+
+  const filtered = Array.isArray(events)
+    ? events.filter(ev => {
+        const term = search.toLowerCase();
+        const isAll = category === 'All Categories' || category === 'all';
+        const matchesCat = isAll || ev.category?.includes?.(category);
+
+        const title = ev.title?.toLowerCase?.() || '';
+        const desc = ev.description?.toLowerCase?.() || '';
+        const reason = ev.reason?.toLowerCase?.() || '';
+
+        const matchesSearch =
+          title.includes(term) ||
+          desc.includes(term) ||
+          reason.includes(term);
+
+        return matchesCat && matchesSearch;
+      })
+    : [];
 
   const count = filtered.length;
 
@@ -70,13 +86,14 @@ export default function DeletionRequestListPage() {
       searchPlaceholder="Search events name, description"
       onSearchChange={(value: string) => setSearch(value)}
       initialSearchValue={search}
-      searchCategoryOptions={categories}
+      // searchCategoryOptions={categories}
       searchSelectedCategory={category}
       onSearchCategoryChange={setCategory}
     >
       {/* Header + quick stats */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-bold text-2xl">Deletion Requests</h1>
+        
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-600">
             <span className="inline-flex items-center rounded-full bg-rose-500/10 text-rose-800 font-medium px-3 py-1 border border-rose-500/20">
@@ -91,7 +108,7 @@ export default function DeletionRequestListPage() {
       {error && <p className="text-red-600">{error}</p>}
 
       {/* Cards */}
-      <div className="space-y-6 mb-10">
+      <div className="space-y-6 mb-20">
         {!loading && !error && filtered.map(ev => (
           <AdminDeletionRequestCard key={ev.id} event={ev} />
         ))}
