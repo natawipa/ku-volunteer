@@ -98,12 +98,12 @@ export const activitiesApi = {
       const response = await httpClient.get<unknown>(API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS);
 
       if (response.success && response.data) {
-        const data: any = response.data;
-        const rawArray: any[] =
-          (typeof data === 'object' && data !== null && 'results' in data && Array.isArray((data as any).results))
-            ? (data as any).results
+        const data = response.data as Record<string, unknown> | unknown[];
+        const rawArray: Record<string, unknown>[] =
+          (typeof data === 'object' && data !== null && 'results' in data && Array.isArray((data as { results?: unknown[] }).results))
+            ? (data as { results: unknown[] }).results as Record<string, unknown>[]
             : Array.isArray(data)
-              ? data
+              ? data as Record<string, unknown>[]
               : [];
 
         if (rawArray.length === 0) {
@@ -113,7 +113,9 @@ export const activitiesApi = {
         }
 
         // Fetch activity details for each deletion request
-        const activityIds = rawArray.map((item) => item.activity).filter((id) => id !== undefined);
+            const activityIds = rawArray
+              .map((item) => item.activity)
+              .filter((id): id is string | number => (typeof id === 'string' || typeof id === 'number') && id !== null && id !== undefined);
         const activityResults = await Promise.all(activityIds.map((id) => this.getActivity(id)));
         const activityMap: Record<number | string, Activity> = {};
         activityResults.forEach((res, i) => {
@@ -123,12 +125,13 @@ export const activitiesApi = {
         });
 
         // Map each item to DeletionRequestEvent shape
-        const mapped: DeletionRequestEvent[] = rawArray.map((item: any) => {
-          const activity = item.activity !== undefined ? activityMap[item.activity] : undefined;
+        const mapped: DeletionRequestEvent[] = rawArray.map((item) => {
+        const activityId = (item.activity as number | string | undefined);
+        const activity = activityId !== undefined ? activityMap[activityId] : undefined;
           return {
-            id: item.id ?? 0,
-            activity: item.activity ?? 0,
-            title: item.activity_title ?? activity?.title ?? '',
+            id: item.id as number ?? 0,
+            activity: activityId ?? 0,
+            title: (item.activity_title as string) ?? activity?.title ?? '',
             description: activity?.description ?? '',
             category: activity?.categories ?? [],
             post: activity?.organizer_name ?? '',
@@ -137,7 +140,7 @@ export const activitiesApi = {
             location: activity?.location ?? '',
             organizer: activity?.organizer_name ?? '',
             image: activity?.cover_image_url ?? '',
-            reason: item?.reason ?? '',
+            reason: typeof item.reason === 'string' ? item.reason : '',
             capacity: activity?.max_participants ?? 0,
             additionalImages: [],
           } as DeletionRequestEvent;

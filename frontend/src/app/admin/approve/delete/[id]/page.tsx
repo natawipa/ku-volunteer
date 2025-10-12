@@ -8,7 +8,6 @@ import { activitiesApi } from "@/lib/activities";
 import type { Activity } from '@/lib/types';
 import { ENV, API_ENDPOINTS } from "@/lib/constants";
 import type { DeletionRequestEvent } from "@/app/admin/events/components/AdminDeletionRequestCard";
-import { de } from "zod/v4/locales";
 
 interface ModerationResponse { detail: string }
 interface PageProps { params: Promise<{ id: string }> }
@@ -67,7 +66,7 @@ export default function Page({ params }: PageProps) {
         setError("Related activity not found");
       }
 
-    } catch (e) {
+    } catch {
       setError("Failed to load data");
     } finally {
       if (mounted) setLoading(false);
@@ -86,7 +85,6 @@ export default function Page({ params }: PageProps) {
   if (loading) return <p className="text-center mt-10 text-gray-600">Loading activity...</p>;
   if (!activity) return <p className="text-center mt-10">{error || 'Event not found'}</p>;
 
-  const status = activity.status || 'pending';
   const legacyEvent = {
     id: activity?.id,
     title: activity?.title || "Untitled",

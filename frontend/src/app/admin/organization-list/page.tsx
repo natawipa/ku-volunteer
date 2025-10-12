@@ -189,11 +189,11 @@ export default function OrganizationList() {
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
-              Are you sure you want to delete organization "
+              Are you sure you want to delete organization ?
               <span className="font-medium">
                 {deleteConfirm.org?.organizer_profile?.organization_name}
               </span>
-              "? This action cannot be undone.
+              This action cannot be undone.
             </p>
             <div className="flex justify-end gap-3">
               <button

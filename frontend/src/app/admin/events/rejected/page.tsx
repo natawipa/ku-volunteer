@@ -4,15 +4,12 @@ import { activitiesApi } from '../../../../lib/activities';
 import type { Activity } from '../../../../lib/types';
 import AdminEventPreviewCard from '../../components/AdminEventPreviewCard';
 import AdminLayout from '../../components/AdminLayout';
-import CategorySelect from '@/app/new/components/CategorySelect';
-import { categories } from '@/app/new/types';
 
 export default function RejectedEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejected, setRejected] = useState<Activity[]>([]);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
+  const [search] = useState('');
   const [searchStartDate, setSearchStartDate] = useState('');
   const [searchEndDate, setSearchEndDate] = useState('');
   const [endAfterChecked, setEndAfterChecked] = useState(false);
