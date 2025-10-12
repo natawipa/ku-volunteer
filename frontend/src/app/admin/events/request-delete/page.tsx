@@ -8,9 +8,14 @@ import { activitiesApi } from '@/lib/activities';
 export default function DeletionRequestListPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All Categories');
-  const [events, setEvents] = useState<DeletionRequestEvent[]>([]);
+  const [events, setEvents] = useState<(DeletionRequestEvent & { startDate?: string; endDate?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
+  const [searchStartDate, setSearchStartDate] = useState('');
+  const [searchEndDate, setSearchEndDate] = useState('');
+  const [endAfterChecked, setEndAfterChecked] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -57,24 +62,40 @@ export default function DeletionRequestListPage() {
   }, [events]);
 
 
-  const filtered = Array.isArray(events)
-    ? events.filter(ev => {
-        const term = search.toLowerCase();
-        const isAll = category === 'All Categories' || category === 'all';
-        const matchesCat = isAll || ev.category?.includes?.(category);
+  const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
 
-        const title = ev.title?.toLowerCase?.() || '';
-        const desc = ev.description?.toLowerCase?.() || '';
-        const reason = ev.reason?.toLowerCase?.() || '';
+    return events.filter(ev => {
+      const matchesSearch =
+        !q ||
+        ev.title.toLowerCase().includes(q) ||
+        ev.location.toLowerCase().includes(q) ||
+        ev.description?.toLowerCase().includes(q);
 
-        const matchesSearch =
-          title.includes(term) ||
-          desc.includes(term) ||
-          reason.includes(term);
+      const matchesCategory =
+        searchSelectedCategory === 'All Categories' ||
+        (Array.isArray(ev.category) &&
+          ev.category.some((c: string) => {
+            if (searchSelectedCategory === 'Social Impact') {
+              return c.includes('Social Engagement Activities');
+            }
+            return c.includes(searchSelectedCategory);
+          }));
 
-        return matchesCat && matchesSearch;
-      })
-    : [];
+      let matchesDate = true;
+      const eventStart = new Date(ev.startDate || '');
+      const eventEnd = new Date(ev.endDate || '');
+
+      if (searchStartDate && searchEndDate) {
+        const filterStart = new Date(searchStartDate);
+        const filterEnd = new Date(searchEndDate);
+        // Use overlap logic for date range
+        matchesDate = eventEnd >= filterStart && eventStart <= filterEnd;
+      }
+
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  }, [events, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
 
   const count = filtered.length;
 
@@ -84,11 +105,15 @@ export default function DeletionRequestListPage() {
       title="Deletion Requests"
       searchVariant="compact"
       searchPlaceholder="Search events name, description"
-      onSearchChange={(value: string) => setSearch(value)}
-      initialSearchValue={search}
-      // searchCategoryOptions={categories}
-      searchSelectedCategory={category}
-      onSearchCategoryChange={setCategory}
+      onSearchChange={setSearchQuery}
+      onSearchCategoryChange={setSearchSelectedCategory}
+      onSearchStartDateChange={setSearchStartDate}
+      onSearchEndDateChange={setSearchEndDate}
+      onEndAfterCheckedChange={setEndAfterChecked}
+      initialSearchValue={searchQuery}
+      searchCategoryOptions={categories}
+      searchSelectedCategory={searchSelectedCategory}
+      
     >
       {/* Header + quick stats */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">

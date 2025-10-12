@@ -5,6 +5,7 @@ import Link from 'next/link';
 import ProfileCard from "@/app/components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlusIcon } from '@heroicons/react/24/solid';
+
 import SearchCard from '@/app/components/SearchCard';
 
 interface AdminLayoutProps {
@@ -28,6 +29,14 @@ interface AdminLayoutProps {
   searchSelectedCategory?: string;
   /** Callback when category changes */
   onSearchCategoryChange?: (value: string) => void;
+  /** Callback for category change (for page filter) */
+  onCategoryChange?: (value: string) => void;
+  /** Callback for start date change */
+  onSearchStartDateChange?: (value: string) => void;
+  /** Callback for end date change */
+  onSearchEndDateChange?: (value: string) => void;
+  /** Callback for end after checked change */
+  onEndAfterCheckedChange?: (checked: boolean) => void;
   /** Whether to show a date picker in the dropdown (default false for admin) */
   searchShowDate?: boolean;
   /** Callback when search is applied */
@@ -53,17 +62,54 @@ export default function AdminLayout({
   searchPlaceholder = 'Search events name, description',
   onSearchChange,
   initialSearchValue = '',
-  searchCategoryOptions = [],
-  searchSelectedCategory = '',
   onSearchCategoryChange,
-  searchShowDate = false,
+  onCategoryChange,
+  onSearchStartDateChange,
+  onSearchEndDateChange,
+  onEndAfterCheckedChange,
   onSearchApply
 }: AdminLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [dateStart, setDateStart] = useState<string>('');
+  const [dateEnd, setDateEnd] = useState<string>('');
+  const [endAfterChecked, setEndAfterChecked] = useState(false);
+  const [searchHistory, setSearchHistory] = useState<string[]>([]);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+
+  // Handlers for SearchCard
+  const handleCategoriesChange = (cats: string[]) => {
+    setSelectedCategories(cats);
+    if (onSearchCategoryChange) onSearchCategoryChange(cats[0] || 'All Categories');
+    if (typeof onCategoryChange === 'function') onCategoryChange(cats[0] || 'All Categories');
+  };
+  const handleDateStartChange = (date: string) => {
+    setDateStart(date);
+    if (typeof onSearchStartDateChange === 'function') onSearchStartDateChange(date);
+  };
+  const handleDateEndChange = (date: string) => {
+    setDateEnd(date);
+    if (typeof onSearchEndDateChange === 'function') onSearchEndDateChange(date);
+  };
+  const handleEndAfterCheckedChange = (checked: boolean) => {
+    setEndAfterChecked(checked);
+    if (typeof onEndAfterCheckedChange === 'function') onEndAfterCheckedChange(checked);
+  };
+  const handleApply = (query?: string) => {
+    // Optionally update search history
+    if (query && !searchHistory.includes(query)) {
+      setSearchHistory([query, ...searchHistory]);
+    }
+    handleSearchApply({
+      searchValue: query ?? searchValue,
+      selectedCategories,
+      dateStart,
+      dateEnd,
+    });
+  };
 
   // Scroll effect for shrinking search bar (only needed for compact)
   useEffect(() => {
@@ -138,10 +184,7 @@ export default function AdminLayout({
               ref={wrapperRef}
               className={`transition-all duration-300 ${isScrolled ? 'max-w-md mx-auto scale-90' : 'relative w-full max-w-xl'}`}
             >
-              <div
-                className="flex bg-white items-center rounded-md px-4 py-3 shadow-md cursor-text"
-                onClick={() => setIsOpen(true)}
-              >
+              <div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md cursor-text" onClick={() => setIsOpen(true)}>
                 <MagnifyingGlassIcon className="text-gray-400 w-5 h-5" />
                 <input
                   ref={searchInputRef}
@@ -158,14 +201,28 @@ export default function AdminLayout({
               {isOpen && (
                 <div className="absolute top-full mt-1 w-full z-50">
                   <SearchCard
-                    searchValue={searchValue}
-                    onSearchChange={handleSearchChange}
-                    categoryOptions={searchCategoryOptions}
-                    selectedCategory={searchSelectedCategory}
-                    onCategoryChange={onSearchCategoryChange}
-                    showDatePicker={searchShowDate}
-                    onApply={handleSearchApply}
-                    placeholder={searchPlaceholder}
+                    query={searchValue}
+                    setQuery={setSearchValue}
+                    categoriesSelected={selectedCategories}
+                    setCategoriesSelected={handleCategoriesChange}
+                    dateStart={dateStart}
+                    setStartDate={handleDateStartChange}
+                    dateEnd={dateEnd}
+                    setEndDate={handleDateEndChange}
+                    endAfterChecked={endAfterChecked}
+                    setEndAfterChecked={handleEndAfterCheckedChange}
+                    history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
+                    setHistory={h => setSearchHistory(h.map(item => item.query))}
+                    onSelectHistory={item => {
+                      setSearchValue(item.query);
+                      handleApply(item.query);
+                      setIsOpen(false);
+                    }}
+                    
+                    onApply={() => {
+                      setIsOpen(false);
+                      handleApply();
+                    }}
                   />
                 </div>
               )}

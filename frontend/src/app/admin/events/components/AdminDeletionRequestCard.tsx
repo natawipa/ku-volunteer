@@ -33,7 +33,7 @@ const formatDate = (iso: string) => {
 
 export default function AdminDeletionRequestCard({ event }: Props) {
   return (
-    <Link href={`/admin/approve/delete/${event.id}`} className='w-full cursor-pointer'>
+    <Link href={`/admin/approve/delete/${event.activity}`} className='w-full cursor-pointer'>
       <div className="relative overflow-hidden rounded-lg shadow-lg p-5 bg-gradient-to-r from-orange-300/25 to-amber-300/25 hover:scale-[1.01] transition-transform duration-200 mb-6">
         {/* Decorative faint icon */}
         <TrashIcon className="w-40 h-40 absolute -right-6 -bottom-6 opacity-5 text-black pointer-events-none" />

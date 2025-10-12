@@ -2,7 +2,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { apiService, User } from "@/lib/api";
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { activitiesApi } from '../../lib/activities';
 
 export default function AdminContent() {

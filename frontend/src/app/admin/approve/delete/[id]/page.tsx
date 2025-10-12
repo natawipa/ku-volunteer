@@ -8,6 +8,7 @@ import { activitiesApi } from "@/lib/activities";
 import type { Activity } from '@/lib/types';
 import { ENV, API_ENDPOINTS } from "@/lib/constants";
 import type { DeletionRequestEvent } from "@/app/admin/events/components/AdminDeletionRequestCard";
+import { de } from "zod/v4/locales";
 
 interface ModerationResponse { detail: string }
 interface PageProps { params: Promise<{ id: string }> }
@@ -33,30 +34,50 @@ export default function Page({ params }: PageProps) {
 
   // Fetch activity when eventId resolved
   useEffect(() => {
-    let mounted = true;
+  if (eventId == null) return;
+  let mounted = true;
 
-    const fetchRequests = async () => {
-      const res = await activitiesApi.getDeletionRequests();
+  const fetchRequests = async () => {
+    try {
+      // 1️⃣ Fetch all deletion requests
+      const reqRes = await activitiesApi.getDeletionRequests();
       if (!mounted) return;
 
-      if (res.success && Array.isArray(res.data)) {
-        const deletionRequest = res.data.find(req => req.id === req.activity);
-        if (!deletionRequest) {
-          setError("Deletion request not found");
-          setLoading(false);
-          return;
-        }
-        setActivity(activity);
-      } else {
-        setError(res.error || "Failed to load deletion requests");
+      if (!reqRes.success || !Array.isArray(reqRes.data)) {
+        setError(reqRes.error || "Failed to load deletion requests");
+        setLoading(false);
+        return;
       }
-      setLoading(false);
-    };
 
-    fetchRequests();
+      // 2️⃣ Find the specific deletion request
+      const req = reqRes.data.find(r => r.id === eventId);
+      if (!req) {
+        setError("Deletion request not found");
+        setLoading(false);
+        return;
+      }
 
-    return () => { mounted = false; };
-  }, [eventId]);
+      setDeletionRequest(req);
+
+      // 3️⃣ Fetch the related activity by its foreign key
+      const actRes = await activitiesApi.getActivity(req.activity);
+      if (actRes.success && actRes.data) {
+        setActivity(actRes.data);
+      } else {
+        setError("Related activity not found");
+      }
+
+    } catch (e) {
+      setError("Failed to load data");
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  };
+
+  fetchRequests();
+
+  return () => { mounted = false; };
+}, [eventId]);
 
 
   if (eventId == null) {
@@ -68,9 +89,8 @@ export default function Page({ params }: PageProps) {
   const status = activity.status || 'pending';
   const legacyEvent = {
     id: activity?.id,
-    activity_id: activity?.activity_id,
     title: activity?.title || "Untitled",
-    reason: activity?.rejection_reason || "",
+    reason: deletionRequest?.reason || "",
     image: activity?.cover_image_url || "/titleExample.jpg",
     post: new Date(activity?.created_at || Date.now()).toLocaleDateString('en-GB'),
     start_at: new Date(activity?.start_at || Date.now()).toLocaleDateString('en-GB'),
