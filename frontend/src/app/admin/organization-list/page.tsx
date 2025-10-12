@@ -12,6 +12,34 @@ export default function OrganizationList() {
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [orgType, setOrgType] = useState("all"); // all, internal, external
+  const [deleteConfirm, setDeleteConfirm] = useState<{show: boolean, org: User | null}>({ show: false, org: null });
+  const [deleting, setDeleting] = useState<number | null>(null);
+  const handleDeleteClick = (org: User) => {
+    setDeleteConfirm({ show: true, org });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ show: false, org: null });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.org) return;
+    setDeleting(deleteConfirm.org.id);
+    try {
+      const result = await apiService.deleteUser(deleteConfirm.org.id);
+      if (result.success) {
+        setOrganizations(organizations.filter(o => o.id !== deleteConfirm.org!.id));
+        setDeleteConfirm({ show: false, org: null });
+      } else {
+        setError(result.error || 'Failed to delete organization');
+      }
+    } catch (err) {
+      setError('Failed to delete organization');
+      console.error('Delete error:', err);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   useEffect(() => {
     let mounted = true;
@@ -139,7 +167,44 @@ export default function OrganizationList() {
                   <button className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1">
                     <EyeIcon className="w-4 h-4" /> View Events
                   </button>
-                  <button className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200">Delete</button>
+                  <button 
+                    onClick={() => handleDeleteClick(org)}
+                    disabled={deleting === org.id}
+                    className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {deleting === org.id ? 'Deleting...' : 'Delete'}
+                  </button>
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete organization "
+              <span className="font-medium">
+                {deleteConfirm.org?.organizer_profile?.organization_name}
+              </span>
+              "? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleting !== null}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting !== null}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting === deleteConfirm.org?.id ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
                 </div>
               </div>
             ))}

@@ -10,6 +10,11 @@ export default function StudentList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [deleteConfirm, setDeleteConfirm] = useState<{show: boolean, student: User | null}>({
+    show: false,
+    student: null
+  });
+  const [deleting, setDeleting] = useState<number | null>(null);
 
   useEffect(() => {
       let mounted = true;
@@ -42,6 +47,37 @@ export default function StudentList() {
       mounted = false;
     };
   }, []);
+
+  const handleDeleteClick = (student: User) => {
+    setDeleteConfirm({ show: true, student });
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirm({ show: false, student: null });
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirm.student) return;
+    
+    setDeleting(deleteConfirm.student.id);
+    
+    try {
+      const result = await apiService.deleteUser(deleteConfirm.student.id);
+      
+      if (result.success) {
+        // Remove the deleted student from the list
+        setStudents(students.filter(s => s.id !== deleteConfirm.student!.id));
+        setDeleteConfirm({ show: false, student: null });
+      } else {
+        setError(result.error || 'Failed to delete student');
+      }
+    } catch (err) {
+      setError('Failed to delete student');
+      console.error('Delete error:', err);
+    } finally {
+      setDeleting(null);
+    }
+  };
 
   return (
     <div className="relative">
@@ -110,13 +146,49 @@ export default function StudentList() {
               <button className="bg-yellow-50 px-4 py-1 rounded-full hover:bg-yellow-100 transition-colors cursor-pointer">
                 edit
               </button>
-              <button className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer">
-                delete
+              <button 
+                onClick={() => handleDeleteClick(s)}
+                disabled={deleting === s.id}
+                className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting === s.id ? 'Deleting...' : 'delete'}
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirm.show && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to delete student "
+              <span className="font-medium">
+                {deleteConfirm.student?.title} {deleteConfirm.student?.first_name} {deleteConfirm.student?.last_name}
+              </span>
+              "? This action cannot be undone.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleDeleteCancel}
+                disabled={deleting !== null}
+                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteConfirm}
+                disabled={deleting !== null}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+              >
+                {deleting === deleteConfirm.student?.id ? 'Deleting...' : 'Delete'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   );
