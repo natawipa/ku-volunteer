@@ -159,7 +159,16 @@ export const activitiesApi = {
   },
 
   async getUserApplications(): Promise<ApiResponse<ActivityApplication[]>> {
-    return httpClient.get<ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.GETAPPLICATIONS);
+    const response = await httpClient.get<ApplicationsPaginatedResponse | ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.GETAPPLICATIONS);
+    if (response.success && response.data) {
+      if (isApplicationsPaginatedResponse(response.data)) {
+        return { success: true, data: response.data.results };
+      }
+      if (isApplicationsArray(response.data)) {
+        return { success: true, data: response.data };
+      }
+    }
+    return { success: response.success, data: [], error: response.error };
   },
 
   async getApplicationDetail(id: string | number): Promise<ApiResponse<ActivityApplication>> {

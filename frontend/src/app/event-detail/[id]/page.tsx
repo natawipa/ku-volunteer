@@ -7,6 +7,7 @@ import { activitiesApi } from "../../../lib/activities";
 import type { Activity, ActivityApplication, CreateApplicationRequest } from "../../../lib/types";
 import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
+import { useRouter } from "next/navigation";
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -22,6 +23,7 @@ export default function EventPage({ params }: PageProps) {
   const [activeSection, setActiveSection] = useState<'details' | 'applicants' | 'approved'>('details');
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
+  const router = useRouter();
   
   const [eventId, setEventId] = useState<number | null>(null);
 
@@ -55,9 +57,12 @@ export default function EventPage({ params }: PageProps) {
 
   // Check if user has already applied to this activity - FIXED: useCallback
   const checkUserApplication = useCallback(async () => {
-    if (eventId == null || Number.isNaN(eventId)) return;
+    if (eventId == null || Number.isNaN(eventId)) {
+      console.log('❌ Cannot check application: eventId is null or NaN');
+      return;
+    }
     try {
-      console.log('📋 Checking user applications...');
+      console.log('📋 Checking user applications for eventId:', eventId);
       const applicationsResponse = await activitiesApi.getUserApplications();
       
       if (applicationsResponse.success && applicationsResponse.data) {
@@ -74,15 +79,22 @@ export default function EventPage({ params }: PageProps) {
           setApplicationStatus(userApp.status);
         } else {
           console.log('ℹ️ No application found for this activity');
+          setUserApplication(null);
           setApplicationStatus(null);
         }
+      } else {
+        console.log('❌ Failed to get applications:', applicationsResponse.error);
+        setUserApplication(null);
+        setApplicationStatus(null);
       }
     } catch (error) {
       console.error('❌ Error checking user application:', error);
+      setUserApplication(null);
+      setApplicationStatus(null);
     }
   }, [eventId]);
 
-  // Check authentication
+  // Check authentication and application status every time
   useEffect(() => {
     const authenticated = auth.isAuthenticated();
     const role = auth.getUserRole();
@@ -97,6 +109,22 @@ export default function EventPage({ params }: PageProps) {
       fetchEventForOrganizer();
     }
   }, [eventId, checkUserApplication, fetchEventForOrganizer]); // add checkUserApplication to dependencies
+
+  // Also check application status when the component mounts (every time user visits the page)
+  useEffect(() => {
+    if (isAuthenticated && userRole === USER_ROLES.STUDENT && eventId) {
+      console.log('🔄 Triggering application check - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'eventId:', eventId);
+      checkUserApplication();
+    }
+  }, [isAuthenticated, userRole, eventId, checkUserApplication]);
+
+  // Force check when eventId becomes available
+  useEffect(() => {
+    if (eventId && isAuthenticated && userRole === USER_ROLES.STUDENT) {
+      console.log('🔄 EventId available, checking application status...');
+      checkUserApplication();
+    }
+  }, [eventId, isAuthenticated, userRole, checkUserApplication]);
 
   // Fetch event data
   useEffect(() => {
@@ -134,6 +162,40 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [activeSection, fetchEventForOrganizer]);
 
+  // Periodically check application status for students
+  useEffect(() => {
+    if (userRole === USER_ROLES.STUDENT && isAuthenticated) {
+      const interval = setInterval(() => {
+        checkUserApplication();
+      }, 30000); // Check every 30 seconds
+
+      return () => clearInterval(interval);
+    }
+  }, [userRole, isAuthenticated, checkUserApplication]);
+
+  // Check application status when page becomes visible or user focuses on window
+  useEffect(() => {
+    if (userRole === USER_ROLES.STUDENT && isAuthenticated) {
+      const handleVisibilityChange = () => {
+        if (!document.hidden) {
+          checkUserApplication();
+        }
+      };
+
+      const handleFocus = () => {
+        checkUserApplication();
+      };
+
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+      window.addEventListener('focus', handleFocus);
+
+      return () => {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+        window.removeEventListener('focus', handleFocus);
+      };
+    }
+  }, [userRole, isAuthenticated, checkUserApplication]);
+
 
   const handleApproveApplication = async (applicationId: number) => {
   }
@@ -169,7 +231,14 @@ export default function EventPage({ params }: PageProps) {
         
       } else {
         console.error('Application failed:', response.error);
-        alert(`Application failed: ${response.error || 'Unknown error'}`);
+        // Check if it's an "already applied" error
+        if (response.error?.includes('already applied')) {
+          // Refresh the application status to show the correct button
+          await checkUserApplication();
+          alert('You have already applied to this activity.');
+        } else {
+          alert(`Application failed: ${response.error || 'Unknown error'}`);
+        }
       }
     } catch (error) {
       console.error('Application error:', error);
@@ -232,8 +301,10 @@ export default function EventPage({ params }: PageProps) {
     );
   };
 
-  // Render apply/cancel button based on application status
+  // Render apply/cancel button
   const renderActionButton = () => {
+    console.log('🎯 renderActionButton called - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'applicationStatus:', applicationStatus);
+    
     if (!isAuthenticated || userRole !== USER_ROLES.STUDENT) {
       return null;
     }
@@ -430,9 +501,9 @@ export default function EventPage({ params }: PageProps) {
         <div className="text-center">
           <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Event</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <Link href="/" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Back to Home
-          </Link>
+          <button onClick={() => router.back} className="bg-green-500/40 text-white px-4 py-2 rounded hover:bg-green-500/70">
+            Back
+          </button>
         </div>
       </div>
     );
@@ -444,11 +515,11 @@ export default function EventPage({ params }: PageProps) {
         <div className="text-center">
           <h2 className="text-xl font-bold mb-2">Event Not Found</h2>
           <p className="text-gray-600 mb-4">The event you&apos;re looking for doesn&apos;t exist.</p>
-          <Link href="/" className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">
-            Back to Home
-          </Link>
+          <button onClick={() => router.back} className="bg-green-500/40 text-white px-4 py-2 rounded hover:bg-green-500/70">
+            Back
+          </button>
         </div>
-      </div>
+        </div>
     );
   }
 
@@ -595,13 +666,10 @@ export default function EventPage({ params }: PageProps) {
              )}
 
             <div className="flex justify-between items-center pt-4 border-t mt-11">
-              <Link 
-                href="/" 
-                className="flex items-center text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400 transition-all duration-200"
-              >
-                Back to Home
-              </Link>
-
+              <button onClick={() => router.back} className="bg-green-500/40 text-white px-4 py-2 rounded hover:bg-green-500/70">
+                Back
+              </button>
+            </div>
               {isAuthenticated ? (
                 userRole === USER_ROLES.STUDENT ? (
                   // Student - Use dynamic button renderer
@@ -643,23 +711,16 @@ export default function EventPage({ params }: PageProps) {
                 <h3 className="font-semibold text-blue-800 mb-2">Application Status</h3>
                 <p className="text-blue-700">
                   {applicationStatus === APPLICATION_STATUS.PENDING && 
-                    "Your application is pending review by the organizer. You can cancel your application if needed."}
+                    "Your application is pending review by the organizer."}
                   {applicationStatus === APPLICATION_STATUS.APPROVED && 
-                    "Congratulations! Your application has been approved. Check &quot;My Events&quot; for more details."}
+                    "Congratulations! Your application has been approved. Check My Events for more details."}
                   {applicationStatus === APPLICATION_STATUS.REJECTED && 
-                    "Your application was not approved for this event. You can explore other events."}
+                    "Your application was not approved for this event."}
                 </p>
-                <Link 
-                  href="/all-events" 
-                  className="inline-block mt-2 text-blue-600 hover:text-blue-800 font-medium"
-                >
-                  My Events →
-                </Link>
               </div>
             )}
           </div>
         </div>
       </div>
-    </div>
   );
 }
