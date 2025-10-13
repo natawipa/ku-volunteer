@@ -104,9 +104,9 @@ function ActivityFormContent() {
           setDateEnd(endDate.toISOString().split('T')[0]);
         }
         
-        console.log('✅ Activity data loaded for editing:', activityData);
+        console.log('Activity data loaded for editing:', activityData);
       } catch (error) {
-        console.error('❌ Error parsing activity data:', error);
+        console.error('Error parsing activity data:', error);
         alert('Error loading activity data for editing');
       }
     }
@@ -232,10 +232,10 @@ function ActivityFormContent() {
       if (isEditMode && activityId) {
         // Update existing activity
         result = await activitiesApi.updateActivity(parseInt(activityId), activityData);
-        console.log('📥 Backend update response:', result);
+        console.log('Backend update response:', result);
         
         if (result.success && result.data) {
-          console.log('✅ Activity updated successfully:', result.data);
+          console.log('Activity updated successfully:', result.data);
           alert('Activity updated successfully!');
           router.push(`/event-detail/${activityId}`);
         } else {
@@ -247,7 +247,7 @@ function ActivityFormContent() {
         console.log('📥 Backend create response:', result);
         
         if (result.success && result.data) {
-          console.log('✅ Activity created successfully:', result.data);
+          console.log('Activity created successfully:', result.data);
           setActivityCreated(true);
           
           if (result.data.id) {
@@ -262,7 +262,7 @@ function ActivityFormContent() {
       }
       
     } catch (error) {
-      console.error('❌ Failed to save activity:', error);
+      console.error('Failed to save activity:', error);
       alert(`Failed to ${isEditMode ? 'update' : 'create'} activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);

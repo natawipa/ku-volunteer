@@ -17,6 +17,9 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
   const [userApplication, setUserApplication] = useState<ActivityApplication | null>(null);
   const [applying, setApplying] = useState(false);
   const [applicationStatus, setApplicationStatus] = useState<string | null>(null);
+  const [activeSection, setActiveSection] = useState<'details' | 'applicants' | 'approved'>('details');
+  const [applications, setApplications] = useState<ActivityApplication[]>([]);
+  const [loadingApplications, setLoadingApplications] = useState(false);
   
   const { id } = React.use(params);
   const eventId = parseInt(id, 10);
@@ -59,26 +62,30 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     if (authenticated && role === USER_ROLES.STUDENT) {
       checkUserApplication();
     }
-  }, [eventId, checkUserApplication]); // FIXED: Added checkUserApplication to dependencies
+
+    if (authenticated && role === USER_ROLES.ORGANIZER) {
+      fetchEventForOrganizer();
+    }
+  }, [eventId, checkUserApplication]); // add checkUserApplication to dependencies
 
   // Fetch event data
   useEffect(() => {
     const fetchEvent = async () => {
       try {
         setLoading(true);
-        console.log('🔄 Fetching event details for ID:', eventId);
+        console.log('Fetching event details for ID:', eventId);
         
         const response = await activitiesApi.getActivity(eventId);
         
         if (response.success && response.data) {
-          console.log('✅ Event data received:', response.data);
+          console.log('Event data received:', response.data);
           setEvent(response.data);
         } else {
           setError(response.error || 'Failed to fetch event details');
-          console.error('❌ API error:', response.error);
+          console.error('API error:', response.error);
         }
       } catch (err) {
-        console.error('❌ Network error:', err);
+        console.error('Network error:', err);
         setError('Network error occurred');
       } finally {
         setLoading(false);
@@ -90,6 +97,46 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     }
   }, [eventId]);
 
+  const fetchEventForOrganizer = useCallback(async () => {
+    if (userRole !== USER_ROLES.ORGANIZER) return;
+
+    try {
+      setLoadingApplications(true);
+      console.log('Fetching applications for event ID:', eventId);
+      
+      const response = await activitiesApi.getActivityApplications(eventId);
+      
+      if (response.success && response.data) {
+        console.log('Applications data received:', response.data);
+        setApplications(response.data);
+      } else {
+        console.error('API error fetching applications:', response.error);
+      }
+    } catch (err) {
+      console.error('Network error fetching applications:', err);
+    } finally {
+      setLoadingApplications(false);
+    }
+  } , [eventId, userRole]);
+
+  // approve student handle for organizer
+  const handleApproveApplication = async (applicationId: number) => {
+    try {
+      console.log('Approving application ID:', applicationId);
+    } catch (error) {
+      console.error('Error approving application:', error);
+    }
+  }
+
+  // reject student handle for organizer
+  const handleRejectApplication = async (applicationId: number) => {
+    try {
+      console.log('Rejecting application ID:', applicationId);
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+    }
+  }
+
   const handleApply = async () => {
     if (!isAuthenticated || userRole !== USER_ROLES.STUDENT) {
       alert('Please login as a student to apply for activities.');
@@ -98,7 +145,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
 
     try {
       setApplying(true);
-      console.log('🚀 Applying to activity:', eventId);
+      console.log('Applying to activity:', eventId);
       
       const applicationData: CreateApplicationRequest = {
         activity: eventId
@@ -107,7 +154,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
       const response = await activitiesApi.createApplication(applicationData);
       
       if (response.success && response.data) {
-        console.log('✅ Application submitted successfully:', response.data);
+        console.log('Application submitted successfully:', response.data);
         setApplicationStatus(APPLICATION_STATUS.PENDING);
         setUserApplication(response.data);
         
@@ -116,11 +163,11 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
         await checkUserApplication();
         
       } else {
-        console.error('❌ Application failed:', response.error);
+        console.error('Application failed:', response.error);
         alert(`Application failed: ${response.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('❌ Application error:', error);
+      console.error('Application error:', error);
       alert('An error occurred while submitting your application. Please try again.');
     } finally {
       setApplying(false);
@@ -134,16 +181,16 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
       const response = await activitiesApi.cancelApplication(userApplication.id);
       
       if (response.success) {
-        console.log('✅ Application cancelled successfully');
+        console.log('Application cancelled successfully');
         setApplicationStatus(null);
         setUserApplication(null);
         alert('Application cancelled successfully.');
       } else {
-        console.error('❌ Cancellation failed:', response.error);
+        console.error('Cancellation failed:', response.error);
         alert(`Cancellation failed: ${response.error || 'Unknown error'}`);
       }
     } catch (error) {
-      console.error('❌ Cancellation error:', error);
+      console.error('Cancellation error:', error);
       alert('An error occurred while cancelling your application. Please try again.');
     }
   };
@@ -157,7 +204,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
         color: 'bg-yellow-100 text-yellow-800 border-yellow-300'
       },
       [APPLICATION_STATUS.APPROVED]: {
-        text: 'Approved 🎉',
+        text: 'Approved',
         color: 'bg-green-100 text-green-800 border-green-300'
       },
       [APPLICATION_STATUS.REJECTED]: {
@@ -202,7 +249,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
       return (
         <div className="text-center">
           <div className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium">
-            You&apos;re Approved! 🎉
+            You&apos;re Approved!
           </div>
           <p className="text-sm text-gray-600 mt-2">
             Check &quot;My Events&quot; for details
@@ -236,6 +283,96 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
       >
         {applying ? 'Applying...' : 'Apply Now'}
       </button>
+    );
+  };
+
+  // section for organizer
+  const renderSectionNavigation = () => {
+    if (userRole !== USER_ROLES.ORGANIZER) return null;
+  
+    return (
+      <div className="flex justify-center mb-6 border-b">
+        <div className="flex space-x-8">
+          <button
+            onClick={() => setActiveSection('details')}
+            className={`py-3 px-4 font-medium transition-all duration-200 ${
+              activeSection === 'details'
+                ? 'border-b-2 border-green-600 text-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Event Details
+          </button>
+          <button
+            onClick={() => setActiveSection('applicants')}
+            className={`py-3 px-4 font-medium transition-all duration-200 ${
+              activeSection === 'applicants'
+                ? 'border-b-2 border-green-600 text-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Participants Apply
+          </button>
+          <button
+            onClick={() => setActiveSection('approved')}
+            className={`py-3 px-4 font-medium transition-all duration-200 ${
+              activeSection === 'approved'
+                ? 'border-b-2 border-green-600 text-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            Approved Participants
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderApplicantsList = () => {
+    const pendingApplications = applications.filter(app => app.status === APPLICATION_STATUS.PENDING);
+    
+    if (loadingApplications) {
+      return <div className="text-center py-8">Loading applications...</div>;
+    }
+  
+    return (
+      <div className="space-y-4">
+        <h2 className="font-semibold text-2xl mb-6">Student Applications</h2>
+        {pendingApplications.length === 0 ? (
+          <p className="text-gray-500 text-center">No pending applications</p>
+        ) : (
+          pendingApplications.map((application) => (
+            <div key={application.id} className="flex justify-between items-center border-b pb-4">
+              <div className="flex-1">
+                <p className="font-medium">{application.student_name || `Student ${application.studentid}`}</p>
+              </div>
+              <div className="flex gap-4">
+                <button 
+                  onClick={() => handleApproveApplication(application.id)}
+                  className="bg-green-100 px-4 py-2 rounded hover:bg-green-200 transition-colors cursor-pointer"
+                >
+                  Approve
+                </button>
+                <button 
+                  onClick={() => handleRejectApplication(application.id)}
+                  className="bg-red-100 px-4 py-2 rounded hover:bg-red-200 transition-colors cursor-pointer"
+                >
+                  Reject
+                </button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    );
+  };
+  
+  // render the approved student later
+  const renderApprovedList = () => {
+    return (
+      <div className="text-center py-8">
+        <p className="text-gray-500">Approved participants</p>
+      </div>
     );
   };
 
@@ -345,8 +482,8 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
           {/* Application Status Badge */}
-          <div className="flex justify-between items-center mb-4">
-            <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
+          <div className="text-center mb-4">
+            <h1 className="text-3xl font-bold align-center">{transformedEvent.title}</h1>
             {renderApplicationStatus()}
           </div>
           
