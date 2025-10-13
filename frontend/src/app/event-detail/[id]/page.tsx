@@ -8,6 +8,7 @@ import type { Activity, ActivityApplication, CreateApplicationRequest } from "..
 import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
 import { useRouter } from "next/navigation";
+import ProfileCard from '../../components/ProfileCard';
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -567,8 +568,11 @@ export default function EventPage({ params }: PageProps) {
           />
           <nav className="flex items-center space-x-8">
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-            {isAuthenticated && userRole === USER_ROLES.ORGANIZER && (
+            <Link href="/all-events" 
+              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
+              {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT ? "My Event" : "All Event"}
+            </Link>     
+                    {isAuthenticated && userRole === USER_ROLES.ORGANIZER && (
               <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
                     hover:bg-[#00361C]
                     transition-all duration-200">
@@ -578,9 +582,7 @@ export default function EventPage({ params }: PageProps) {
                 </div>
               </Link>
             )}
-            <Link href="/profile">
-              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
-            </Link>
+            <ProfileCard/>
           </nav>
         </header>
 
