@@ -162,7 +162,7 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [activeSection, fetchEventForOrganizer]);
 
-  // Periodically check application status for students
+  // check application status for students
   useEffect(() => {
     if (userRole === USER_ROLES.STUDENT && isAuthenticated) {
       const interval = setInterval(() => {
@@ -197,9 +197,11 @@ export default function EventPage({ params }: PageProps) {
   }, [userRole, isAuthenticated, checkUserApplication]);
 
 
+  // TODO: implement approve application for organizer later
   const handleApproveApplication = async (applicationId: number) => {
   }
 
+  // TODO: implement reject application for organizer later
   const handleRejectApplication = async (applicationId: number) => {
   }
 
@@ -231,9 +233,9 @@ export default function EventPage({ params }: PageProps) {
         
       } else {
         console.error('Application failed:', response.error);
-        // Check if it's an "already applied" error
+        // check if student already apply
         if (response.error?.includes('already applied')) {
-          // Refresh the application status to show the correct button
+          // refresh the application status
           await checkUserApplication();
           alert('You have already applied to this activity.');
         } else {
@@ -409,45 +411,34 @@ export default function EventPage({ params }: PageProps) {
       return <div className="text-center py-8">Loading applications...</div>;
     }
   
+    // Filter only pending applications
+    const pendingApplications = applications.filter(app => app.status === APPLICATION_STATUS.PENDING);
+  
     return (
       <div className="space-y-4">
-        <h2 className="font-semibold text-2xl mb-6">Student Applications</h2>
-        {applications.length === 0 ? (
-          <p className="text-gray-500 text-center">No applications</p>
+        <h2 className="font-semibold text-2xl mb-6">Pending Applications</h2>
+        {pendingApplications.length === 0 ? (
+          <p className="text-gray-500 text-center">No pending applications</p>
         ) : (
-          applications.map((application) => (
+          pendingApplications.map((application) => (
             <div key={application.id} className="flex justify-between items-center border-b pb-4">
               <div className="flex-1">
                 <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
                 <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
               </div>
               <div className="flex gap-4 items-center">
-                {application.status === APPLICATION_STATUS.PENDING ? (
-                  <>
-                    <button 
-                      onClick={() => handleApproveApplication(application.id)}
-                      className="bg-green-100 px-4 py-2 rounded hover:bg-green-200 transition-colors cursor-pointer"
-                    >
-                      Approve
-                    </button>
-                    <button 
-                      onClick={() => handleRejectApplication(application.id)}
-                      className="bg-red-100 px-4 py-2 rounded hover:bg-red-200 transition-colors cursor-pointer"
-                    >
-                      Reject
-                    </button>
-                  </>
-                ) : (
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
-                    application.status === APPLICATION_STATUS.APPROVED 
-                      ? 'bg-green-100 text-green-800' 
-                      : application.status === APPLICATION_STATUS.REJECTED
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                  </span>
-                )}
+                <button 
+                  onClick={() => handleApproveApplication(application.id)}
+                  className="bg-green-100 px-4 py-2 rounded hover:bg-green-200 transition-colors cursor-pointer"
+                >
+                  Approve
+                </button>
+                <button 
+                  onClick={() => handleRejectApplication(application.id)}
+                  className="bg-red-100 px-4 py-2 rounded hover:bg-red-200 transition-colors cursor-pointer"
+                >
+                  Reject
+                </button>
               </div>
             </div>
           ))
@@ -456,11 +447,36 @@ export default function EventPage({ params }: PageProps) {
     );
   };
   
-  // render the approved student later
+  // render the approved students
   const renderApprovedList = () => {
+    if (loadingApplications) {
+      return <div className="text-center py-8">Loading applications...</div>;
+    }
+  
+    // Filter only approved applications
+    const approvedApplications = applications.filter(app => app.status === APPLICATION_STATUS.APPROVED);
+  
     return (
-      <div className="text-center py-8">
-        <p className="text-gray-500">Approved participants</p>
+      <div className="space-y-4">
+        <h2 className="font-semibold text-2xl mb-6">Approved Participants</h2>
+        {approvedApplications.length === 0 ? (
+          <p className="text-gray-500 text-center">No approved participants yet</p>
+        ) : (
+          approvedApplications.map((application) => (
+            <div key={application.id} className="flex justify-between items-center border-b pb-4">
+              <div className="flex-1">
+                <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
+                <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
+                <p className="text-xs text-gray-500">Approved on: {new Date(application.decision_at || '').toLocaleDateString('en-GB')}</p>
+              </div>
+              <div className="flex gap-4 items-center">
+                <span className="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                  Approved
+                </span>
+              </div>
+            </div>
+          ))
+        )}
       </div>
     );
   };
@@ -501,7 +517,7 @@ export default function EventPage({ params }: PageProps) {
         <div className="text-center">
           <h2 className="text-xl font-bold text-red-600 mb-2">Error Loading Event</h2>
           <p className="text-gray-600 mb-4">{error}</p>
-          <button onClick={() => router.back} className="bg-green-500/40 text-white px-4 py-2 rounded hover:bg-green-500/70">
+          <button onClick={() => router.back} className="bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-gray-200 cursor-pointer transition-all duration-200 font-medium">
             Back
           </button>
         </div>
@@ -515,7 +531,7 @@ export default function EventPage({ params }: PageProps) {
         <div className="text-center">
           <h2 className="text-xl font-bold mb-2">Event Not Found</h2>
           <p className="text-gray-600 mb-4">The event you&apos;re looking for doesn&apos;t exist.</p>
-          <button onClick={() => router.back} className="bg-green-500/40 text-white px-4 py-2 rounded hover:bg-green-500/70">
+          <button onClick={() => router.back} className="bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-green-600/50 cursor-pointer transition-all duration-200 font-medium">
             Back
           </button>
         </div>
@@ -666,10 +682,10 @@ export default function EventPage({ params }: PageProps) {
              )}
 
             <div className="flex justify-between items-center pt-4 border-t mt-11">
-              <button onClick={() => router.back} className="bg-green-500/40 text-white px-4 py-2 rounded hover:bg-green-500/70">
+              <button onClick={() => router.back()} className="bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-green-600/50  cursor-pointer transition-all duration-200 font-medium">
                 Back
               </button>
-            </div>
+
               {isAuthenticated ? (
                 userRole === USER_ROLES.STUDENT ? (
                   // Student - Use dynamic button renderer
@@ -722,5 +738,6 @@ export default function EventPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+    </div>
   );
 }
