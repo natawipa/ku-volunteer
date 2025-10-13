@@ -50,7 +50,9 @@ class HttpClient {
   
       if (!response.ok) {
         console.error('❌ API Error Response:', data);
-        throw new Error(data?.detail || data?.message || data?.error || ERROR_MESSAGES.SERVER_ERROR);
+        const nonField = Array.isArray(data?.non_field_errors) ? data.non_field_errors[0] : undefined;
+        const message = data?.detail || data?.message || data?.error || nonField || ERROR_MESSAGES.SERVER_ERROR;
+        throw new Error(message);
       }
   
       console.log('✅ API Success Response:', data);

@@ -8,7 +8,9 @@ import type { Activity, ActivityApplication, CreateApplicationRequest } from "..
 import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
 
-export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
+interface PageProps { params: Promise<{ id: string }> }
+
+export default function EventPage({ params }: PageProps) {
   const [event, setEvent] = useState<Activity | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -21,11 +23,39 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
   
-  const { id } = React.use(params);
-  const eventId = parseInt(id, 10);
+  const [eventId, setEventId] = useState<number | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    Promise.resolve(params).then(p => { if (active) setEventId(parseInt(p.id, 10)); });
+    return () => { active = false; };
+  }, [params]);
+
+  const fetchEventForOrganizer = useCallback(async () => {
+    if (eventId == null || Number.isNaN(eventId)) return;
+    if (userRole !== USER_ROLES.ORGANIZER) return;
+
+    try {
+      setLoadingApplications(true);
+      console.log('Fetching applications for event ID:', eventId);
+
+      const response = await activitiesApi.getActivityApplications(eventId);
+      if (response.success && response.data) {
+        console.log('Applications data received:', response.data);
+        setApplications(response.data);
+      } else {
+        console.error('API error fetching applications:', response.error);
+      }    
+    } catch (err) {
+      console.error('Network error fetching applications:', err);
+    } finally {
+      setLoadingApplications(false);
+    }
+  } , [eventId, userRole]);
 
   // Check if user has already applied to this activity - FIXED: useCallback
   const checkUserApplication = useCallback(async () => {
+    if (eventId == null || Number.isNaN(eventId)) return;
     try {
       console.log('📋 Checking user applications...');
       const applicationsResponse = await activitiesApi.getUserApplications();
@@ -66,16 +96,17 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     if (authenticated && role === USER_ROLES.ORGANIZER) {
       fetchEventForOrganizer();
     }
-  }, [eventId, checkUserApplication]); // add checkUserApplication to dependencies
+  }, [eventId, checkUserApplication, fetchEventForOrganizer]); // add checkUserApplication to dependencies
 
   // Fetch event data
   useEffect(() => {
     const fetchEvent = async () => {
+      if (eventId == null || Number.isNaN(eventId)) return;
       try {
         setLoading(true);
         console.log('Fetching event details for ID:', eventId);
-        
-        const response = await activitiesApi.getActivity(eventId);
+        const id: number = eventId;
+        const response = await activitiesApi.getActivity(id);
         
         if (response.success && response.data) {
           console.log('Event data received:', response.data);
@@ -92,49 +123,22 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
       }
     };
 
-    if (eventId) {
+    if (eventId != null && !Number.isNaN(eventId)) {
       fetchEvent();
     }
   }, [eventId]);
 
-  const fetchEventForOrganizer = useCallback(async () => {
-    if (userRole !== USER_ROLES.ORGANIZER) return;
-
-    try {
-      setLoadingApplications(true);
-      console.log('Fetching applications for event ID:', eventId);
-      
-      const response = await activitiesApi.getActivityApplications(eventId);
-      
-      if (response.success && response.data) {
-        console.log('Applications data received:', response.data);
-        setApplications(response.data);
-      } else {
-        console.error('API error fetching applications:', response.error);
-      }
-    } catch (err) {
-      console.error('Network error fetching applications:', err);
-    } finally {
-      setLoadingApplications(false);
+  useEffect(() => {
+    if (activeSection === 'applicants') {
+      fetchEventForOrganizer();
     }
-  } , [eventId, userRole]);
+  }, [activeSection, fetchEventForOrganizer]);
 
-  // approve student handle for organizer
+
   const handleApproveApplication = async (applicationId: number) => {
-    try {
-      console.log('Approving application ID:', applicationId);
-    } catch (error) {
-      console.error('Error approving application:', error);
-    }
   }
 
-  // reject student handle for organizer
   const handleRejectApplication = async (applicationId: number) => {
-    try {
-      console.log('Rejecting application ID:', applicationId);
-    } catch (error) {
-      console.error('Error rejecting application:', error);
-    }
   }
 
   const handleApply = async () => {
@@ -144,6 +148,7 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     }
 
     try {
+      if (eventId == null || Number.isNaN(eventId)) return;
       setApplying(true);
       console.log('Applying to activity:', eventId);
       
@@ -329,8 +334,6 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
   };
 
   const renderApplicantsList = () => {
-    const pendingApplications = applications.filter(app => app.status === APPLICATION_STATUS.PENDING);
-    
     if (loadingApplications) {
       return <div className="text-center py-8">Loading applications...</div>;
     }
@@ -338,27 +341,42 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
     return (
       <div className="space-y-4">
         <h2 className="font-semibold text-2xl mb-6">Student Applications</h2>
-        {pendingApplications.length === 0 ? (
-          <p className="text-gray-500 text-center">No pending applications</p>
+        {applications.length === 0 ? (
+          <p className="text-gray-500 text-center">No applications</p>
         ) : (
-          pendingApplications.map((application) => (
+          applications.map((application) => (
             <div key={application.id} className="flex justify-between items-center border-b pb-4">
               <div className="flex-1">
-                <p className="font-medium">{application.student_name || `Student ${application.studentid}`}</p>
+                <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
+                <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
               </div>
-              <div className="flex gap-4">
-                <button 
-                  onClick={() => handleApproveApplication(application.id)}
-                  className="bg-green-100 px-4 py-2 rounded hover:bg-green-200 transition-colors cursor-pointer"
-                >
-                  Approve
-                </button>
-                <button 
-                  onClick={() => handleRejectApplication(application.id)}
-                  className="bg-red-100 px-4 py-2 rounded hover:bg-red-200 transition-colors cursor-pointer"
-                >
-                  Reject
-                </button>
+              <div className="flex gap-4 items-center">
+                {application.status === APPLICATION_STATUS.PENDING ? (
+                  <>
+                    <button 
+                      onClick={() => handleApproveApplication(application.id)}
+                      className="bg-green-100 px-4 py-2 rounded hover:bg-green-200 transition-colors cursor-pointer"
+                    >
+                      Approve
+                    </button>
+                    <button 
+                      onClick={() => handleRejectApplication(application.id)}
+                      className="bg-red-100 px-4 py-2 rounded hover:bg-red-200 transition-colors cursor-pointer"
+                    >
+                      Reject
+                    </button>
+                  </>
+                ) : (
+                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${
+                    application.status === APPLICATION_STATUS.APPROVED 
+                      ? 'bg-green-100 text-green-800' 
+                      : application.status === APPLICATION_STATUS.REJECTED
+                      ? 'bg-red-100 text-red-800'
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                  </span>
+                )}
               </div>
             </div>
           ))
@@ -486,9 +504,9 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
             <h1 className="text-3xl font-bold align-center">{transformedEvent.title}</h1>
             {renderApplicationStatus()}
           </div>
-          
-          <h2 className="text-xl font-light mb-4 text-center">Detail | Participant</h2>
-          
+
+          {renderSectionNavigation()}
+                    
           {/* Activity Status Warnings */}
           {event.status !== ACTIVITY_STATUS.OPEN && (
             <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 px-4 py-3 rounded mb-4">
@@ -505,53 +523,76 @@ export default function EventPage({ params }: { params: Promise<{ id: string }> 
             </div>
           )}
 
-          <Image
-            src={transformedEvent.image}
-            alt={transformedEvent.title}
-            width={500}
-            height={310}
-            className="w-3/4 mx-auto object-cover"
-          />
+          {!(userRole === USER_ROLES.ORGANIZER && activeSection !== 'details') && (
+            <Image
+              src={transformedEvent.image}
+              alt={transformedEvent.title}
+              width={500}
+              height={310}
+              className="w-3/4 mx-auto object-cover"
+            />
+          )}
 
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             {/* Top Info Card */}
-            <div className="bg-green-50 rounded-lg p-6 shadow">
-              <div className="mb-4">
-                <p><strong>Post at:</strong> {transformedEvent.post}</p>
-              </div>
-              <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
-                <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
-                <p><strong>Location:</strong> {transformedEvent.location}</p>
-                <p><strong>Type:</strong> {transformedEvent.category.join(", ")}</p>
-                <p><strong>Capacity:</strong> {transformedEvent.currentParticipants} / {transformedEvent.capacity} people</p>
-                <p><strong>Organizer:</strong> {transformedEvent.organizer}</p>
-              </div>
-            </div>
-
-            {/* Image carousel / gallery */}
-            <div className="relative w-full">
-              <div className="overflow-x-auto scrollbar-hide">
-                <div className="flex space-x-4 p-2 min-w-full md:justify-center">
-                  {transformedEvent.additionalImages?.map((img, index) => (
-                    <div key={index} className="flex-shrink-0">
-                      <Image
-                        src={img}
-                        alt={`Event image ${index + 1}`}
-                        width={180}
-                        height={120}
-                        className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer"
-                      />
-                    </div>
-                  ))}
+            {!(userRole === USER_ROLES.ORGANIZER && activeSection !== 'details') && (
+              <div className="bg-green-50 rounded-lg p-6 shadow">
+                <div className="mb-4">
+                  <p><strong>Post at:</strong> {transformedEvent.post}</p>
+                </div>
+                <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
+                  <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
+                  <p><strong>Location:</strong> {transformedEvent.location}</p>
+                  <p><strong>Type:</strong> {transformedEvent.category.join(", ")}</p>
+                  <p><strong>Capacity:</strong> {transformedEvent.currentParticipants} / {transformedEvent.capacity} people</p>
+                  <p><strong>Organizer:</strong> {transformedEvent.organizer}</p>
                 </div>
               </div>
-            </div>
+            )}
 
-            {/* Event Details */}
-            <h2 className="text-lg font-semibold mb-2">Event Description</h2>
-            <div className="bg-white rounded-lg shadow p-4 min-h-[200px] h-auto w-full">                
-              <p className="text-gray-700 whitespace-pre-wrap">{transformedEvent.description}</p>
-            </div>
+            {/* Image carousel / gallery */}
+            {!(userRole === USER_ROLES.ORGANIZER && activeSection !== 'details') && (
+              <div className="relative w-full">
+                <div className="overflow-x-auto scrollbar-hide">
+                  <div className="flex space-x-4 p-2 min-w-full md:justify-center">
+                    {transformedEvent.additionalImages?.map((img, index) => (
+                      <div key={index} className="flex-shrink-0">
+                        <Image
+                          src={img}
+                          alt={`Event image ${index + 1}`}
+                          width={180}
+                          height={120}
+                          className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+             {/* Event Details or Organizer Sections */}
+             {userRole === USER_ROLES.ORGANIZER && activeSection !== 'details' ? (
+               <div>
+                 {activeSection === 'applicants' && (
+                   <div className="bg-white rounded-lg shadow p-4 w-full">
+                     {renderApplicantsList()}
+                   </div>
+                 )}
+                 {activeSection === 'approved' && (
+                   <div className="bg-white rounded-lg shadow p-4 w-full">
+                     {renderApprovedList()}
+                   </div>
+                 )}
+               </div>
+             ) : (
+               <>
+                 <h2 className="text-lg font-semibold mb-2">Event Description</h2>
+                 <div className="bg-white rounded-lg shadow p-4 min-h-[200px] h-auto w-full">                
+                   <p className="text-gray-700 whitespace-pre-wrap">{transformedEvent.description}</p>
+                 </div>
+               </>
+             )}
 
             <div className="flex justify-between items-center pt-4 border-t mt-11">
               <Link 

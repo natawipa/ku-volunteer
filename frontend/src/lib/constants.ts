@@ -94,10 +94,10 @@ export const UI_CONSTANTS = {
 } as const;
 
 export const APPLICATION_STATUS = {
-  PENDING: 'Pending', 
+  PENDING: 'pending', 
   APPROVED: 'approved',
   REJECTED: 'rejected', 
-  CANCELLED: 'cancel'
+  CANCELLED: 'cancelled'
 }
 
 // Error messages

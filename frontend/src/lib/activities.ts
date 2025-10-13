@@ -35,6 +35,14 @@ interface ActivitiesPaginatedResponse {
   results: Activity[];
 }
 
+// Paginated response for applications
+interface ApplicationsPaginatedResponse {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: ActivityApplication[];
+}
+
 // Type guard to check if response is paginated
 function isPaginatedResponse(data: unknown): data is ActivitiesPaginatedResponse {
   return (
@@ -47,6 +55,19 @@ function isPaginatedResponse(data: unknown): data is ActivitiesPaginatedResponse
 
 // Type guard to check if response is direct array
 function isActivityArray(data: unknown): data is Activity[] {
+  return Array.isArray(data);
+}
+
+function isApplicationsPaginatedResponse(data: unknown): data is ApplicationsPaginatedResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'results' in data &&
+    Array.isArray((data as ApplicationsPaginatedResponse).results)
+  );
+}
+
+function isApplicationsArray(data: unknown): data is ActivityApplication[] {
   return Array.isArray(data);
 }
 
@@ -155,7 +176,16 @@ export const activitiesApi = {
 
   // organizer application reviews
   async getActivityApplications(activityId: string | number): Promise<ApiResponse<ActivityApplication[]>> {
-    return httpClient.get<ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.EVENTAPPLICANTS(activityId));
+    const response = await httpClient.get<ApplicationsPaginatedResponse | ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.EVENTAPPLICANTS(activityId));
+    if (response.success && response.data) {
+      if (isApplicationsPaginatedResponse(response.data)) {
+        return { success: true, data: response.data.results };
+      }
+      if (isApplicationsArray(response.data)) {
+        return { success: true, data: response.data };
+      }
+    }
+    return { success: response.success, data: [], error: response.error };
   },
 
   async reviewApplication(applicationId: string | number, data: ReviewApplicationRequest): Promise<ApiResponse<ActivityApplication>> {
