@@ -192,4 +192,16 @@ export const activitiesApi = {
     }
     return result;
   },
+
+  // Get activities by organizer ID
+  async getActivitiesByOrganizer(organizerId: number): Promise<ApiResponse<Activity[]>> {
+    const result = await this.getActivities();
+    if (result.success && result.data) {
+      const filteredData = result.data.filter(activity => 
+        activity.organizer_profile_id === organizerId
+      );
+      return { ...result, data: filteredData };
+    }
+    return result;
+  },
 };

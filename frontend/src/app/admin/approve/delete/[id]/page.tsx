@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { activitiesApi } from "@/lib/activities";
 import type { Activity } from '@/lib/types';
@@ -15,6 +16,7 @@ interface PageProps { params: Promise<{ id: string }> }
 export default function Page({ params }: PageProps) {
   // Resolve promised params in effect to keep component synchronous (cannot mark client component async)
   const [eventId, setEventId] = useState<number | null>(null);
+  const router = useRouter();
   useEffect(() => {
     let active = true;
     Promise.resolve(params).then(p => { if (active) setEventId(parseInt(p.id, 10)); });
@@ -48,8 +50,8 @@ export default function Page({ params }: PageProps) {
         return;
       }
 
-      // 2️⃣ Find the specific deletion request
-      const req = reqRes.data.find(r => r.id === eventId);
+      // 2️⃣ Find the specific deletion request by request id OR by related activity id (backward compat)
+  const req = reqRes.data.find(r => Number(r.id) === Number(eventId) || Number(r.activity) === Number(eventId));
       if (!req) {
         setError("Deletion request not found");
         setLoading(false);
@@ -113,13 +115,16 @@ export default function Page({ params }: PageProps) {
     setMessage(null);
     
     try {
-      const endpoint = `${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.MODERATION_REVIEW(activity.id)}`;
+      // Prefer reviewing the deletion request directly if we have it; fallback to activity moderation otherwise
+      const reviewId = deletionRequest?.id ?? activity.id;
+      const endpoint = `${ENV.API_BASE_URL}${deletionRequest ? API_ENDPOINTS.ACTIVITIES.DELETION_REQUEST_REVIEW(reviewId) : API_ENDPOINTS.ACTIVITIES.MODERATION_REVIEW(reviewId)}`;
       console.log('🌐 Moderation endpoint:', endpoint);
       
       const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
       console.log('🔑 Auth token exists:', !!token);
       
-      const requestBody = { action, reason: rejectReason };
+      // Backend for deletion request expects 'note' for reject reason
+      const requestBody = deletionRequest ? { action, note: rejectReason } : { action, reason: rejectReason };
       console.log('📤 Request payload:', requestBody);
       
       const resp = await fetch(endpoint, {
@@ -152,8 +157,14 @@ export default function Page({ params }: PageProps) {
       } else {
         console.log('✅ Moderation successful:', data);
         setMessage(data.detail);
-        const refresh = await activitiesApi.getActivity(activity.id);
-        if (refresh.success && refresh.data) setActivity(refresh.data);
+        if (deletionRequest && action === 'approve') {
+          // Activity is deleted on the server. Navigate away.
+          setActivity(null);
+          setTimeout(() => router.push('/admin'), 600);
+        } else {
+          const refresh = await activitiesApi.getActivity(activity.id);
+          if (refresh.success && refresh.data) setActivity(refresh.data);
+        }
         setApproveChecked(false); setRejectChecked(false); setRejectReason('');
       }
     } catch (error) {
