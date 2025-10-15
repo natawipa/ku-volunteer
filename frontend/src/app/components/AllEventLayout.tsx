@@ -76,7 +76,7 @@ export default function AdminLayout({
   onSearchApply,
 }: AdminLayoutProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, ] = useState<string | null>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
   const [selectedCategories, setSelectedCategories] = useState<string[]>(Array.isArray(searchSelectedCategories) && searchSelectedCategories.filter(Boolean).length > 0 ? searchSelectedCategories.filter(Boolean) : []);

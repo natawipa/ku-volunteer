@@ -1,5 +1,5 @@
 "use client";
-import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState, useCallback } from "react";
@@ -200,10 +200,12 @@ export default function EventPage({ params }: PageProps) {
 
   // TODO: implement approve application for organizer later
   const handleApproveApplication = async (applicationId: number) => {
+    applicationId; 
   }
 
   // TODO: implement reject application for organizer later
   const handleRejectApplication = async (applicationId: number) => {
+    applicationId;
   }
 
   const handleApply = async () => {
