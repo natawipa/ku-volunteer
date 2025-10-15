@@ -148,8 +148,6 @@ export default function AdminLayout({
     });
   };
 
-  ////// TODOOOOOOOOOO //////
-
 
   const handleSearchChange = (val: string) => {
     setSearchValue(val);
