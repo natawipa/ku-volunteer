@@ -259,8 +259,9 @@ export default function EventPage({ params }: PageProps) {
       
       if (response.success) {
         console.log('Application cancelled successfully');
-        setApplicationStatus(null);
-        setUserApplication(null);
+        // Reflect cancelled state immediately in UI
+        setApplicationStatus(APPLICATION_STATUS.CANCELLED);
+        setUserApplication({ ...(userApplication as ActivityApplication), status: APPLICATION_STATUS.CANCELLED as ActivityApplication['status'] });
         alert('Application cancelled successfully.');
       } else {
         console.error('Cancellation failed:', response.error);
@@ -348,7 +349,18 @@ export default function EventPage({ params }: PageProps) {
       );
     }
 
-    // No application or cancelled application - show apply button
+    if (applicationStatus === APPLICATION_STATUS.CANCELLED) {
+      return (
+        <button
+          disabled
+          className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium"
+        >
+          Cancelled
+        </button>
+      );
+    }
+
+    // No application - show apply button
     const canApply = !event?.capacity_reached && event?.status === ACTIVITY_STATUS.OPEN;
     return (
       <button
@@ -734,6 +746,8 @@ export default function EventPage({ params }: PageProps) {
                     "Congratulations! Your application has been approved. Check My Events for more details."}
                   {applicationStatus === APPLICATION_STATUS.REJECTED && 
                     "Your application was not approved for this event."}
+                  {applicationStatus === APPLICATION_STATUS.CANCELLED && 
+                    "You have cancelled this event application."}
                 </p>
               </div>
             )}
