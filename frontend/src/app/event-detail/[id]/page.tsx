@@ -200,12 +200,12 @@ export default function EventPage({ params }: PageProps) {
 
   // TODO: implement approve application for organizer later
   const handleApproveApplication = async (applicationId: number) => {
-    applicationId; 
+    console.log('Approve application:', applicationId);
   }
 
   // TODO: implement reject application for organizer later
   const handleRejectApplication = async (applicationId: number) => {
-    applicationId;
+    console.log('Reject application:', applicationId);
   }
 
   const handleApply = async () => {
