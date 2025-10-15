@@ -143,9 +143,6 @@ export default function StudentList() {
               {s.title} {s.first_name} {s.last_name}
             </p>
             <div className="flex gap-4">
-              <button className="bg-yellow-50 px-4 py-1 rounded-full hover:bg-yellow-100 transition-colors cursor-pointer">
-                edit
-              </button>
               <button 
                 onClick={() => handleDeleteClick(s)}
                 disabled={deleting === s.id}
