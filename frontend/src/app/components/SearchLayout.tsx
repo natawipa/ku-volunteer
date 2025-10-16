@@ -1,4 +1,5 @@
 import { useRef, useState, useEffect, useMemo } from "react";
+import { USER_ROLES, STORAGE_KEYS } from "../../lib/constants";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import SearchCard from "./SearchCard";
@@ -51,6 +52,8 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	const [searchStartDate, setSearchStartDate] = useState("");
 	const [searchEndDate, setSearchEndDate] = useState("");
 	const [endAfterChecked, setEndAfterChecked] = useState(false);
+  const [openOnlyChecked, setOpenOnlyChecked] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 	const [isSearchApplied, setIsSearchApplied] = useState(false);
 	const [searchHistory, setSearchHistory] = useState<string[]>(() => {
 		if (typeof window !== "undefined") {
@@ -76,6 +79,34 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
+
+  // Detect user role (student/organizer/admin)
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        const role = parsed?.role ?? parsed?.user_role;
+        if (role) {
+          setUserRole(String(role).toLowerCase());
+          return;
+        }
+      }
+      const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+      if (rawUserData) {
+        const parsed = JSON.parse(rawUserData);
+        const role = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
+        if (role) {
+          setUserRole(String(role).toLowerCase());
+          return;
+        }
+      }
+      const direct = localStorage.getItem('role') || localStorage.getItem('userRole');
+      if (direct) {
+        setUserRole(String(direct).toLowerCase());
+      }
+    } catch {}
+  }, []);
 
 	// Sync local search state with parent isSearchActive
 	useEffect(() => {
@@ -108,7 +139,7 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 						return searchSelectedCategory.some(sel => c.includes(sel));
 					}));
 
-			let matchesDate = true;
+      let matchesDate = true;
 			const eventStart = new Date(ev.dateStart + "T00:00:00");
 			const eventEnd = new Date(ev.dateEnd + "T00:00:00");
 
@@ -129,9 +160,11 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 				searchSelectedStatus.length === 0 ||
 				searchSelectedStatus.some(sel => sel.toLowerCase() === (ev.status || '').toLowerCase());
 
-			return matchesCategory && matchesSearch && matchesDate && matchesStatus;
+      const matchesOpenOnly = !openOnlyChecked || (ev.status || '').toLowerCase() === 'open';
+
+      return matchesCategory && matchesSearch && matchesDate && matchesStatus && matchesOpenOnly;
 		});
-	}, [activities, searchQuery, searchSelectedCategory, searchSelectedStatus, searchStartDate, searchEndDate, endAfterChecked]);
+  }, [activities, searchQuery, searchSelectedCategory, searchSelectedStatus, searchStartDate, searchEndDate, endAfterChecked, openOnlyChecked]);
 
 	// Render events in search results layout (filtered)
 	const renderSearchResults = () => {
@@ -243,6 +276,9 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 							setEndDate={setSearchEndDate}
 							endAfterChecked={endAfterChecked}
 							setEndAfterChecked={setEndAfterChecked}
+					showOpenEventCheckbox={userRole === USER_ROLES.STUDENT}
+					OpenEventChecked={openOnlyChecked}
+					setOpenEventChecked={setOpenOnlyChecked}
 							history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
 							setHistory={(h) => setSearchHistory(h.map(item => item.query))}
 							onSelectHistory={(item) => {

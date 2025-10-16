@@ -14,6 +14,7 @@ interface SearchCardProps {
   showCategory?: boolean;
   showDate?: boolean;
   showEndAfterCheckbox?: boolean;
+  showOpenEventCheckbox?: boolean;
   showStatus?: boolean;
   categories?: string[];
   query?: string;                   // Current search query
@@ -31,6 +32,8 @@ interface SearchCardProps {
   setEndDate?: (date: string) => void;
   endAfterChecked?: boolean;            // Whether "end after" is checked
   setEndAfterChecked?: (checked: boolean) => void;
+  OpenEventChecked?: boolean;        // Whether "only open events" is checked
+  setOpenEventChecked?: (checked: boolean) => void;
   // Event handlers
   onKeyDown?: (e: React.KeyboardEvent) => void; // Key down handler for input fields
   onApply?: () => void;            // Called when search is applied
@@ -59,6 +62,7 @@ export default function SearchCard({
   showCategory = true,
   showDate = true,
   showEndAfterCheckbox = true,
+  showOpenEventCheckbox = false,
   showStatus = true,
   categories,
   setQuery = () => {},
@@ -72,6 +76,9 @@ export default function SearchCard({
   setEndDate = () => {},
   endAfterChecked = false,
   setEndAfterChecked = () => {},
+  OpenEventChecked = false,
+  setOpenEventChecked = () => {},
+  // onKeyDown = () => {},
   onApply = () => {},
   history,
   setHistory,
@@ -119,6 +126,7 @@ export default function SearchCard({
         return;
       }
     } catch (e) {
+      console.error("Failed to read user data:", e);
     }
   }, []);
 
@@ -129,7 +137,7 @@ export default function SearchCard({
       const raw = localStorage.getItem("ku_search_history") || localStorage.getItem("searchHistory") || "[]";
       const parsed = JSON.parse(raw);
     
-      // Normalize both old string arrays and object arrays into string[] of queries
+      // Normalize old string and object arrays into string[] of queries
       const normalized: string[] = Array.isArray(parsed)
         ? parsed
       .map((p: string | { query?: string }) => {
@@ -358,6 +366,21 @@ export default function SearchCard({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* End after checkbox */}
+      {showOpenEventCheckbox && (
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="checkbox"
+            id="openEventCheckbox"
+            checked={OpenEventChecked}
+            onChange={e => setOpenEventChecked(e.target.checked)}
+          />
+          <label htmlFor="openEventCheckbox" className="text-sm">
+            Include only open events
+          </label>
         </div>
       )}
 
