@@ -31,7 +31,8 @@ const transformActivityToEvent = (activity: Activity) => {
 		category: activity.categories || [],
 		imgSrc: "/titleExample.jpg",
 		capacity: activity.max_participants || 0,
-		status: activity.status === "open" ? "upcoming" : activity.status || "unknown",
+    // raw backend status to align with SearchCard DEFAULT_STATUS
+    status: activity.status || "unknown",
 	};
 };
 
@@ -46,6 +47,7 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	const [isOpen, setIsOpen] = useState(false);
 	const [searchQuery, setSearchQuery] = useState("");
 	const [searchSelectedCategory, setSearchSelectedCategory] = useState<string[]>([]);
+  	const [searchSelectedStatus, setSearchSelectedStatus] = useState<string[]>([]);
 	const [searchStartDate, setSearchStartDate] = useState("");
 	const [searchEndDate, setSearchEndDate] = useState("");
 	const [endAfterChecked, setEndAfterChecked] = useState(false);
@@ -123,9 +125,13 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 				}
 			}
 
-			return matchesCategory && matchesSearch && matchesDate;
+			const matchesStatus =
+				searchSelectedStatus.length === 0 ||
+				searchSelectedStatus.some(sel => sel.toLowerCase() === (ev.status || '').toLowerCase());
+
+			return matchesCategory && matchesSearch && matchesDate && matchesStatus;
 		});
-	}, [activities, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
+	}, [activities, searchQuery, searchSelectedCategory, searchSelectedStatus, searchStartDate, searchEndDate, endAfterChecked]);
 
 	// Render events in search results layout (filtered)
 	const renderSearchResults = () => {
@@ -229,6 +235,8 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 							setQuery={setSearchQuery}
 							categoriesSelected={searchSelectedCategory}
 							setCategoriesSelected={setSearchSelectedCategory}
+					statusSelected={searchSelectedStatus}
+					setStatusSelected={setSearchSelectedStatus}
 							dateStart={searchStartDate}
 							setStartDate={setSearchStartDate}
 							dateEnd={searchEndDate}

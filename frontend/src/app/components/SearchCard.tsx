@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { USER_ROLES, STORAGE_KEYS } from "@/lib/constants";
 
 interface HistoryItem {
   query: string;
@@ -82,14 +83,48 @@ export default function SearchCard({
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
   const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
   const statusDropdownRef = useRef<HTMLDivElement>(null);
-
+  const [userRole, setUserRole] = useState<string | null>(null);
   const isControlledCategories = Array.isArray(categoriesSelected) && typeof setCategoriesSelected === 'function';
   const [internalSelected, setInternalSelected] = useState<string[]>(() => (isControlledCategories ? categoriesSelected : []));
   const [internalSelectedStatus, setInternalSelectedStatus] = useState<string[]>(() => (Array.isArray(statusSelected) ? statusSelected : []));
 
+    useEffect(() => {
+    try {
+      // stored role
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (parsed?.role) {
+          setUserRole(String(parsed.role).toLowerCase());
+          return;
+        }
+        if (parsed?.user_role) {
+          setUserRole(String(parsed.user_role).toLowerCase());
+          return;
+        }
+      }
+      // standardized storage key if available
+      const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+      if (rawUserData) {
+        const parsed = JSON.parse(rawUserData);
+        const candidateRole = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
+        if (candidateRole) {
+          setUserRole(String(candidateRole).toLowerCase());
+          return;
+        }
+      }
+      const roleDirect = localStorage.getItem('role') || localStorage.getItem('userRole');
+      if (roleDirect) {
+        setUserRole(String(roleDirect).toLowerCase());
+        return;
+      }
+    } catch (e) {
+    }
+  }, []);
+
   // Load local history on mount unless parent supplies history
   useEffect(() => {
-    if (Array.isArray(history)) return; // parent controls history (we read it below)
+    if (Array.isArray(history)) return; // parent controls history
     try {
       const raw = localStorage.getItem("ku_search_history") || localStorage.getItem("searchHistory") || "[]";
       const parsed = JSON.parse(raw);
@@ -157,10 +192,12 @@ export default function SearchCard({
   const updateSelectedStatus = (next: string[]) => {
     if (Array.isArray(statusSelected) && typeof setStatusSelected === 'function') {
       setStatusSelected(next); // parent will re-render with the new array
+      setInternalSelectedStatus(next);
     } else {
       setInternalSelectedStatus(next);
     }
-  }
+  };
+
   const selectedStatus = Array.isArray(statusSelected) ? (statusSelected || []) : internalSelectedStatus;
 
   const handleDateStartChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -241,7 +278,7 @@ export default function SearchCard({
         </>
       )}
 
-      {showStatus && (
+      {userRole === USER_ROLES.ORGANIZER && showStatus && (
         <div 
           ref={statusDropdownRef}
           onMouseDown={(e) => e.stopPropagation()}
@@ -291,7 +328,6 @@ export default function SearchCard({
               ))}
             </div>
           ) : null}
-
           {/* Status Dropdown menu */}
           {statusDropdownOpen && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
