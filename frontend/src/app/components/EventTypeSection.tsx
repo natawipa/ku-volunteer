@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import EventCard from "./EventCard";
+import EventCardHorizontal from "./EventCardHorizontal";
 
 interface EventTypeSectionProps {
   title: string;
@@ -59,7 +59,7 @@ export default function EventTypeSection({ title, color, backgroundBrain, events
           <div className="mt-4">
             {mostRecentEvent ? (
               <div className="bg-white/80 rounded-lg p-4 backdrop-blur-sm">
-                <EventCard {...mostRecentEvent} />
+                <EventCardHorizontal {...mostRecentEvent} />
               </div>
             ) : (
               <div className="bg-white/80 rounded-lg p-8 text-center backdrop-blur-sm">

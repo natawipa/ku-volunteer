@@ -1,7 +1,12 @@
 // lib/activities.ts
 import { httpClient } from './utils';
 import { API_ENDPOINTS } from './constants';
-import type { Activity, ApiResponse } from './types';
+import type { 
+  Activity, 
+  ApiResponse, 
+  CreateApplicationRequest,
+  ReviewApplicationRequest,
+  ActivityApplication} from './types';
 
 // Create activity data type that matches your backend serializer
 export interface CreateActivityData {
@@ -14,7 +19,6 @@ export interface CreateActivityData {
   hours_awarded?: number;
   categories: string[];
 }
-
 // Activities metadata type
 interface ActivityMetadata {
   top_levels: string[];
@@ -31,6 +35,14 @@ interface ActivitiesPaginatedResponse {
   results: Activity[];
 }
 
+// Paginated response for applications
+interface ApplicationsPaginatedResponse {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: ActivityApplication[];
+}
+
 // Type guard to check if response is paginated
 function isPaginatedResponse(data: unknown): data is ActivitiesPaginatedResponse {
   return (
@@ -43,6 +55,19 @@ function isPaginatedResponse(data: unknown): data is ActivitiesPaginatedResponse
 
 // Type guard to check if response is direct array
 function isActivityArray(data: unknown): data is Activity[] {
+  return Array.isArray(data);
+}
+
+function isApplicationsPaginatedResponse(data: unknown): data is ApplicationsPaginatedResponse {
+  return (
+    typeof data === 'object' &&
+    data !== null &&
+    'results' in data &&
+    Array.isArray((data as ApplicationsPaginatedResponse).results)
+  );
+}
+
+function isApplicationsArray(data: unknown): data is ActivityApplication[] {
   return Array.isArray(data);
 }
 
@@ -126,5 +151,53 @@ export const activitiesApi = {
       return { ...result, data: filteredData };
     }
     return result;
+  },
+
+  // student applications
+  async createApplication(data: CreateApplicationRequest): Promise<ApiResponse<ActivityApplication>> {
+    return httpClient.post<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.APPLY, data);
+  },
+
+  async getUserApplications(): Promise<ApiResponse<ActivityApplication[]>> {
+    const response = await httpClient.get<ApplicationsPaginatedResponse | ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.GETAPPLICATIONS);
+    if (response.success && response.data) {
+      if (isApplicationsPaginatedResponse(response.data)) {
+        return { success: true, data: response.data.results };
+      }
+      if (isApplicationsArray(response.data)) {
+        return { success: true, data: response.data };
+      }
+    }
+    return { success: response.success, data: [], error: response.error };
+  },
+
+  async getApplicationDetail(id: string | number): Promise<ApiResponse<ActivityApplication>> {
+    return httpClient.get<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.APPLICATION_DETAIL(id));
+  },
+
+  async cancelApplication(id: string | number): Promise<ApiResponse<void>> {
+    return httpClient.post<void>(API_ENDPOINTS.ACTIVITIES.CANCELAPPLICATION(id));
+  },
+
+  async getApprovedActivities(): Promise<ApiResponse<Activity[]>> {
+    return httpClient.get<Activity[]>(API_ENDPOINTS.ACTIVITIES.APPROVEDAPPLICATION);
+  },
+
+  // organizer application reviews
+  async getActivityApplications(activityId: string | number): Promise<ApiResponse<ActivityApplication[]>> {
+    const response = await httpClient.get<ApplicationsPaginatedResponse | ActivityApplication[]>(API_ENDPOINTS.ACTIVITIES.EVENTAPPLICANTS(activityId));
+    if (response.success && response.data) {
+      if (isApplicationsPaginatedResponse(response.data)) {
+        return { success: true, data: response.data.results };
+      }
+      if (isApplicationsArray(response.data)) {
+        return { success: true, data: response.data };
+      }
+    }
+    return { success: response.success, data: [], error: response.error };
+  },
+
+  async reviewApplication(applicationId: string | number, data: ReviewApplicationRequest): Promise<ApiResponse<ActivityApplication>> {
+    return httpClient.post<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.REVIEWAPPLICATION(applicationId), data);
   },
 };

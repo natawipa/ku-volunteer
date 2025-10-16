@@ -20,14 +20,13 @@ export interface PublicEventCardData {
 
 interface Props {
   event: PublicEventCardData;
-  onJoin?: (id: string | number) => void;
 }
 
 const formatDate = (iso: string) => {
   try { return new Date(iso).toLocaleDateString('en-GB'); } catch { return iso; }
 };
 
-export default function PublicEventHorizontalCard({ event, onJoin }: Props) {
+export default function PublicEventHorizontalCard({ event }: Props) {
   return (
     <div className="relative flex flex-col sm:flex-row gap-4 items-start sm:items-stretch overflow-hidden rounded-lg shadow-md p-4 bg-gradient-to-r from-green-200/25 to-gray-200/25 transition group hover:shadow-lg">
       <Link
@@ -84,12 +83,6 @@ export default function PublicEventHorizontalCard({ event, onJoin }: Props) {
         <span className="hidden sm:inline-block px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 whitespace-nowrap">
           {event.category}
         </span>
-        <button
-          onClick={() => onJoin?.(event.id)}
-          className="w-full sm:w-auto bg-white/60 text-green-700 border border-green-600/20 px-4 py-1.5 rounded-md text-xs font-medium hover:bg-green-50 transition-colors shadow-sm whitespace-nowrap"
-        >
-          Join
-        </button>
       </div>
     </div>
   );

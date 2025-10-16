@@ -1,9 +1,11 @@
 "use client";
 import { useState, useEffect, ChangeEvent, useRef } from "react";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
+import { USER_ROLES, STORAGE_KEYS } from "@/lib/constants";
 
 interface HistoryItem {
   query: string;
+  status ?: string;
   category: string;
   date: string;
 }
@@ -12,10 +14,14 @@ interface SearchCardProps {
   showCategory?: boolean;
   showDate?: boolean;
   showEndAfterCheckbox?: boolean;
+  showOpenEventCheckbox?: boolean;
+  showStatus?: boolean;
   categories?: string[];
   query?: string;                   // Current search query
   setQuery?: (query: string) => void;
   categoriesSelected?: string[];                // Selected category
+  statusSelected?: string[];                    // Selected status
+  setStatusSelected?: (status: string[]) => void;
   setCategoriesSelected?: (category: string[]) => void;
   onSearchChange?: (val: string) => void;
   onCategoryChange?: (val: string) => void;
@@ -26,6 +32,8 @@ interface SearchCardProps {
   setEndDate?: (date: string) => void;
   endAfterChecked?: boolean;            // Whether "end after" is checked
   setEndAfterChecked?: (checked: boolean) => void;
+  OpenEventChecked?: boolean;        // Whether "only open events" is checked
+  setOpenEventChecked?: (checked: boolean) => void;
   // Event handlers
   onKeyDown?: (e: React.KeyboardEvent) => void; // Key down handler for input fields
   onApply?: () => void;            // Called when search is applied
@@ -43,12 +51,23 @@ const DEFAULT_CATEGORIES = [
   'Social Engagement Activities'
 ];
 
+const DEFAULT_STATUS = [
+  'Pending',
+  'Open',
+  'Full',
+  'Closed'
+]
+
 export default function SearchCard({
   showCategory = true,
   showDate = true,
   showEndAfterCheckbox = true,
+  showOpenEventCheckbox = false,
+  showStatus = true,
   categories,
   setQuery = () => {},
+  statusSelected = [],
+  setStatusSelected = () => {},
   categoriesSelected = [],
   setCategoriesSelected = () => {},
   dateStart = "",
@@ -57,6 +76,9 @@ export default function SearchCard({
   setEndDate = () => {},
   endAfterChecked = false,
   setEndAfterChecked = () => {},
+  OpenEventChecked = false,
+  setOpenEventChecked = () => {},
+  // onKeyDown = () => {},
   onApply = () => {},
   history,
   setHistory,
@@ -66,19 +88,56 @@ export default function SearchCard({
   const [localHistory, setLocalHistory] = useState<string[]>([]);
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const categoryDropdownRef = useRef<HTMLDivElement>(null);
-
+  const [statusDropdownOpen, setStatusDropdownOpen] = useState(false);
+  const statusDropdownRef = useRef<HTMLDivElement>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const isControlledCategories = Array.isArray(categoriesSelected) && typeof setCategoriesSelected === 'function';
   const [internalSelected, setInternalSelected] = useState<string[]>(() => (isControlledCategories ? categoriesSelected : []));
+  const [internalSelectedStatus, setInternalSelectedStatus] = useState<string[]>(() => (Array.isArray(statusSelected) ? statusSelected : []));
 
+    useEffect(() => {
+    try {
+      // stored role
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        if (parsed?.role) {
+          setUserRole(String(parsed.role).toLowerCase());
+          return;
+        }
+        if (parsed?.user_role) {
+          setUserRole(String(parsed.user_role).toLowerCase());
+          return;
+        }
+      }
+      // standardized storage key if available
+      const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+      if (rawUserData) {
+        const parsed = JSON.parse(rawUserData);
+        const candidateRole = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
+        if (candidateRole) {
+          setUserRole(String(candidateRole).toLowerCase());
+          return;
+        }
+      }
+      const roleDirect = localStorage.getItem('role') || localStorage.getItem('userRole');
+      if (roleDirect) {
+        setUserRole(String(roleDirect).toLowerCase());
+        return;
+      }
+    } catch (e) {
+      console.error("Failed to read user data:", e);
+    }
+  }, []);
 
   // Load local history on mount unless parent supplies history
   useEffect(() => {
-    if (Array.isArray(history)) return; // parent controls history (we read it below)
+    if (Array.isArray(history)) return; // parent controls history
     try {
       const raw = localStorage.getItem("ku_search_history") || localStorage.getItem("searchHistory") || "[]";
       const parsed = JSON.parse(raw);
     
-      // Normalize both old string arrays and object arrays into string[] of queries
+      // Normalize old string and object arrays into string[] of queries
       const normalized: string[] = Array.isArray(parsed)
         ? parsed
       .map((p: string | { query?: string }) => {
@@ -138,6 +197,17 @@ export default function SearchCard({
   };
   const selectedCategories = isControlledCategories ? (categoriesSelected || []) : internalSelected;
 
+  const updateSelectedStatus = (next: string[]) => {
+    if (Array.isArray(statusSelected) && typeof setStatusSelected === 'function') {
+      setStatusSelected(next); // parent will re-render with the new array
+      setInternalSelectedStatus(next);
+    } else {
+      setInternalSelectedStatus(next);
+    }
+  };
+
+  const selectedStatus = Array.isArray(statusSelected) ? (statusSelected || []) : internalSelectedStatus;
+
   const handleDateStartChange = (e: ChangeEvent<HTMLInputElement>) => {
     setStartDate(e.target.value);
   };
@@ -152,11 +222,14 @@ export default function SearchCard({
     }
   };
 
-  // Close category dropdown when clicking outside
+  // Close categor, status dropdown when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
         setCategoryDropdownOpen(false);
+      }
+      if (statusDropdownRef.current && !statusDropdownRef.current.contains(event.target as Node)) {
+        setStatusDropdownOpen(false);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
@@ -172,6 +245,7 @@ export default function SearchCard({
           <div className="max-h-20 overflow-y-auto space-y-1">
             {effectiveHistoryStrings.map((q, idx) => (
               <div key={idx} className="flex items-start justify-between gap-3">
+                
                 <button
                   onClick={() => {
                     if (typeof onSelectHistory === "function") {
@@ -210,6 +284,104 @@ export default function SearchCard({
 
           <hr />
         </>
+      )}
+
+      {userRole === USER_ROLES.ORGANIZER && showStatus && (
+        <div 
+          ref={statusDropdownRef}
+          onMouseDown={(e) => e.stopPropagation()}
+          className="relative"
+        >
+          <label className="block text-sm font-bold text-gray-700 mb-2">Status</label>
+
+          {/* Status Dropdown trigger */}
+          <div
+            onClick={() => setStatusDropdownOpen(!statusDropdownOpen)}
+            className="flex items-center justify-between w-full px-3 py-2 border border-gray-300 rounded-lg bg-white cursor-pointer hover:border-gray-400 transition-colors"
+          >
+            <span className="text-gray-700">
+              {selectedStatus.length > 0 
+                ? `${selectedStatus.length} selected`
+                : "Select status..."
+              }
+            </span>
+            <ChevronDownIcon 
+              className={`w-5 h-5 text-gray-400 transition-transform ${
+                statusDropdownOpen ? "rotate-180" : ""
+              }`}
+            />
+          </div>
+
+          {/* Selected status chips */}
+          {selectedStatus.length > 0 ? (
+            <div className="flex flex-wrap gap-2 mt-2">
+              {selectedStatus.map(status => (
+                <span
+                  key={status}
+                  className="flex items-center bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs"
+                >
+                  <span className="truncate max-w-[8rem] inline-block">{status}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateSelectedStatus(selectedStatus.filter(s => s !== status));
+                    }}
+                    className="ml-1 text-blue-700 hover:text-blue-900"
+                    aria-label={`Remove ${status}`}
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : null}
+          {/* Status Dropdown menu */}
+          {statusDropdownOpen && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-300 rounded-lg shadow-lg z-50 max-h-48 overflow-y-auto">
+              {DEFAULT_STATUS.map(status => {
+                const isSelected = selectedStatus.includes(status);
+                return (
+                  <div
+                    key={status}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isSelected) {
+                        updateSelectedStatus(selectedStatus.filter(s => s !== status));
+                      } else {
+                        updateSelectedStatus([...selectedStatus, status]);
+                      }
+                    }}
+                    className="flex items-center px-3 py-2 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isSelected}
+                      readOnly
+                      className="mr-2"
+                    />
+                    <span className="text-sm text-gray-700">{status}</span>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* End after checkbox */}
+      {showOpenEventCheckbox && (
+        <div className="flex items-center gap-2 mt-2">
+          <input
+            type="checkbox"
+            id="openEventCheckbox"
+            checked={OpenEventChecked}
+            onChange={e => setOpenEventChecked(e.target.checked)}
+          />
+          <label htmlFor="openEventCheckbox" className="text-sm">
+            Include only open events
+          </label>
+        </div>
       )}
 
       {showCategory && (

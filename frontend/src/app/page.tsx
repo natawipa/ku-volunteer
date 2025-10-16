@@ -95,7 +95,7 @@ export default function Home() {
     fetchActivities();
   }, []);
 
-  // Transform activities to events format with safety check
+  // Transform activities to events format
   const events = Array.isArray(activities) 
     ? activities.map(transformActivityToEvent)
     : [];
@@ -126,7 +126,7 @@ export default function Home() {
     },
   ];
 
-  // Handle scroll to add shadow to header for authenticated users
+  // Handle scroll
   useEffect(() => {
     if (isAuthenticated) {
       const handleScroll = () => setIsScrolled(window.scrollY > 100);
@@ -135,49 +135,65 @@ export default function Home() {
     }
   }, [isAuthenticated]);
 
-  // Get appropriate logo based on user role
+  // Get logo based on role
   const getLogo = () => {
     if (!isAuthenticated) return "/Logo_Kasetsart.svg";
     return userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/Logo_Kasetsart.svg";
   };
 
-  // Get appropriate navigation for authenticated users
-  const getNavigation = () => {
-    if (!isAuthenticated) {
-      return (
-        <nav className="space-x-8">
-          <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-          <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-          <Link href="/login" 
-          className="btn bg-[#215701] text-white px-4 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-            Sign In
-          </Link>
-        </nav>
-      );
-    }
-
+  // Get navigation for users
+const getNavigation = () => {
+  if (!isAuthenticated) {
     return (
-      <nav className="flex items-center space-x-8">
+      <nav className="space-x-8">
         <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-        <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-        {userRole === USER_ROLES.ORGANIZER && (
-          <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-            <div className="flex items-center">
+        <Link href="/all-events" 
+        className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
+        {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT ? "My Event" : "All Event"}
+        </Link>        
+        {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN) && (
+          <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+                  hover:bg-[#00361C]
+                  transition-all duration-200">
+          <div className="flex items-center">
             <PlusIcon className="w-4 h-4 mr-2" />
             <span className="mr-1">New</span>
-            </div>
-          </Link>
+          </div>
+        </Link>
         )}
-        <ProfileCard/>
+        <Link href="/login" 
+        className="btn bg-[#215701] text-white px-4 py-2 rounded 
+                  hover:bg-[#00361C]
+                  transition-all duration-200">
+          Sign In
+        </Link>
       </nav>
     );
-  };
+  }
 
-  // Render sections for events on the homepage
+  return (
+    <nav className="flex items-center space-x-8">
+      <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
+      <Link href="/all-events" 
+        className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
+        {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT ? "My Event" : "All Event"}
+      </Link>        
+      {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN) && (
+        <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
+                  hover:bg-[#00361C]
+                  transition-all duration-200">
+          <div className="flex items-center">
+            <PlusIcon className="w-4 h-4 mr-2" />
+            <span className="mr-1">New</span>
+          </div>
+        </Link>
+      )}
+      <ProfileCard/>
+    </nav>
+  );
+};
+
+  // Render sections for events
   const getSections = () => {
     if (!events || events.length === 0) {
       return (
@@ -201,8 +217,7 @@ export default function Home() {
     );
   };
 
-  // If the user is an authenticated admin, render the admin dashboard as the
-  // root homepage. Hooks have already been declared above in a stable order.
+  // Admin homepage
   if (isAuthenticated && userRole === USER_ROLES.ADMIN) {
     return (
       <AdminLayout>
@@ -234,7 +249,7 @@ export default function Home() {
           <Image src={getLogo()} alt="Big Logo" width={180} height={180} className="object-cover" />
         </div>
 
-        {/* Only show SearchLayout if not loading or error */}
+        {/* show SearchLayout if not loading or error */}
         {!loading && !error && (
           <section className="sticky top-10 z-[101]">
             <SearchLayout
@@ -246,7 +261,6 @@ export default function Home() {
           </section>
         )}
 
-        {/* Only show Upcoming Events and Event Types if not searching */}
         {!isSearchActive && (
           <>
             {loading ? (

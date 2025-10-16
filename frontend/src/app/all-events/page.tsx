@@ -18,6 +18,7 @@ interface Event {
   image_url?: string;
   participants_count: number;
   max_participants: number;
+  status: string;
 }
 
 const AllEventsPage: React.FC = () => {
@@ -28,8 +29,7 @@ const AllEventsPage: React.FC = () => {
   const [dateStart, setDateStart] = useState('');
   const [dateEnd, setDateEnd] = useState('');
   const [endAfterChecked, setEndAfterChecked] = useState(true);
-
-
+  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -50,6 +50,7 @@ const AllEventsPage: React.FC = () => {
             image_url: activity.cover_image_url,
             participants_count: activity.current_participants,
             max_participants: activity.max_participants || 0,
+            status: activity.status || 'unknown',
           }));
           setEvents(mappedEvents);
         } else {
@@ -107,9 +108,14 @@ const AllEventsPage: React.FC = () => {
         matchesDate = startInRange && endInRange;
       }
 
-      return matchesCategory && matchesSearch && matchesDate;
+      const matchesStatus = selectedStatus.length === 0 || 
+                     selectedStatus.some(status => 
+                       status.toLowerCase() === event.status.toLowerCase()
+                     );
+
+      return matchesCategory && matchesSearch && matchesDate && matchesStatus;
     });
-}, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked]);
+}, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
 
   return (
     <EventLayout
@@ -124,10 +130,11 @@ const AllEventsPage: React.FC = () => {
       onDateEndChange={setDateEnd}
       endAfterChecked={endAfterChecked}
       setEndAfterChecked={setEndAfterChecked}
-      onSearchApply={({ searchValue, selectedCategories, dateStart: ds, dateEnd: de }) => {
+      onSearchApply={({ searchValue, selectedCategories, selectedStatus, dateStart: ds, dateEnd: de }) => {
         setSearchTerm(searchValue);
         const val = selectedCategories?.[0];
         setFilter(val === 'All Categories' ? '' : (val || ''));
+        setSelectedStatus(selectedStatus || []);
         setDateStart(ds || '');
         setDateEnd(de || '');
       }}

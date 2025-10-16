@@ -27,6 +27,13 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string | number) => `/api/activities/${id}/`,
     UPDATE: (id: string | number) => `/api/activities/${id}/update/`,
     DELETE: (id: string | number) => `/api/activities/delete/${id}/`,
+    APPLY: `/api/activities/applications/create/`,
+    GETAPPLICATIONS: `/api/activities/applications/list/`,
+    APPLICATION_DETAIL: (id: string | number) => `/api/activities/applications/${id}/`,
+    CANCELAPPLICATION: (id: string | number) => `/api/activities/applications/${id}/cancel/`,
+    APPROVEDAPPLICATION: `/api/activities/my-approved-activities/`,
+    EVENTAPPLICANTS: (activity_id: string | number) => `/api/activities/${activity_id}/applications/`,
+    REVIEWAPPLICATION: (id: string | number) => `/api/activities/applications/${id}/review/`,
     METADATA: '/api/activities/metadata/',
     MODERATION_REVIEW: (id: string | number) => `/api/activities/moderation/${id}/review/`,
   },
@@ -73,7 +80,8 @@ export const ROUTES = {
     SOCIAL: '/event-type/social',
     UNIVERSITY: '/event-type/university',
   },
-  NEW_EVENT: '/new',
+  NEW_EVENT: '/new-event',
+  ALL_EVENTS: '/all-events',
 } as const;
 
 // UI constants
@@ -84,6 +92,13 @@ export const UI_CONSTANTS = {
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
 } as const;
+
+export const APPLICATION_STATUS = {
+  PENDING: 'pending', 
+  APPROVED: 'approved',
+  REJECTED: 'rejected', 
+  CANCELLED: 'cancelled'
+}
 
 // Error messages
 export const ERROR_MESSAGES = {
