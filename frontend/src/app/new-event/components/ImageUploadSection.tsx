@@ -1,8 +1,10 @@
 import { PlusCircle, X } from "lucide-react";
 import Image from "next/image";
+import type { ChangeEvent } from 'react';
 
 interface ImageUploadSectionProps {
   cover: File | null;
+  coverUrl?: string | null;
   pictures: File[];
   onCoverChange: (file: File | null) => void;
   onPicturesChange: (files: File[]) => void;
@@ -11,6 +13,7 @@ interface ImageUploadSectionProps {
 
 export default function ImageUploadSection({
   cover,
+  coverUrl,
   pictures,
   onCoverChange,
   onPicturesChange,
@@ -28,6 +31,8 @@ export default function ImageUploadSection({
             height={200}
             className="object-cover w-full h-full"
           />
+        ) : coverUrl ? (
+          <img src={coverUrl} alt="cover" className="object-cover w-full h-full" />
         ) : (
           <span className="text-gray-500">Upload Cover</span>
         )}
@@ -35,13 +40,13 @@ export default function ImageUploadSection({
         <input
           type="file"
           accept="image/*"
-          onChange={(e) => {
+          onChange={(e: ChangeEvent<HTMLInputElement>) => {
             if (e.target.files?.[0]) onCoverChange(e.target.files[0]);
           }}
           className="absolute inset-0 opacity-0 cursor-pointer"
         />
 
-        {cover && (
+        {(cover || coverUrl) && (
           <button
             type="button"
             onClick={() => onCoverChange(null)}
@@ -85,7 +90,7 @@ export default function ImageUploadSection({
               type="file"
               accept="image/*"
               multiple
-              onChange={(e) => {
+              onChange={(e: ChangeEvent<HTMLInputElement>) => {
                 if (e.target.files) {
                   onPicturesChange([...pictures, ...Array.from(e.target.files)]);
                 }

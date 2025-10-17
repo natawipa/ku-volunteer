@@ -510,8 +510,16 @@ export default function EventPage({ params }: PageProps) {
       currentParticipants: activity.current_participants || 0,
       organizer: activity.organizer_name || 'Unknown Organizer',
       description: activity.description || 'No description available',
-      image: "/titleExample.jpg",
-      additionalImages: ["/titleExample.jpg", "/titleExample.jpg", "/titleExample.jpg"]
+      image: activity.cover_image_url || activity.cover_image || "/titleExample.jpg",
+      additionalImages: (() => {
+        const posters = (activity as unknown as { posters?: { image?: string }[] })?.posters;
+        if (Array.isArray(posters)) {
+          return posters
+            .map(p => p.image)
+            .filter((x): x is string => typeof x === 'string' && x.length > 0);
+        }
+        return [activity.cover_image_url || activity.cover_image || "/titleExample.jpg"];
+      })(),
     };
   };
 
@@ -658,7 +666,9 @@ export default function EventPage({ params }: PageProps) {
               <div className="relative w-full">
                 <div className="overflow-x-auto scrollbar-hide">
                   <div className="flex space-x-4 p-2 min-w-full md:justify-center">
-                    {transformedEvent.additionalImages?.map((img, index) => (
+                    {transformedEvent.additionalImages
+                      ?.filter((i): i is string => typeof i === 'string')
+                      .map((img, index) => (
                       <div key={index} className="flex-shrink-0">
                         <Image
                           src={img}
@@ -668,7 +678,7 @@ export default function EventPage({ params }: PageProps) {
                           className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer"
                         />
                       </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>

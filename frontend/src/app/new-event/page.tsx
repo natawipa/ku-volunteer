@@ -30,6 +30,7 @@ function ActivityFormContent() {
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [cover, setCover] = useState<File | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [pictures, setPictures] = useState<File[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activityCreated, setActivityCreated] = useState(false);
@@ -92,6 +93,8 @@ function ActivityFormContent() {
         setCategories(activityData.categories || []);
         setMaxParticipants(activityData.max_participants || "");
         setHour(activityData.hours_awarded || "");
+  // set existing cover image URL if available
+  setCoverUrl(activityData.cover_image || activityData.cover_image_url || null);
         
         // Format dates for input fields (YYYY-MM-DD)
         if (activityData.start_at) {
@@ -109,6 +112,43 @@ function ActivityFormContent() {
         console.error('Error parsing activity data:', error);
         alert('Error loading activity data for editing');
       }
+    }
+    // If edit mode requested but no activityData param provided, fetch from API
+    if (editParam && !activityDataParam) {
+      (async () => {
+        try {
+          console.log('Fetching activity data for edit:', editParam);
+          const resp = await activitiesApi.getActivity(editParam);
+          if (resp.success && resp.data) {
+            const activityData = resp.data;
+            setIsEditMode(true);
+            setActivityId(editParam);
+            setTitle(activityData.title || "");
+            setLocation(activityData.location || "");
+            setDescription(activityData.description || "");
+            setCategories(activityData.categories || []);
+            setMaxParticipants(activityData.max_participants || "");
+            setHour(activityData.hours_awarded || "");
+            if (activityData.start_at) {
+              const startDate = new Date(activityData.start_at);
+              setDateStart(startDate.toISOString().split('T')[0]);
+            }
+            if (activityData.end_at) {
+              const endDate = new Date(activityData.end_at);
+              setDateEnd(endDate.toISOString().split('T')[0]);
+            }
+            // set coverUrl from backend image field
+            // DRF ImageField typically returns a URL string under 'cover_image'
+            setCoverUrl(activityData.cover_image || activityData.cover_image_url || null);
+            console.log('Loaded activity for edit:', activityData);
+          } else {
+            console.warn('Failed to fetch activity for edit', resp.error);
+            alert('Unable to load activity for editing');
+          }
+        } catch (error) {
+          console.error('Error fetching activity:', error);
+        }
+      })();
     }
   }, [searchParams]);
 
@@ -408,8 +448,13 @@ function ActivityFormContent() {
           {/* Image Upload Section - Optional for now */}
           <ImageUploadSection
             cover={cover}
+            coverUrl={coverUrl}
             pictures={pictures}
-            onCoverChange={setCover}
+            onCoverChange={(file) => {
+              setCover(file);
+              // if user cleared file, also clear coverUrl
+              if (!file) setCoverUrl(null);
+            }}
             onPicturesChange={setPictures}
             coverError={errors.cover}
           />
