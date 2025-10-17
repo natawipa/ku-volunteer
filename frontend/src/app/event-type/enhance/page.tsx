@@ -22,7 +22,7 @@ const transformActivityToEvent = (activity: Activity) => {
       dateEnd: new Date().toLocaleDateString('en-GB'),
       location: 'Unknown Location',
       category: [],
-      imgSrc: "/titleExample.jpg",
+    imgSrc: "/titleExample.jpg",
       capacity: 0,
       status: 'unknown'
     };
@@ -36,7 +36,7 @@ const transformActivityToEvent = (activity: Activity) => {
     dateEnd: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
     location: activity.location || 'Unknown Location',
     category: activity.categories || [],
-    imgSrc: "/titleExample.jpg",
+    imgSrc: activity?.cover_image_url ?? activity?.cover_image ?? "/titleExample.jpg",
     capacity: activity.max_participants || 0,
     status: activity.status === "open" ? "upcoming" : activity.status || 'unknown',
   };
