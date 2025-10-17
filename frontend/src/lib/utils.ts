@@ -16,21 +16,41 @@ class HttpClient {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAccessToken();
   
+    // Build headers but if body is FormData do not set Content-Type so the
+    // browser can generate the correct multipart boundary.
+    const isFormData = options.body instanceof FormData;
+    const defaultHeaders: Record<string, string> = {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(!isFormData ? { 'Content-Type': 'application/json' } : {}),
+    };
+
     const config: RequestInit = {
       headers: {
-        'Content-Type': 'application/json',
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
+        ...defaultHeaders,
+        ...(options.headers || {}),
       },
       ...options,
     };
   
     console.log('🌐 Making request to:', url);
-    console.log('🔧 Request config:', {
-      method: config.method,
-      headers: config.headers,
-      body: config.body ? JSON.parse(config.body as string) : 'No body'
-    });
+    try {
+      const bodyPreview = (() => {
+        if (!config.body) return 'No body';
+        if (config.body instanceof FormData) return 'FormData (files/binary)';
+        try {
+          return JSON.parse(config.body as string);
+        } catch {
+          return config.body;
+        }
+      })();
+      console.log('🔧 Request config:', {
+        method: config.method,
+        headers: config.headers,
+        body: bodyPreview,
+      });
+    } catch (e) {
+      console.log('Unable to log request body preview', e);
+    }
   
     try {
       const response = await fetch(url, config);

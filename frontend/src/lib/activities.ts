@@ -1,6 +1,6 @@
 // lib/activities.ts
 import { httpClient } from './utils';
-import { API_ENDPOINTS } from './constants';
+import { API_ENDPOINTS, ENV } from './constants';
 import type { 
   Activity, 
   ApiResponse, 
@@ -122,13 +122,143 @@ export const activitiesApi = {
   },
 
   // Create new activity
-  async createActivity(data: CreateActivityData): Promise<ApiResponse<Activity>> {
-    return httpClient.post<Activity>(API_ENDPOINTS.ACTIVITIES.CREATE, data);
+  async createActivity(data: CreateActivityData & { cover?: File | null; pictures?: File[] | null }): Promise<ApiResponse<Activity>> {
+    // If no files attached, use JSON POST via httpClient
+    const { cover, pictures, ...payload } = data;
+    if (!cover && (!pictures || pictures.length === 0)) {
+      return httpClient.post<Activity>(API_ENDPOINTS.ACTIVITIES.CREATE, payload);
+    }
+
+    // Build FormData for multipart upload
+    const form = new FormData();
+    // Append known fields explicitly to avoid any/implicit typings
+    if ((payload as CreateActivityData).title) form.append('title', String((payload as CreateActivityData).title));
+    if ((payload as CreateActivityData).description) form.append('description', String((payload as CreateActivityData).description));
+    if ((payload as CreateActivityData).location) form.append('location', String((payload as CreateActivityData).location));
+    if ((payload as CreateActivityData).start_at) form.append('start_at', String((payload as CreateActivityData).start_at));
+    if ((payload as CreateActivityData).end_at) form.append('end_at', String((payload as CreateActivityData).end_at));
+    if ((payload as CreateActivityData).max_participants !== undefined && (payload as CreateActivityData).max_participants !== null) form.append('max_participants', String((payload as CreateActivityData).max_participants));
+    if ((payload as CreateActivityData).hours_awarded !== undefined && (payload as CreateActivityData).hours_awarded !== null) form.append('hours_awarded', String((payload as CreateActivityData).hours_awarded));
+    if ((payload as CreateActivityData).categories) form.append('categories', JSON.stringify((payload as CreateActivityData).categories));
+
+    if (cover) form.append('cover_image', cover);
+
+    // Send multipart request to create activity. We use fetch directly to allow FormData
+    try {
+  const token = localStorage.getItem('access_token');
+  const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.CREATE}`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: form,
+      });
+
+      const text = await res.text();
+      const dataRes = text ? JSON.parse(text) : null;
+      if (!res.ok) {
+        return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
+      }
+
+      // If posters provided, upload them to posters endpoint
+      if (dataRes && dataRes.id && pictures && pictures.length > 0) {
+        await this.uploadPosterImages(dataRes.id, pictures);
+        // Re-fetch activity to include poster images? For now return created data
+      }
+
+      return { success: true, data: dataRes };
+    } catch (error) {
+      console.error('createActivity (multipart) error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+    }
   },
 
   // Update activity
-  async updateActivity(id: string | number, data: Partial<Activity>): Promise<ApiResponse<Activity>> {
-    return httpClient.put<Activity>(API_ENDPOINTS.ACTIVITIES.UPDATE(id), data);
+  async updateActivity(id: string | number, data: Partial<Activity> & { cover?: File | null; pictures?: File[] | null }): Promise<ApiResponse<Activity>> {
+    const { cover, pictures, ...payload } = data;
+    if (!cover && (!pictures || pictures.length === 0)) {
+      return httpClient.put<Activity>(API_ENDPOINTS.ACTIVITIES.UPDATE(id), payload);
+    }
+
+    const form = new FormData();
+  // Explicitly append expected fields (typed to Partial<Activity>)
+  const p = payload as Partial<Activity>;
+  if (p.title) form.append('title', String(p.title));
+  if (p.description) form.append('description', String(p.description));
+  if (p.location) form.append('location', String(p.location));
+  if ((p as unknown as { start_at?: string }).start_at) form.append('start_at', String((p as unknown as { start_at?: string }).start_at));
+  if ((p as unknown as { end_at?: string }).end_at) form.append('end_at', String((p as unknown as { end_at?: string }).end_at));
+  if (p.max_participants !== undefined && p.max_participants !== null) form.append('max_participants', String(p.max_participants));
+  if (p.hours_awarded !== undefined && p.hours_awarded !== null) form.append('hours_awarded', String(p.hours_awarded));
+  if (p.categories) form.append('categories', JSON.stringify(p.categories));
+    if (cover) form.append('cover_image', cover);
+
+    try {
+  const token = localStorage.getItem('access_token');
+  const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.UPDATE(id)}`, {
+        method: 'PUT',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: form,
+      });
+
+      const text = await res.text();
+      const dataRes = text ? JSON.parse(text) : null;
+      if (!res.ok) {
+        return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
+      }
+
+      if (pictures && pictures.length > 0 && dataRes && dataRes.id) {
+        await this.uploadPosterImages(dataRes.id, pictures);
+      }
+
+      return { success: true, data: dataRes };
+    } catch (error) {
+      console.error('updateActivity (multipart) error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+    }
+  },
+
+  // Upload poster images to activity posters endpoint (one request with multiple files)
+  async uploadPosterImages(activityId: string | number, pictures: File[]): Promise<ApiResponse<unknown>> {
+    if (!pictures || pictures.length === 0) return { success: true, data: null };
+    const form = new FormData();
+    pictures.forEach((pic, idx) => {
+      // backend expects 'image' field; if multiple, send multiple 'image' entries
+      form.append('image', pic);
+      // optionally include order
+      form.append('order', String(idx + 1));
+    });
+
+    try {
+      const token = localStorage.getItem('access_token');
+      // Post each image individually because the backend serializer expects a single image per POST
+      for (let idx = 0; idx < pictures.length; idx++) {
+        const pic = pictures[idx];
+        const singleForm = new FormData();
+        singleForm.append('image', pic);
+        singleForm.append('order', String(idx + 1));
+
+        const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.POSTERS(activityId)}`, {
+          method: 'POST',
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: singleForm,
+        });
+
+        const text = await res.text();
+        const dataRes = text ? JSON.parse(text) : null;
+        if (!res.ok) {
+          return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
+        }
+      }
+      return { success: true, data: null };
+    } catch (error) {
+      console.error('uploadPosterImages error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+    }
   },
 
   // Delete activity

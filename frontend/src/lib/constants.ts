@@ -36,6 +36,7 @@ export const API_ENDPOINTS = {
     REVIEWAPPLICATION: (id: string | number) => `/api/activities/applications/${id}/review/`,
     METADATA: '/api/activities/metadata/',
     MODERATION_REVIEW: (id: string | number) => `/api/activities/moderation/${id}/review/`,
+    POSTERS: (activity_id: string | number) => `/api/activities/${activity_id}/posters/`,
   },
   TOKEN: {
     OBTAIN: '/api/token/',
