@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.conf import settings
-from .models import Activity, ActivityDeletionRequest, Application
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
 from users.models import OrganizerProfile
 
 
@@ -81,6 +81,9 @@ class ActivityAdmin(admin.ModelAdmin):
             'fields': (
                 'organizer_profile', 'title', 'description', 'categories', 'location'
             )
+        }),
+        ('Images', {
+            'fields': ('cover_image',)
         }),
         ('Timing', {
             'fields': ('start_at', 'end_at')
@@ -180,3 +183,26 @@ class ApplicationAdmin(admin.ModelAdmin):
         return obj.decision_by.email if obj.decision_by else '-'
     get_decision_by_email.short_description = 'Decided By'
     get_decision_by_email.admin_order_field = 'decision_by__email'
+
+
+@admin.register(ActivityPosterImage)
+class ActivityPosterImageAdmin(admin.ModelAdmin):
+    list_display = ('id', 'get_activity_title', 'order', 'image', 'created_at')
+    list_filter = ('order', 'created_at', 'activity__status')
+    search_fields = ('activity__title',)
+    readonly_fields = ('created_at',)
+    
+    fieldsets = (
+        ('Poster Info', {
+            'fields': ('activity', 'image', 'order')
+        }),
+        ('Metadata', {
+            'classes': ('collapse',),
+            'fields': ('created_at',)
+        }),
+    )
+    
+    def get_activity_title(self, obj: ActivityPosterImage):
+        return obj.activity.title if obj.activity else '-'
+    get_activity_title.short_description = 'Activity'
+    get_activity_title.admin_order_field = 'activity__title'
