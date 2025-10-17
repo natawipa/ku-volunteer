@@ -230,8 +230,12 @@ function ActivityFormContent() {
       let result;
       
       if (isEditMode && activityId) {
-        // Update existing activity
-        result = await activitiesApi.updateActivity(parseInt(activityId), activityData);
+        // Update existing activity (include files when present)
+        result = await activitiesApi.updateActivity(parseInt(activityId), {
+          ...activityData,
+          cover,
+          pictures,
+        });
         console.log('Backend update response:', result);
         
         if (result.success && result.data) {
@@ -242,8 +246,12 @@ function ActivityFormContent() {
           throw new Error(result.error || 'Failed to update activity');
         }
       } else {
-        // Create new activity
-        result = await activitiesApi.createActivity(activityData);
+        // Create new activity (include files when present)
+        result = await activitiesApi.createActivity({
+          ...activityData,
+          cover,
+          pictures,
+        });
         console.log('📥 Backend create response:', result);
         
         if (result.success && result.data) {
