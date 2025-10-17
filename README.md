@@ -1,7 +1,8 @@
 # KU Volunteer
-KU Volunteer is a web application for Kasetsart University students to discover, apply for, and track volunteer activities while enabling staff to manage and verify participation. It consists of a Django backend and a Next.js frontend, with optional Google OAuth login and JWT-based API authentication.
----
 
+KU Volunteer is a web application for Kasetsart University students to discover, apply for, and track volunteer activities while enabling staff to manage and verify participation. It consists of a Django backend and a Next.js frontend, with optional Google OAuth login and JWT-based API authentication.
+
+---
 ## 📌 Project Links
 - 🎬 **Sprint Review Videos**
   - Playlist : [Playlists](https://youtube.com/playlist?list=PL-agTHiNrXJK620Vo5P6VZCPbh5BCq6Qu&si=EKEUJKmh41vWM9dX)
@@ -23,6 +24,9 @@ KU Volunteer is a web application for Kasetsart University students to discover,
 
 ### Installing (Docker)
 1. Clone the repository
+```
+git clone https://github.com/natawipa/ku-volunteer.git
+```
 2. Start the stack
 ```
 cd ku-volunteer
@@ -43,15 +47,32 @@ Admin: http://localhost:8000/admin/
 
 Backend (Django)
 - Create/activate virtualenv
-	- macOS/Linux: `source .venv/bin/activate`
-	- Windows: `.venv\\Scripts\\Activate.ps1`
-- Install deps: `pip install -r backend/requirements.txt`
-- Run server from `backend/`: `python manage.py runserver`
+	- macOS/Linux: 
+      ```
+      source .venv/bin/activate
+      ```
+	- Windows: 
+      ```
+      .venv\\Scripts\\Activate.ps1
+      ```
+- Install deps: 
+  ```
+  pip install -r backend/requirements.txt
+  ```
+- Run server from `backend/`: 
+  ```
+  python manage.py runserver
+  ```
 
 Frontend (Next.js)
-- From `frontend/`: `npm install` then `npm run dev`
+- From `frontend/`: 
+  ```
+  npm install
+  npm run dev
+  ```
 
-Frontend: http://localhost:3000
+
+Frontend: http://localhost:3000 
 Backend: http://localhost:8000
 
 ## Help
