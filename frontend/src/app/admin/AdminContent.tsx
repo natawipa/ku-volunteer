@@ -1,14 +1,19 @@
 "use client";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { apiService, User } from "@/lib/api";
+import { useEffect, useState, useMemo } from 'react';
+import { activitiesApi } from '../../lib/activities';
 
 export default function AdminContent() {
   const [students, setStudents] = useState<User[]>([]);
   const [organizations, setOrganizations] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [pendingCount, setPendingCount] = useState(0);
+  const [approvedCount, setApprovedCount] = useState(0);
+  const [rejectedCount, setRejectedCount] = useState(0);
+  const [deletionRequestCount, setDeletionRequestCount] = useState(0);
 
   useEffect(() => {
     let mounted = true;
@@ -44,21 +49,63 @@ export default function AdminContent() {
     return () => { mounted = false; };
   }, []);
 
+  useEffect(() => {
+    const load = async () => {
+      setLoading(true);
+      const res = await activitiesApi.getActivities();
+      if (res.success && Array.isArray(res.data)) {
+        setPendingCount(res.data.filter(a => a.status === 'pending').length);
+        setApprovedCount(res.data.filter(a => a.status === 'open').length);
+        setRejectedCount(res.data.filter(a => a.status === 'rejected').length);
+        setDeletionRequestCount(res.data.filter(a => a.status === 'deletion_requested').length);
+      } else {
+        setError(res.error || 'Failed to load activities');
+      }
+      setLoading(false);
+    };
+    load();
+  }, []);
+
   return (
     <>
       {/* Status Navigation */}
       <h2 className="font-bold mb-6 text-2xl pt-2">Status Events</h2>
       <Link href="/admin/events/pending">
-        <h3 className="font-semibold mb-4 text-xl bg-gradient-to-r from-green-300/25 to-yellow-300/25 p-5 w-full rounded-lg shadow-md hover:scale-102 transition-transform duration-200">Pending Events</h3>
+        <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-green-300/25 to-yellow-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
+          <h3 className="font-semibold text-xl ">
+            Pending Events
+            {pendingCount > 0 && (
+            <span className="text-gray-800 bg-green-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{pendingCount}</span>
+          )}
+          </h3>
+        </div>
       </Link>
       <Link href="/admin/events/approved">
-        <h3 className="font-semibold mb-4 text-xl bg-gradient-to-r from-blue-300/25 to-purple-300/25 p-5 w-full rounded-lg shadow-md hover:scale-102 transition-transform duration-200">Approved Events</h3>
+      <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-blue-300/25 to-purple-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
+        <h3 className="font-semibold text-xl ">
+          Approved Events
+          {approvedCount > 0 && (
+            <span className="text-gray-800 bg-blue-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{approvedCount}</span>
+          )}
+        </h3>
+      </div>
       </Link>
       <Link href="/admin/events/rejected">
-        <h3 className="font-semibold mb-4 text-xl bg-gradient-to-r from-red-300/25 to-pink-300/25 p-5 w-full rounded-lg shadow-md hover:scale-102 transition-transform duration-200">Rejected Events</h3>
+      <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-red-300/25 to-pink-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
+        <h3 className="font-semibold text-xl ">
+          Rejected Events
+          {rejectedCount > 0 && (
+            <span className="text-gray-800 bg-red-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{rejectedCount}</span>
+          )}
+        </h3>
+      </div>
       </Link>
       <Link href="/admin/events/request-delete">
-        <h3 className="font-semibold mb-4 text-xl bg-gradient-to-r from-orange-300/25 to-amber-300/25 p-5 w-full rounded-lg shadow-md hover:scale-102 transition-transform duration-200">Deletion Request</h3>
+      <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-orange-300/25 to-amber-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
+        <h3 className="font-semibold text-xl ">
+          Deletion Request
+        </h3>
+      </div>
       </Link>
 
       {/* User Lists */}
