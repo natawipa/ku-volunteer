@@ -5,6 +5,8 @@ import React from 'react';
 
 export interface DeletionRequestEvent {
   id: number;
+  // Related Activity ID for this deletion request
+  activity?: number | string;
   title: string;
   description: string;
   category: string[];

@@ -2,7 +2,6 @@
 import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import SearchCard from '@/app/components/SearchCard';
 import ProfileCard from "@/app/components/ProfileCard";
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 import { PlusIcon } from '@heroicons/react/24/solid';
@@ -40,6 +39,13 @@ interface AdminLayoutProps {
   onEndAfterCheckedChange?: (checked: boolean) => void;
   /** Whether to show a date picker in the dropdown (default false for admin) */
   searchShowDate?: boolean;
+  /** Callback when search is applied */
+  onSearchApply?: (params: {
+    searchValue: string;
+    selectedCategories: string[];
+    dateStart: string;
+    dateEnd: string;
+  }) => void;
 }
 
 /**
@@ -117,7 +123,9 @@ export default function AdminLayout({
   useEffect(() => {
     if (hideSearch) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) setIsOpen(false);
+      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
+        setIsOpen(false);
+      }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
@@ -126,6 +134,16 @@ export default function AdminLayout({
   const handleSearchChange = (val: string) => {
     setSearchValue(val);
     onSearchChange?.(val);
+  };
+
+  const handleSearchApply = (params: {
+    searchValue: string;
+    selectedCategories: string[];
+    dateStart: string;
+    dateEnd: string;
+  }) => {
+    onSearchApply?.(params);
+    setIsOpen(false); // Close dropdown after applying search
   };
 
   return (
@@ -169,6 +187,7 @@ export default function AdminLayout({
               <div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md cursor-text" onClick={() => setIsOpen(true)}>
                 <MagnifyingGlassIcon className="text-gray-400 w-5 h-5" />
                 <input
+                  ref={searchInputRef}
                   type="text"
                   value={searchValue}
                   onChange={(e: ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}

@@ -51,7 +51,10 @@ export default function Page({ params }: PageProps) {
       }
 
       // 2️⃣ Find the specific deletion request by request id OR by related activity id (backward compat)
-  const req = reqRes.data.find(r => Number(r.id) === Number(eventId) || Number(r.activity) === Number(eventId));
+      const requests = reqRes.data as DeletionRequestEvent[];
+      const req = requests.find(
+        (r) => Number(r.id) === Number(eventId) || Number(r.activity) === Number(eventId)
+      );
       if (!req) {
         setError("Deletion request not found");
         setLoading(false);
@@ -61,6 +64,11 @@ export default function Page({ params }: PageProps) {
       setDeletionRequest(req);
 
       // 3️⃣ Fetch the related activity by its foreign key
+      if (req.activity == null) {
+        setError("Related activity not found");
+        setLoading(false);
+        return;
+      }
       const actRes = await activitiesApi.getActivity(req.activity);
       if (actRes.success && actRes.data) {
         setActivity(actRes.data);
@@ -199,117 +207,128 @@ export default function Page({ params }: PageProps) {
             <Link href="/all-events">All Event</Link>
             <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C]">
               <div className="flex items-center">
-              <PlusIcon className="w-4 h-4 mr-2" />
-              <span className="mr-1">New</span>
+                <PlusIcon className="w-4 h-4 mr-2" />
+                <span>New</span>
               </div>
             </Link>
-              <Link href="/profile">
-              { <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" /> }
-              </Link>
-            </nav>
-          </header>
+            <Link href="/profile">
+              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C]" />
+            </Link>
+          </nav>
+        </header>
 
-        {/* -------------------------- */} 
-
+        {/* Event Detail Card */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
-            <h1 className="text-3xl font-bold mb-4 text-center">{event.title}</h1>
-            <Image
-            src={event.image}
-            alt={event.title}
-            width={500}
-            height={310}
-            className="w-3/4 mx-auto object-cover"
-            />
+          <h1 className="text-3xl font-bold mb-4 text-center">{legacyEvent.title}</h1>
 
-            <div className="max-w-4xl mx-auto p-6 space-y-6">
+          <Image src={legacyEvent.image} alt={legacyEvent.title} width={500} height={310} className="w-3/4 mx-auto object-cover" />
 
-        {/* Top Info Card */}
+          <div className="p-6 space-y-6">
+            {/* Event Info */}
             <div className="bg-green-50 rounded-lg p-6 shadow">
-                <div className="mb-4">
-                    <p><strong>Post at:</strong> {event.post}</p>
-                </div>
-                <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
-                    <p><strong>Date:</strong> {event.datestart} - {event.dateend}</p>
-                    <p><strong>Location:</strong> {event.location}</p>
-                    <p><strong>Type:</strong> {event.category.join(", ")}</p>
-                    <p><strong>Capacity:</strong> {event.capacity} คน</p>
-                    <p><strong>Organizer:</strong> {event.organizer}</p>
-                </div>
+              <div className="mb-4">
+                <p><strong>Posted at:</strong> {legacyEvent.post}</p>
+              </div>
+              <div className="grid lg:grid-cols-2 gap-4">
+                <p><strong>Date:</strong> {legacyEvent.start_at} - {legacyEvent.end_at}</p>
+                <p><strong>Location:</strong> {legacyEvent.location}</p>
+                <p><strong>Type:</strong> {legacyEvent.categories.join(", ")}</p>
+                <p><strong>Capacity:</strong> {legacyEvent.max_participants} people</p>
+                <p><strong>Organizer:</strong> {legacyEvent.organizer_name}</p>
+              </div>
             </div>
 
-            {/* Image carousel / gallery */}
-            <div className="relative w-full">
-                <div className="overflow-x-auto scrollbar-hide">
-                    <div className="flex space-x-4 p-2 min-w-full md:justify-center">
-                    {event.additionalImages?.map((img, index) => (
-                        <div key={index} className="flex-shrink-0">
-                        <Image
-                            src={img}
-                            alt={`Event image ${index + 1}`}
-                            width={180}
-                            height={120}
-                            className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer"
-                        />
-                        </div>
-                    ))}
-                    </div>
+            {/* Gallery */}
+            {legacyEvent.additionalImages.length > 0 && (
+              <div className="overflow-x-auto scrollbar-hide">
+                <div className="flex space-x-4 p-2 md:justify-center">
+                  {legacyEvent.additionalImages.map((img: string, index: number) => (
+                    <Image
+                      key={index}
+                      src={img}
+                      alt={`Event image ${index + 1}`}
+                      width={180}
+                      height={120}
+                      className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform"
+                    />
+                  ))}
                 </div>
+              </div>
+            )}
+
+            {/* Description */}
+            <h2 className="text-lg font-semibold">Event Description</h2>
+            <div className="bg-white rounded-lg shadow p-4">
+              <p className="text-gray-700">{legacyEvent.description}</p>
             </div>
 
-            {/* Event Details */}
-            <h2 className="text-lg font-semibold mb-2">Event Description</h2>
-            <div className="bg-white rounded-lg shadow p-4">                
-                <p className="text-gray-700">{event.description}</p>
-            </div>
-
-            {/* Reason why this event is delete */}
-            <h2 className="text-lg font-semibold mb-2">Reason for Deletion</h2>
+            {/* Deletion Reason */}
+            <h2 className="text-lg font-semibold">Reason for Deletion</h2>
             <div className="bg-red-50 rounded-lg shadow p-4 min-h-[200px]">
-                <p className="text-gray-700">{event.reason}</p>
+              <p className="text-gray-700">{legacyEvent.reason}</p>
             </div>
 
-            {/* Add Confirmation Checkbox */}
-            <div className="flex gap-2">
-                <input 
-                    type="checkbox" 
-                    id="confirmDelete"
-                    className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
+            {/* Moderation Controls */}
+            <div className="flex flex-col gap-3">
+              <label className="flex items-center gap-2 text-green-600">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={approveChecked}
+                  onChange={() => {
+                    setApproveChecked(true);
+                    setRejectChecked(false);
+                  }}
                 />
-                <label htmlFor="confirmDelete" className="text-sm text-green-600">
-                    Approve Deletion
-                </label>
-            </div>
-
-            <div className="mt-4 flex gap-2">
-                <input 
-                    type="checkbox" 
-                    id="confirmDelete"
-                    className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                Approve Deletion
+              </label>
+              <label className="flex items-center gap-2 text-red-600">
+                <input
+                  type="checkbox"
+                  className="w-4 h-4"
+                  checked={rejectChecked}
+                  onChange={() => {
+                    setRejectChecked(true);
+                    setApproveChecked(false);
+                  }}
                 />
-                <label htmlFor="rejectDelete" className="text-sm text-red-600">
-                    Reject Deletion
-                </label>
+                Reject Deletion
+              </label>
+              {rejectChecked && (
+                <textarea
+                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500"
+                  placeholder="Add reason for rejection..."
+                  rows={3}
+                  value={rejectReason}
+                  onChange={(e) => setRejectReason(e.target.value)}
+                />
+              )}
             </div>
-            <textarea 
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-200"
-                placeholder="Add reason for rejection..."
-                rows={3}
-            />
-        </div>
-        {/* Footer buttons */}
-          <div className="flex justify-between pt-4 border-t mt-6">
-            <button className="text-gray-600 hover:text-gray-900 cursor-pointer">
-              Cancel
-            </button>
 
-            <button className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer">
-              Submit
-            </button>
-        </div>
+            {/* Action Buttons */}
+            <div className="flex justify-between pt-4 border-t mt-6">
+              <button className="text-gray-600 hover:text-gray-900">Cancel</button>
+              <button
+                disabled={actionLoading}
+                onClick={() =>
+                  moderate(approveChecked ? "approve" : rejectChecked ? "reject" : "approve")
+                }
+                className={`px-6 py-2 rounded-lg text-white ${
+                  approveChecked
+                    ? "bg-green-600 hover:bg-green-700"
+                    : rejectChecked
+                    ? "bg-red-600 hover:bg-red-700"
+                    : "bg-gray-400 cursor-not-allowed"
+                }`}
+              >
+                {actionLoading ? "Submitting..." : "Submit"}
+              </button>
+            </div>
 
+            {message && <p className="mt-4 text-blue-600">{message}</p>}
+          </div>
         </div>
-
-        </div>
+      </div>
     </div>
-);
+  );
 }
