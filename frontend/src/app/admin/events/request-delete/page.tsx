@@ -13,9 +13,14 @@ const rawEvents = (data as RequestDeleteJson).events;
 export default function DeletionRequestListPage() {
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('All Categories');
-  const [events, setEvents] = useState<DeletionRequestEvent[]>([]);
+  const [events, setEvents] = useState<(DeletionRequestEvent & { startDate?: string; endDate?: string })[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
+  const [searchStartDate, setSearchStartDate] = useState('');
+  const [searchEndDate, setSearchEndDate] = useState('');
+  const [endAfterChecked, setEndAfterChecked] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -48,17 +53,41 @@ export default function DeletionRequestListPage() {
     return ['All Categories', ...Array.from(set.values())];
   }, [events]);
 
-  const filtered = events.filter(ev => {
-    const term = search.toLowerCase();
-    const isAll = category === 'All Categories' || category === 'all';
-    const matchesCat = isAll || ev.category.includes(category);
-    const matchesSearch = (
-      ev.title.toLowerCase().includes(term) ||
-      ev.description.toLowerCase().includes(term) ||
-      ev.reason.toLowerCase().includes(term)
-    );
-    return matchesCat && matchesSearch;
-  });
+
+  const filtered = useMemo(() => {
+    const q = searchQuery.toLowerCase().trim();
+
+    return events.filter(ev => {
+      const matchesSearch =
+        !q ||
+        ev.title.toLowerCase().includes(q) ||
+        ev.location.toLowerCase().includes(q) ||
+        ev.description?.toLowerCase().includes(q);
+
+      const matchesCategory =
+        searchSelectedCategory === 'All Categories' ||
+        (Array.isArray(ev.category) &&
+          ev.category.some((c: string) => {
+            if (searchSelectedCategory === 'Social Impact') {
+              return c.includes('Social Engagement Activities');
+            }
+            return c.includes(searchSelectedCategory);
+          }));
+
+      let matchesDate = true;
+      const eventStart = new Date(ev.startDate || '');
+      const eventEnd = new Date(ev.endDate || '');
+
+      if (searchStartDate && searchEndDate) {
+        const filterStart = new Date(searchStartDate);
+        const filterEnd = new Date(searchEndDate);
+        // Use overlap logic for date range
+        matchesDate = eventEnd >= filterStart && eventStart <= filterEnd;
+      }
+
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  }, [events, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
 
   const count = filtered.length;
 
@@ -68,11 +97,15 @@ export default function DeletionRequestListPage() {
       title="Deletion Requests"
       searchVariant="compact"
       searchPlaceholder="Search events name, description"
-      onSearchChange={(value: string) => setSearch(value)}
-      initialSearchValue={search}
+      onSearchChange={setSearchQuery}
+      onSearchCategoryChange={setSearchSelectedCategory}
+      onSearchStartDateChange={setSearchStartDate}
+      onSearchEndDateChange={setSearchEndDate}
+      onEndAfterCheckedChange={setEndAfterChecked}
+      initialSearchValue={searchQuery}
       searchCategoryOptions={categories}
-      searchSelectedCategory={category}
-      onSearchCategoryChange={setCategory}
+      searchSelectedCategory={searchSelectedCategory}
+      
     >
       {/* Header + quick stats */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
