@@ -27,6 +27,12 @@ export default function EventPage({ params }: PageProps) {
   const router = useRouter();
   
   const [eventId, setEventId] = useState<number | null>(null);
+  
+  // Modal state for rejection
+  const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
+  const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
+  const [rejectionReason, setRejectionReason] = useState('');
+  const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -198,14 +204,77 @@ export default function EventPage({ params }: PageProps) {
   }, [userRole, isAuthenticated, checkUserApplication]);
 
 
-  // TODO: implement approve application for organizer later
   const handleApproveApplication = async (applicationId: number) => {
     console.log('Approve application:', applicationId);
-  }
+    
+    if (!confirm('Are you sure you want to approve this application?')) {
+      return;
+    }
 
-  // TODO: implement reject application for organizer later
+    try {
+      setIsProcessing(true);
+      const response = await activitiesApi.reviewApplication(applicationId, {
+        action: 'approve'
+      });
+
+      if (response.success) {
+        alert('Application approved successfully!');
+        // Refresh the applications list
+        await fetchEventForOrganizer();
+      } else {
+        alert(`Failed to approve application: ${response.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error approving application:', error);
+      alert('An error occurred while approving the application.');
+    } finally {
+      setIsProcessing(false);
+    }
+  }
   const handleRejectApplication = async (applicationId: number) => {
     console.log('Reject application:', applicationId);
+    setSelectedApplicationId(applicationId);
+    setRejectionReason('');
+    setIsRejectModalOpen(true);
+  }
+
+  const handleConfirmReject = async () => {
+    if (!selectedApplicationId) return;
+    
+    if (!rejectionReason.trim()) {
+      alert('Please provide a reason for rejection.');
+      return;
+    }
+
+    try {
+      setIsProcessing(true);
+      const response = await activitiesApi.reviewApplication(selectedApplicationId, {
+        action: 'reject',
+        reason: rejectionReason.trim()
+      });
+
+      if (response.success) {
+        alert('Application rejected successfully.');
+        setIsRejectModalOpen(false);
+        setRejectionReason('');
+        setSelectedApplicationId(null);
+        // Refresh the applications list
+        await fetchEventForOrganizer();
+      } else {
+        alert(`Failed to reject application: ${response.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error rejecting application:', error);
+      alert('An error occurred while rejecting the application.');
+    } finally {
+      setIsProcessing(false);
+    }
+  }
+
+  const handleCancelReject = () => {
+    setIsRejectModalOpen(false);
+    setRejectionReason('');
+    setSelectedApplicationId(null);
   }
 
   const handleApply = async () => {
@@ -444,15 +513,25 @@ export default function EventPage({ params }: PageProps) {
               <div className="flex gap-4 items-center">
                 <button 
                   onClick={() => handleApproveApplication(application.id)}
-                  className="bg-green-100 px-4 py-2 rounded hover:bg-green-200 transition-colors cursor-pointer"
+                  disabled={isProcessing}
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isProcessing 
+                      ? 'bg-gray-300 cursor-not-allowed' 
+                      : 'bg-green-100 hover:bg-green-200 cursor-pointer'
+                  }`}
                 >
-                  Approve
+                  {isProcessing ? 'Processing...' : 'Approve'}
                 </button>
                 <button 
                   onClick={() => handleRejectApplication(application.id)}
-                  className="bg-red-100 px-4 py-2 rounded hover:bg-red-200 transition-colors cursor-pointer"
+                  disabled={isProcessing}
+                  className={`px-4 py-2 rounded transition-colors ${
+                    isProcessing 
+                      ? 'bg-gray-300 cursor-not-allowed' 
+                      : 'bg-red-100 hover:bg-red-200 cursor-pointer'
+                  }`}
                 >
-                  Reject
+                  {isProcessing ? 'Processing...' : 'Reject'}
                 </button>
               </div>
             </div>
@@ -756,6 +835,41 @@ export default function EventPage({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Rejection Modal */}
+      {isRejectModalOpen && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-xl font-semibold mb-4">Reject Application</h2>
+            <p className="text-gray-600 mb-4">
+              Please provide a reason for rejecting this application:
+            </p>
+            <textarea
+              value={rejectionReason}
+              onChange={(e) => setRejectionReason(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg p-3 mb-4 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-red-500"
+              placeholder="Enter rejection reason..."
+              disabled={isProcessing}
+            />
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={handleCancelReject}
+                disabled={isProcessing}
+                className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmReject}
+                disabled={isProcessing || !rejectionReason.trim()}
+                className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing ? 'Rejecting...' : 'Confirm Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
