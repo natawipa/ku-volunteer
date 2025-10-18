@@ -3,17 +3,16 @@
 import { useState, useMemo, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import AdminDeletionRequestCard, { DeletionRequestEvent } from '../components/AdminDeletionRequestCard';
-import { apiService } from '@/lib/api';
+import { activitiesApi } from '@/lib/activities';
 
-// DeletionRequestEvent interface now imported from component file
-
-type RequestDeleteJson = { events: DeletionRequestEvent[] };
-const rawEvents = (data as RequestDeleteJson).events;
+// Combined data structure (after merging)
+type MergedDeletionRequest = DeletionRequestEvent & {
+  startDate?: string | null;
+  endDate?: string | null;
+};
 
 export default function DeletionRequestListPage() {
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
-  const [events, setEvents] = useState<(DeletionRequestEvent & { startDate?: string; endDate?: string })[]>([]);
+  const [events, setEvents] = useState<MergedDeletionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
@@ -25,20 +24,33 @@ export default function DeletionRequestListPage() {
   useEffect(() => {
     let mounted = true;
     async function fetchRequests() {
-      setLoading(true);
-      setError(null);
       try {
-        // Replace with your actual API call
-        const result = await apiService.getDeletionRequests();
-        if (!mounted) return;
-        if (result.success && result.data) {
-          setEvents(result.data);
-        } else {
-          setError(result.error || "Failed to load deletion requests");
-        }
-      } catch (err: unknown) {
-        if (!mounted) return;
-        setError("Failed to load deletion requests");
+        const reqRes = await activitiesApi.getDeletionRequests();
+        if (!reqRes.success || !Array.isArray(reqRes.data)) return;
+
+        // Fetch all activities
+        const actRes = await activitiesApi.getActivities();
+        const activities = Array.isArray(actRes.data) ? actRes.data : [];
+
+        // Merge by foreign key
+        const merged: MergedDeletionRequest[] = reqRes.data.map((req: DeletionRequestEvent) => {
+          const act = activities.find(a => a.id === req.activity);
+          return {
+            ...req,
+            title: act?.title || req.title || "Untitled Event",
+            location: act?.location || req.location || "Unknown Location",
+            startDate: act?.start_at || null,
+            endDate: act?.end_at || null,
+            post: act?.created_at || req.post || "",
+            datestart: act?.start_at || req.datestart || "",
+            dateend: act?.end_at || req.dateend || "",
+            organizer: act?.organizer_name || req.organizer || "",
+          };
+        });
+
+        if (mounted) setEvents(merged);
+      } catch {
+        setError("Failed to load data");
       } finally {
         if (mounted) setLoading(false);
       }
@@ -81,8 +93,10 @@ export default function DeletionRequestListPage() {
       if (searchStartDate && searchEndDate) {
         const filterStart = new Date(searchStartDate);
         const filterEnd = new Date(searchEndDate);
-        // Use overlap logic for date range
-        matchesDate = eventEnd >= filterStart && eventStart <= filterEnd;
+        
+        matchesDate = endAfterChecked
+          ? eventEnd >= filterStart && eventStart <= filterEnd
+          : eventEnd <= filterEnd && eventStart <= filterEnd && eventEnd >= filterStart;
       }
 
       return matchesSearch && matchesCategory && matchesDate;

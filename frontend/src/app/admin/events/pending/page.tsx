@@ -9,8 +9,8 @@ export default function PendingEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Activity[]>([]);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
+  const [search] = useState('');
+  const [category] = useState('All Categories');
   const [searchStartDate, setSearchStartDate] = useState('');
   const [searchEndDate, setSearchEndDate] = useState('');
   const [endAfterChecked, setEndAfterChecked] = useState(false);
