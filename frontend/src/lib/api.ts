@@ -315,6 +315,72 @@ class ApiService {
       };
     }
   }
+
+  async deleteUser(userId: number): Promise<ApiResponse<null>> {
+    try {
+      console.log('deleteUser called with userId:', userId);
+      
+      const url = `${API_BASE_URL}/users/delete/${userId}/`;
+      console.log('Making DELETE request to:', url);
+      
+      const headers = this.getAuthHeaders();
+      console.log('Headers:', headers);
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: headers,
+      });
+  
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+  
+      if (response.ok) {
+        console.log('Delete successful!');
+        return { success: true, data: null };
+      } else {
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        let responseData;
+        try {
+          responseData = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          console.error('Failed to parse response as JSON:', responseText);
+          return { 
+            success: false, 
+            error: `Server returned invalid JSON: ${responseText}` 
+          };
+        }
+        
+        console.error('Delete failed:', responseData);
+        
+        let errorMessage = 'Delete failed';
+        if (responseData.detail) {
+          errorMessage = responseData.detail;
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (typeof responseData === 'object') {
+          errorMessage = JSON.stringify(responseData);
+        } else if (typeof responseData === 'string') {
+          errorMessage = responseText;
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+    } catch (error) {
+      console.error('NETWORK ERROR in deleteUser:', error);
+      console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
+      
+      if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
+        return this.deleteUser(userId);
+      }
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Network error occurred' 
+      };
+    }
+  }
 }
 
 export const apiService = new ApiService();
