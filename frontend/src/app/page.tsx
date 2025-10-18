@@ -48,6 +48,7 @@ const transformActivityToEvent = (activity: Activity) => {
   };
 };
 
+
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -105,24 +106,34 @@ export default function Home() {
       title: "University Activities",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
       backgroundBrain: "/brainread.svg",
-      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => cat.includes("University Activities"))),
+      events: events.filter(e => {
+      return Array.isArray(e.category) && e.category.some(cat => 
+          cat.includes("University Activities")
+        );
+      }),
     },
     {
       title: "Enhance Competencies",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
       backgroundBrain: "/brainthink.svg",
-      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => (
-        cat.includes("Development of Morality") ||
-        cat.includes("Development of Thinking") ||
-        cat.includes("Development of Interpersonal") ||
-        cat.includes("Development of Health")
-      ))),
+      events: events.filter(e => {
+        return Array.isArray(e.category) && e.category.some(cat => 
+          cat.includes("Development of Morality") ||
+          cat.includes("Development of Thinking") ||
+          cat.includes("Development of Interpersonal") ||
+          cat.includes("Development of Health")
+        );
+      }),
     },
     {
       title: "Social Engagement Activities",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
       backgroundBrain: "/brainlove.svg",
-      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => cat.includes("Social Engagement Activities"))),
+      events: events.filter(e => {
+        return Array.isArray(e.category) && e.category.some(cat => 
+          cat.includes("Social Engagement Activities")
+        );
+      }),
     },
   ];
 
@@ -195,6 +206,40 @@ const getNavigation = () => {
 
   // Render sections for events
   const getSections = () => {
+
+    // Loading state
+    if (loading) {
+      return (
+        <section className="mb-6 mt-18">
+          <div className="flex justify-center items-center h-48">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
+            <span className="ml-3 text-gray-600">Loading activities...</span>
+          </div>
+        </section>
+      );
+    }
+
+    // Error state
+    if (error) {
+      return (
+        <section className="mb-6 mt-18">
+          <div className="flex justify-center items-center h-48">
+            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
+              <h3 className="text-red-800 font-semibold mb-2">Error Loading Activities</h3>
+              <p className="text-red-600 mb-4">{error}</p>
+              <button 
+                onClick={() => window.location.reload()}
+                className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+              >
+                Try Again
+              </button>
+            </div>
+          </div>
+        </section>
+      );
+    }
+
+    // Empty state
     if (!events || events.length === 0) {
       return (
         <section className="mb-6">
