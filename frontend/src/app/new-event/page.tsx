@@ -32,6 +32,7 @@ function ActivityFormContent() {
   const [cover, setCover] = useState<File | null>(null);
   const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [pictures, setPictures] = useState<File[]>([]);
+  const [existingPosters, setExistingPosters] = useState<{ id?: number | string; url: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activityCreated, setActivityCreated] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -113,6 +114,17 @@ function ActivityFormContent() {
         }
         
         console.log('Activity data loaded for editing:', activityData);
+        // load existing poster images if present on activityData
+        try {
+          const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
+          if (Array.isArray(posters) && posters.length > 0) {
+            setExistingPosters(posters.map(p => ({ id: p.id, url: normalizeUrl(p.image || '') || '' }))); 
+          } else {
+            setExistingPosters([]);
+          }
+        } catch (e) {
+          console.warn('Failed to parse poster images from activityData', e);
+        }
       } catch (error) {
         console.error('Error parsing activity data:', error);
         alert('Error loading activity data for editing');
@@ -149,6 +161,20 @@ function ActivityFormContent() {
               setCoverUrl(null);
             }
             console.log('Loaded activity for edit:', activityData);
+            // if posters not present in initial payload, fetch from API to be safe
+            (async () => {
+              try {
+                if (activityData.id) {
+                  const resp = await activitiesApi.getPosterImages(activityData.id);
+                  if (resp.success && resp.data) {
+                    type PosterResp = { id?: number | string; image?: string };
+                    setExistingPosters((resp.data as PosterResp[]).map((p) => ({ id: p.id, url: normalizeUrl(p.image) as string })));
+                  }
+                }
+              } catch (e) {
+                console.warn('Error fetching poster images for edit:', e);
+              }
+            })();
           } else {
             console.warn('Failed to fetch activity for edit', resp.error);
             alert('Unable to load activity for editing');
@@ -336,6 +362,26 @@ function ActivityFormContent() {
     }
   };
 
+  const handleDeleteExistingPoster = async (posterId: number | string) => {
+    if (!activityId) {
+      alert('Cannot delete poster before activity is saved');
+      return;
+    }
+    if (!confirm('Delete this poster image?')) return;
+    try {
+      const resp = await activitiesApi.deletePosterImage(parseInt(activityId), posterId);
+      if (resp.success) {
+  setExistingPosters((prev: { id?: number | string; url: string }[]) => prev.filter((p) => String(p.id) !== String(posterId)));
+        alert('Poster deleted');
+      } else {
+        throw new Error(resp.error || 'Failed to delete poster');
+      }
+    } catch (error) {
+      console.error('Error deleting poster:', error);
+      alert('Failed to delete poster');
+    }
+  };
+
   const clearError = (field: string) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
@@ -469,12 +515,14 @@ function ActivityFormContent() {
             cover={cover}
             coverUrl={coverUrl}
             pictures={pictures}
+            existingPosters={existingPosters}
             onCoverChange={(file) => {
               setCover(file);
               // if user cleared file, also clear coverUrl
               if (!file) setCoverUrl(null);
             }}
             onPicturesChange={setPictures}
+            onDeleteExistingPoster={handleDeleteExistingPoster}
             coverError={errors.cover}
           />
 

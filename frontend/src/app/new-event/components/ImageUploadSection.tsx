@@ -2,12 +2,19 @@ import { PlusCircle, X } from "lucide-react";
 import Image from "next/image";
 import type { ChangeEvent } from 'react';
 
+interface PosterItem {
+  id?: number | string;
+  url: string;
+}
+
 interface ImageUploadSectionProps {
   cover: File | null;
   coverUrl?: string | null;
-  pictures: File[];
+  pictures: File[]; // new uploads (File objects)
+  existingPosters?: PosterItem[]; // posters already saved in backend
   onCoverChange: (file: File | null) => void;
   onPicturesChange: (files: File[]) => void;
+  onDeleteExistingPoster?: (posterId: number | string) => void;
   coverError?: string;
 }
 
@@ -15,8 +22,10 @@ export default function ImageUploadSection({
   cover,
   coverUrl,
   pictures,
+  existingPosters = [],
   onCoverChange,
   onPicturesChange,
+  onDeleteExistingPoster,
   coverError
 }: ImageUploadSectionProps) {
   return (
@@ -32,7 +41,7 @@ export default function ImageUploadSection({
             className="object-cover w-full h-full"
           />
         ) : coverUrl ? (
-          <img src={coverUrl} alt="cover" className="object-cover w-full h-full" />
+          <Image src={coverUrl} alt="cover" width={500} height={200} className="object-cover w-full h-full" unoptimized />
         ) : (
           <span className="text-gray-500">Upload Cover</span>
         )}
@@ -62,8 +71,25 @@ export default function ImageUploadSection({
       <p className="text-sm font-medium mb-2">Additional Pictures</p>
       <div className="bg-mutegreen shadow rounded-xl p-6 space-y-6 py-7 mt-1">
         <div className="flex gap-4 overflow-x-auto">
+          {/* existing posters from backend (read-only thumbnails with delete) */}
+          {existingPosters.map((p, i) => (
+            <div key={`existing-${p.id ?? i}`} className="relative flex-shrink-0 w-32 h-28">
+              <Image src={p.url} alt={`poster-${i}`} width={128} height={112} className="object-cover w-full h-full rounded-lg" unoptimized />
+              {onDeleteExistingPoster && p.id && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteExistingPoster(p.id!)}
+                  className="absolute top-1 right-1 bg-white rounded-full p-1 shadow text-red-600 hover:text-red-800"
+                >
+                  <X size={14} />
+                </button>
+              )}
+            </div>
+          ))}
+
+          {/* newly selected pictures (File objects) */}
           {pictures.map((pic, i) => (
-            <div key={i} className="relative flex-shrink-0 w-32 h-28">
+            <div key={`new-${i}`} className="relative flex-shrink-0 w-32 h-28">
               <Image
                 src={URL.createObjectURL(pic)}
                 alt={`pic-${i}`}

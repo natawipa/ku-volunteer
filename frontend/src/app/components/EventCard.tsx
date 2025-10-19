@@ -1,6 +1,7 @@
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useRouter } from 'next/navigation';
 import { auth } from '../../lib/utils';
+import Image from 'next/image';
 
 export interface EventCardProps {
   id: number;
@@ -45,12 +46,16 @@ const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, cat
   return (
     <div onClick={handleClick} role="button" tabIndex={0} className="cursor-pointer">
       <div className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200">
-        <img
-          src={imgSrc}
-          alt={title}
-          className="rounded-lg object-cover"
-          style={{ width: '100%', height: '120px' }}
-        />
+        <div className="rounded-lg overflow-hidden" style={{ width: '100%', height: '120px' }}>
+          <Image
+            src={imgSrc}
+            alt={title}
+            width={400}
+            height={120}
+            className="object-cover w-full h-full"
+            unoptimized
+          />
+        </div>
 
         {/* Status Badge */}
       {status && (
