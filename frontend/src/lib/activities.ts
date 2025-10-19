@@ -261,6 +261,47 @@ export const activitiesApi = {
     }
   },
 
+  // Get poster images for an activity
+  async getPosterImages(activityId: string | number): Promise<ApiResponse<{ id: number; image: string; order?: number }[]>> {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.POSTERS(activityId)}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        }
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        return { success: false, error: data?.detail || JSON.stringify(data), data: [] };
+      }
+      return { success: true, data: data };
+    } catch (error) {
+      console.error('getPosterImages error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error', data: [] };
+    }
+  },
+
+  // Delete a poster image by id
+  async deletePosterImage(activityId: string | number, posterId: string | number): Promise<ApiResponse<unknown>> {
+    try {
+      const token = localStorage.getItem('access_token');
+      const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.POSTERS(activityId)}${posterId}/`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (res.status === 204) return { success: true, data: null };
+      const data = await res.json();
+      return { success: res.ok, data: data, error: data?.detail || undefined };
+    } catch (error) {
+      console.error('deletePosterImage error:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+    }
+  },
+
   // Delete activity
   async deleteActivity(id: string | number): Promise<ApiResponse<void>> {
     return httpClient.delete<void>(API_ENDPOINTS.ACTIVITIES.DELETE(id));
