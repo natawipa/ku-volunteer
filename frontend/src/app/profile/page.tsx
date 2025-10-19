@@ -50,6 +50,7 @@ export default function Profile() {
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<Activity[]>([]);
   const [favoriteEvents, setFavoriteEvents] = useState<Activity[]>([]);
+  const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -216,13 +217,20 @@ export default function Profile() {
   
         {/* profile image */}
         <div className="flex-shrink-0">
-          <Image
-            src="/avatar.jpg"
-            alt="profile"
-            width={120}
-            height={120}
-            className="p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
-          />
+          <div className="w-[120px] h-[120px] rounded-full p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA]">
+            <Image
+              src={imageError ? '/avatar.jpg' : apiService.getProfileImageUrl(user?.profile_image)}
+              alt="profile"
+              width={120}
+              height={120}
+              className="w-full h-full rounded-full object-cover"
+              unoptimized
+              onError={() => {
+                console.error('Failed to load profile image');
+                setImageError(true);
+              }}
+            />
+          </div>
         </div>
         
         {/* name, Info container*/}
