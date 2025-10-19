@@ -11,7 +11,7 @@ import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
-import { USER_ROLES } from "../../lib/constants";
+import { USER_ROLES, ENV } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
 
 // Move the main content to a separate component
@@ -93,8 +93,13 @@ function ActivityFormContent() {
         setCategories(activityData.categories || []);
         setMaxParticipants(activityData.max_participants || "");
         setHour(activityData.hours_awarded || "");
-  // set existing cover image URL if available
-  setCoverUrl(activityData.cover_image || activityData.cover_image_url || null);
+        // set existing cover image URL if available (normalize relative urls)
+        if (activityData.cover_image || activityData.cover_image_url) {
+          const raw = activityData.cover_image || activityData.cover_image_url;
+          setCoverUrl(normalizeUrl(raw));
+        } else {
+          setCoverUrl(null);
+        }
         
         // Format dates for input fields (YYYY-MM-DD)
         if (activityData.start_at) {
@@ -137,9 +142,12 @@ function ActivityFormContent() {
               const endDate = new Date(activityData.end_at);
               setDateEnd(endDate.toISOString().split('T')[0]);
             }
-            // set coverUrl from backend image field
-            // DRF ImageField typically returns a URL string under 'cover_image'
-            setCoverUrl(activityData.cover_image || activityData.cover_image_url || null);
+            // set coverUrl from backend image field (normalize relative urls)
+            if (activityData.cover_image || activityData.cover_image_url) {
+              setCoverUrl(normalizeUrl(activityData.cover_image || activityData.cover_image_url));
+            } else {
+              setCoverUrl(null);
+            }
             console.log('Loaded activity for edit:', activityData);
           } else {
             console.warn('Failed to fetch activity for edit', resp.error);
@@ -151,6 +159,17 @@ function ActivityFormContent() {
       })();
     }
   }, [searchParams]);
+
+  function normalizeUrl(url: string | null | undefined) {
+    if (!url) return url ?? null;
+    try {
+      const parsed = new URL(url);
+      return parsed.href;
+    } catch (e) {
+      if (typeof url === 'string' && url.startsWith('/')) return `${ENV.API_BASE_URL.replace(/\/$/, '')}${url}`;
+      return url as string;
+    }
+  }
 
   /**
    * restore activity data when cancel delete confirmation

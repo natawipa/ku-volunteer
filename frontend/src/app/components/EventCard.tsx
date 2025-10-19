@@ -1,4 +1,3 @@
-// Use native img to avoid next/image domain restrictions for backend-served media
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useRouter } from 'next/navigation';
 import { auth } from '../../lib/utils';
