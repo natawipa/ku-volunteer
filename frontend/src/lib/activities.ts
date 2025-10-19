@@ -84,12 +84,12 @@ export const activitiesApi = {
         // Handle paginated response
         if (isPaginatedResponse(response.data)) {
           activitiesData = response.data.results;
-          console.log('📊 Extracted paginated results:', activitiesData);
+          console.log('Extracted paginated results:', activitiesData);
         } 
         // Handle direct array response
         else if (isActivityArray(response.data)) {
           activitiesData = response.data;
-          console.log('📊 Using direct array response:', activitiesData);
+          console.log('Using direct array response:', activitiesData);
         }
         
         // Return new response with the extracted array
@@ -107,7 +107,7 @@ export const activitiesApi = {
       };
       
     } catch (error) {
-      console.error('❌ Error in getActivities:', error);
+      console.error('Error in getActivities:', error);
       return { 
         success: false, 
         data: [],
@@ -160,10 +160,24 @@ export const activitiesApi = {
         return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
       }
 
+      console.log('Activity created successfully');
+
       // If posters provided, upload them to posters endpoint
       if (dataRes && dataRes.id && pictures && pictures.length > 0) {
-        await this.uploadPosterImages(dataRes.id, pictures);
-        // Re-fetch activity to include poster images? For now return created data
+        console.log(`Uploading ${pictures.length} poster image(s) for new activity ${dataRes.id}...`);
+        const uploadResult = await this.uploadPosterImages(dataRes.id, pictures);
+        
+        if (!uploadResult.success) {
+          console.error('Poster upload failed:', uploadResult.error);
+          // Return partial success - activity created but posters failed
+          return {
+            success: true,
+            data: dataRes,
+            error: `Activity created, but poster upload failed: ${uploadResult.error}`
+          };
+        }
+      } else {
+        console.log('No posters to upload for new activity');
       }
 
       return { success: true, data: dataRes };
@@ -209,8 +223,24 @@ export const activitiesApi = {
         return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
       }
 
+      console.log('Activity updated successfully');
+
+      // Upload poster images if provided
       if (pictures && pictures.length > 0 && dataRes && dataRes.id) {
-        await this.uploadPosterImages(dataRes.id, pictures);
+        console.log(`Uploading ${pictures.length} poster image(s) for activity ${dataRes.id}...`);
+        const uploadResult = await this.uploadPosterImages(dataRes.id, pictures);
+        
+        if (!uploadResult.success) {
+          console.error('Poster upload failed:', uploadResult.error);
+          // Return partial success - activity updated but posters failed
+          return {
+            success: true,
+            data: dataRes,
+            error: `Activity updated, but poster upload failed: ${uploadResult.error}`
+          };
+        }
+      } else {
+        console.log('No new posters to upload');
       }
 
       return { success: true, data: dataRes };
@@ -223,22 +253,77 @@ export const activitiesApi = {
   // Upload poster images to activity posters endpoint (one request with multiple files)
   async uploadPosterImages(activityId: string | number, pictures: File[]): Promise<ApiResponse<unknown>> {
     if (!pictures || pictures.length === 0) return { success: true, data: null };
-    const form = new FormData();
-    pictures.forEach((pic, idx) => {
-      // backend expects 'image' field; if multiple, send multiple 'image' entries
-      form.append('image', pic);
-      // optionally include order
-      form.append('order', String(idx + 1));
-    });
 
     try {
       const token = localStorage.getItem('access_token');
+      
+      // First, get existing posters to determine which order numbers are available
+      console.log('Fetching existing posters to find available order slots...');
+      
+      // Add a delay to ensure database has been updated after any deletions
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      const existingPostersResp = await this.getPosterImages(activityId);
+      const existingOrders = new Set<number>();
+      
+      console.log('getPosterImages response:', {
+        success: existingPostersResp.success,
+        isArray: Array.isArray(existingPostersResp.data),
+        dataLength: existingPostersResp.data?.length,
+        data: existingPostersResp.data
+      });
+      
+      if (existingPostersResp.success && existingPostersResp.data && Array.isArray(existingPostersResp.data)) {
+        console.log('Processing existing posters:');
+        existingPostersResp.data.forEach((poster, idx) => {
+          console.log(`  Poster ${idx + 1}:`, {
+            id: poster.id,
+            order: poster.order,
+            orderType: typeof poster.order,
+            hasOrder: poster.order !== undefined && poster.order !== null
+          });
+          
+          if (poster.order !== undefined && poster.order !== null) {
+            existingOrders.add(poster.order);
+            console.log(`  Added order ${poster.order} to existingOrders set`);
+          } else {
+            console.log(`  WARNING: Poster ${poster.id} has no order field`);
+          }
+        });
+      } else {
+        console.log('No existing posters found or data is not an array');
+      }
+      
+      console.log('Final existingOrders set:', Array.from(existingOrders));
+      
+      // Find available order slots (1-4)
+      const availableOrders: number[] = [];
+      for (let i = 1; i <= 4; i++) {
+        if (!existingOrders.has(i)) {
+          availableOrders.push(i);
+        }
+      }
+      
+      console.log('Existing orders:', Array.from(existingOrders));
+      console.log('Available orders:', availableOrders);
+      console.log(`Uploading ${pictures.length} new poster(s)...`);
+      
+      // Validate we have enough slots
+      if (pictures.length > availableOrders.length) {
+        const error = `Cannot upload ${pictures.length} posters. Only ${availableOrders.length} slot(s) available.`;
+        console.error('ERROR:', error);
+        return { success: false, error };
+      }
+      
       // Post each image individually because the backend serializer expects a single image per POST
       for (let idx = 0; idx < pictures.length; idx++) {
         const pic = pictures[idx];
+        const orderToUse = availableOrders[idx];
         const singleForm = new FormData();
         singleForm.append('image', pic);
-        singleForm.append('order', String(idx + 1));
+        singleForm.append('order', String(orderToUse));
+
+        console.log(`Uploading poster ${idx + 1}/${pictures.length} with order ${orderToUse}...`);
 
         const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.POSTERS(activityId)}`, {
           method: 'POST',
@@ -249,11 +334,45 @@ export const activitiesApi = {
         });
 
         const text = await res.text();
-        const dataRes = text ? JSON.parse(text) : null;
-        if (!res.ok) {
-          return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
+        console.log('Response status:', res.status, res.statusText);
+        console.log('Response body (first 500 chars):', text.substring(0, 500));
+        
+        let dataRes = null;
+        try {
+          dataRes = text ? JSON.parse(text) : null;
+        } catch (parseError) {
+          console.error('Failed to parse response as JSON:', parseError);
+          console.error('Full response:', text);
+          
+          if (!res.ok) {
+            return { 
+              success: false, 
+              error: `Server returned ${res.status} ${res.statusText}. Response is not valid JSON. Check server logs.` 
+            };
+          }
         }
+        
+        if (!res.ok) {
+          console.error(`Failed to upload poster ${idx + 1} (order ${orderToUse}):`, dataRes);
+          const errorMsg = dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) || `Server error ${res.status}`;
+          
+          // If it's a duplicate key error, provide helpful context
+          if (errorMsg.includes('unique') || errorMsg.includes('duplicate') || errorMsg.includes('already exists')) {
+            console.error('Duplicate order conflict detected!');
+            console.error('Tried to use order:', orderToUse);
+            console.error('Existing orders found:', Array.from(existingOrders));
+            return { 
+              success: false, 
+              error: `Order conflict: Poster order ${orderToUse} already exists. This might be a timing issue. Please try again.` 
+            };
+          }
+          
+          return { success: false, error: errorMsg };
+        }
+        console.log(`Poster ${idx + 1} uploaded successfully with order ${orderToUse}`);
       }
+      
+      console.log('All posters uploaded successfully!');
       return { success: true, data: null };
     } catch (error) {
       console.error('uploadPosterImages error:', error);
