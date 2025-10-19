@@ -50,7 +50,7 @@ function ActivityFormContent() {
         setIsAuthenticated(authenticated);
         setUserRole(role);
         
-        console.log('🔐 New page auth check:', { authenticated, role });
+        console.log('New page auth check:', { authenticated, role });
         
         // Redirect if not authenticated or not organizer or admin
         if (!authenticated) {
@@ -81,7 +81,7 @@ function ActivityFormContent() {
     
     if (editParam && activityDataParam) {
       try {
-        console.log('🔄 Entering edit mode for activity:', editParam);
+        console.log('Entering edit mode for activity:', editParam);
         const activityData = JSON.parse(decodeURIComponent(activityDataParam)) as Activity;
         
         setIsEditMode(true);
@@ -309,13 +309,16 @@ function ActivityFormContent() {
         categories: categories,
       };
   
-      console.log('📤 Sending activity data to backend:', activityData);
-      console.log('🔧 Mode:', isEditMode ? 'EDIT' : 'CREATE');
+      console.log('Sending activity data to backend:', activityData);
+      console.log('Mode:', isEditMode ? 'EDIT' : 'CREATE');
+      console.log('Pictures to upload:', pictures.length, 'file(s)');
+      console.log('Existing posters:', existingPosters.length, 'poster(s)');
 
       let result;
       
       if (isEditMode && activityId) {
         // Update existing activity (include files when present)
+        console.log(`Updating activity ${activityId} with ${pictures.length} new poster(s)...`);
         result = await activitiesApi.updateActivity(parseInt(activityId), {
           ...activityData,
           cover,
@@ -325,19 +328,27 @@ function ActivityFormContent() {
         
         if (result.success && result.data) {
           console.log('Activity updated successfully:', result.data);
-          alert('Activity updated successfully!');
+          
+          // Show warning if there was a poster upload error
+          if (result.error) {
+            alert(`Activity updated!\n\nWarning: ${result.error}`);
+          } else {
+            alert('Activity updated successfully!');
+          }
+          
           router.push(`/event-detail/${activityId}`);
         } else {
           throw new Error(result.error || 'Failed to update activity');
         }
       } else {
         // Create new activity (include files when present)
+        console.log(`Creating new activity with ${pictures.length} poster(s)...`);
         result = await activitiesApi.createActivity({
           ...activityData,
           cover,
           pictures,
         });
-        console.log('📥 Backend create response:', result);
+        console.log('Backend create response:', result);
         
         if (result.success && result.data) {
           console.log('Activity created successfully:', result.data);
@@ -347,7 +358,13 @@ function ActivityFormContent() {
             setActivityId(result.data.id.toString());
           }
           
-          alert('Activity created successfully!');
+          // Show warning if there was a poster upload error
+          if (result.error) {
+            alert(`Activity created!\n\nWarning: ${result.error}`);
+          } else {
+            alert('Activity created successfully!');
+          }
+          
           router.push('/');
         } else {
           throw new Error(result.error || 'Failed to create activity');

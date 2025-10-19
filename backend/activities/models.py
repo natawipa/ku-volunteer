@@ -132,7 +132,7 @@ class Activity(models.Model):
 
 
 class ActivityPosterImage(models.Model):
-    """Model for activity poster images (1-3 per activity)."""
+    """Model for activity poster images (1-4 per activity)."""
     
     activity = models.ForeignKey(
         Activity, 
@@ -145,7 +145,7 @@ class ActivityPosterImage(models.Model):
     )
     order = models.PositiveIntegerField(
         default=1,
-        help_text="Display order of the poster (1-3)"
+        help_text="Display order of the poster (1-4)"
     )
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -167,18 +167,18 @@ class ActivityPosterImage(models.Model):
         """Validate poster image constraints."""
         super().clean()
         
-        # Limit to 3 posters per activity
+        # Limit to 4 posters per activity
         if self.activity_id:
             existing_count = ActivityPosterImage.objects.filter(
                 activity=self.activity
             ).exclude(pk=self.pk).count()
             
-            if existing_count >= 3:
-                raise ValidationError("Maximum 3 poster images allowed per activity.")
+            if existing_count >= 4:
+                raise ValidationError("Maximum 4 poster images allowed per activity.")
         
-        # Validate order is between 1-3
-        if not (1 <= self.order <= 3):
-            raise ValidationError("Poster order must be between 1 and 3.")
+        # Validate order is between 1-4
+        if not (1 <= self.order <= 4):
+            raise ValidationError("Poster order must be between 1 and 4.")
 
 
 class ActivityDeletionRequest(models.Model):

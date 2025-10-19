@@ -28,6 +28,10 @@ export default function ImageUploadSection({
   onDeleteExistingPoster,
   coverError
 }: ImageUploadSectionProps) {
+  const MAX_POSTERS = 4;
+  const totalPosters = existingPosters.length + pictures.length;
+  const canAddMore = totalPosters < MAX_POSTERS;
+
   return (
     <>
       {/* Cover Image Upload */}
@@ -68,7 +72,10 @@ export default function ImageUploadSection({
       {coverError && <p className="text-red-600 text-sm">{coverError}</p>}
 
       {/* Additional Pictures */}
-      <p className="text-sm font-medium mb-2">Additional Pictures</p>
+      <div className="flex justify-between items-center mb-2">
+        <p className="text-sm font-medium">Additional Pictures</p>
+        <p className="text-xs text-gray-500">({totalPosters}/{MAX_POSTERS} posters)</p>
+      </div>
       <div className="bg-mutegreen shadow rounded-xl p-6 space-y-6 py-7 mt-1">
         <div className="flex gap-4 overflow-x-auto">
           {/* existing posters from backend (read-only thumbnails with delete) */}
@@ -110,20 +117,35 @@ export default function ImageUploadSection({
           ))}
 
           {/* Upload button */}
-          <label className="flex-shrink-0 w-32 h-28 flex items-center justify-center bg-gray-300 rounded-lg cursor-pointer">
-            <PlusCircle className="text-gray-500" size={28} />
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                if (e.target.files) {
-                  onPicturesChange([...pictures, ...Array.from(e.target.files)]);
-                }
-              }}
-              className="hidden"
-            />
-          </label>
+          {canAddMore ? (
+            <label className="flex-shrink-0 w-32 h-28 flex items-center justify-center bg-gray-300 rounded-lg cursor-pointer hover:bg-gray-400 transition-colors">
+              <PlusCircle className="text-gray-500" size={28} />
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={(e: ChangeEvent<HTMLInputElement>) => {
+                  if (e.target.files) {
+                    const newFiles = Array.from(e.target.files);
+                    const availableSlots = MAX_POSTERS - totalPosters;
+                    const filesToAdd = newFiles.slice(0, availableSlots);
+                    
+                    if (newFiles.length > availableSlots) {
+                      alert(`Maximum ${MAX_POSTERS} posters allowed. Only ${availableSlots} image(s) will be added.`);
+                    }
+                    
+                    onPicturesChange([...pictures, ...filesToAdd]);
+                  }
+                }}
+                className="hidden"
+              />
+            </label>
+          ) : (
+            <div className="flex-shrink-0 w-32 h-28 flex flex-col items-center justify-center bg-gray-200 rounded-lg cursor-not-allowed">
+              <PlusCircle className="text-gray-400" size={28} />
+              <span className="text-xs text-gray-400 mt-1">Max {MAX_POSTERS}</span>
+            </div>
+          )}
         </div>
       </div>
     </>

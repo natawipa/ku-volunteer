@@ -630,6 +630,31 @@ class ActivityPosterImageListCreateView(generics.ListCreateAPIView):
                 message=StatusMessages.PERMISSION_DENIED
             )
 
+        # Auto-assign order if not provided or if it conflicts
+        order = serializer.validated_data.get('order')
+        if order is None:
+            # Find next available order (1-4)
+            existing_orders = set(
+                ActivityPosterImage.objects.filter(activity=activity)
+                .values_list('order', flat=True)
+            )
+            for i in range(1, 5):
+                if i not in existing_orders:
+                    serializer.validated_data['order'] = i
+                    break
+        else:
+            # If order is provided, check if it's already taken
+            if ActivityPosterImage.objects.filter(activity=activity, order=order).exists():
+                # Find next available order instead
+                existing_orders = set(
+                    ActivityPosterImage.objects.filter(activity=activity)
+                    .values_list('order', flat=True)
+                )
+                for i in range(1, 5):
+                    if i not in existing_orders:
+                        serializer.validated_data['order'] = i
+                        break
+
         serializer.save(activity=activity)
 
 
