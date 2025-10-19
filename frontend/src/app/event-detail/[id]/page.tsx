@@ -622,7 +622,7 @@ export default function EventPage({ params }: PageProps) {
     try {
       const parsed = new URL(url);
       return parsed.href;
-    } catch (_) {
+    } catch {
       // Not absolute - make sure path starts with '/media/' and prefix with API base
       const base = ENV.API_BASE_URL.replace(/\/$/, '');
       let path = url.startsWith('/') ? url : `/${url}`;

@@ -122,8 +122,8 @@ function ActivityFormContent() {
           } else {
             setExistingPosters([]);
           }
-        } catch (e) {
-          console.warn('Failed to parse poster images from activityData', e);
+        } catch {
+          console.warn('Failed to parse poster images from activityData');
         }
       } catch (error) {
         console.error('Error parsing activity data:', error);
@@ -171,8 +171,8 @@ function ActivityFormContent() {
                     setExistingPosters((resp.data as PosterResp[]).map((p) => ({ id: p.id, url: normalizeUrl(p.image) as string })));
                   }
                 }
-              } catch (e) {
-                console.warn('Error fetching poster images for edit:', e);
+              } catch {
+                console.warn('Error fetching poster images for edit');
               }
             })();
           } else {
@@ -191,7 +191,7 @@ function ActivityFormContent() {
     try {
       const parsed = new URL(url);
       return parsed.href;
-    } catch (e) {
+    } catch {
       if (typeof url === 'string' && url.startsWith('/')) return `${ENV.API_BASE_URL.replace(/\/$/, '')}${url}`;
       return url as string;
     }
