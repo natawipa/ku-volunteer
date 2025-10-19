@@ -47,7 +47,7 @@ const AllEventsPage: React.FC = () => {
             dateEnd: (activity.end_at || '').split('T')[0],
             location: activity.location,
             organizer: activity.organizer_name || activity.organizer_email || '',
-            image_url: activity.cover_image_url,
+            imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/titleExample.jpg",
             participants_count: activity.current_participants,
             max_participants: activity.max_participants || 0,
             status: activity.status || 'unknown',
