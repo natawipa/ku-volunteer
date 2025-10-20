@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { EyeIcon, PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, EyeIcon, PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Image from "next/image";
 import Link from "next/link";
 import { apiService, User } from "@/lib/api";
@@ -122,21 +122,29 @@ export default function OrganizationList() {
               </nav>
             </header>
           {/* -------------------------- */} 
+
+          <Link 
+            href="/admin" 
+            className="inline-flex items-center text-[#215701] hover:text-[#00361C] mt-4 transition-colors"
+          >
+            <ArrowLeftIcon className="w-5 h-5 mr-2" />
+            Back to Admin
+          </Link>
     
-          <h2 className="font-semibold mb-6 text-2xl pt-11 lg:pt-20 md:pt-16">Organization Name</h2>
+          <h2 className="font-semibold mb-6 text-2xl lg:pt-10 md:pt-16">Organization Name</h2>
           {/* Search and Filter Bar */}
-          <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+          <div className="flex flex-col md:flex-row gap-4 mb-6 items-center ">
             <input
               type="text"
               placeholder="Search organization name..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="border rounded px-3 py-2 w-full md:w-1/2"
+              className="border border-gray-500 rounded px-3 py-2 w-full md:w-1/2 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
             />
             <select
               value={orgType}
               onChange={e => setOrgType(e.target.value)}
-              className="border rounded px-3 py-2 w-full md:w-1/4"
+              className="border border-gray-500 rounded px-3 py-2 w-full md:w-1/4 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
             >
               <option value="all">All</option>
               <option value="internal">Kasetsart University</option>

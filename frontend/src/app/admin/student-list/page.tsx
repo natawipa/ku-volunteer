@@ -1,5 +1,5 @@
 "use client";
-import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon, PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect, useState } from "react";
@@ -120,15 +120,40 @@ export default function StudentList() {
           </nav>
         </header>
       {/* -------------------------- */} 
+      <Link 
+            href="/admin" 
+            className="inline-flex items-center text-[#215701] hover:text-[#00361C] mb-4 transition-colors"
+          >
+            <ArrowLeftIcon className="w-5 h-5 mr-2" />
+            Back to List
+        </Link>
 
-      <h2 className="font-semibold mb-6 text-2xl pt-11 lg:pt-20 md:pt-16">Student Name</h2>
+      <h2 className="font-semibold mb-6 text-2xl pt-11 md:pt-16">Student Name</h2>
+      
+      {/* Search Bar */}
+      <div className="mb-6">
+        <input
+          type="text"
+          placeholder="Search student name..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          className="border border-gray-500 rounded px-3 py-2 w-full md:w-1/2 focus:outline-none focus:ring-1 focus:ring-green-700 focus:border-green-700 transition-all"
+        />
+      </div>
       <div className="flex flex-col gap-4 mb-10 ">
         {loading && <p>Loading students...</p>}
         {error && <p className="text-red-600">{error}</p>}
         {!loading && !error && students.length === 0 && (
           <p className="text-gray-500">No students found.</p>
         )}
-        {students.slice().reverse().map((s) => (
+        {students
+          .filter((s) => {
+            // Filter by search term
+            if (!search) return true;
+            const fullName = `${s.title || ""} ${s.first_name || ""} ${s.last_name || ""}`.toLowerCase();
+            return fullName.includes(search.toLowerCase());
+          })
+          .slice().reverse().map((s) => (
           <div key={s.id} className="flex justify-between items-center border-b pb-2">
             <p className="flex-1">
               {s.title} {s.first_name} {s.last_name}
