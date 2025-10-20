@@ -1,57 +1,27 @@
 "use client";
-import Image from "next/image";
-import Link from "next/link";
+import PublicEventHorizontalCard, { PublicEventCardData } from "./PublicEventHorizontalCard";
 
-import { MapPinIcon } from "@heroicons/react/20/solid";
-import { Calendar } from "lucide-react";
-
-interface Event {
-  id: number;
+interface SearchEvent {
+  id: string | number;
   title: string;
+  description?: string;
+  category: string | string[];
   dateStart: string;
   dateEnd: string;
   location: string;
-  category: string[];
-  imgSrc: string;
-  status: string;
+  organizer?: string;
+  participants_count?: number;
+  max_participants?: number;
+  imgSrc?: string;
+  status?: string;
 }
 
 interface SearchResultsProps {
-  events: Event[];
+  events: SearchEvent[];
   onBack?: () => void;
 }
 
-const formatDate = (iso: string) => {
-  try { return new Date(iso).toLocaleDateString('en-GB'); } catch { return iso; }
-};
-
-
-export default function SearchResults({ events, onBack }: SearchResultsProps) {
-  // Use event.status and style like EventCard
-  const renderEventStatus = (event: Event) => {
-    let colorClass = '';
-    switch (event.status) {
-      case 'upcoming':
-        colorClass = 'bg-red-100 text-red-800';
-        break;
-      case 'ongoing':
-        colorClass = 'bg-green-100 text-green-800';
-        break;
-      case 'past':
-        colorClass = 'bg-gray-100 text-gray-800';
-        break;
-      default:
-        colorClass = 'bg-gray-100 text-gray-800';
-    }
-    // Capitalize first letter
-    const label = event.status ? event.status.charAt(0).toUpperCase() + event.status.slice(1) : '';
-    return (
-      <span className={`${colorClass} text-xs px-2 py-1 rounded-full font-semibold`}>
-        {label}
-      </span>
-    );
-  };
-
+const SearchResults = ({ events, onBack }: SearchResultsProps) => {
   if (!events || events.length === 0) {
     return (
       <div className="mt-6">
@@ -70,7 +40,6 @@ export default function SearchResults({ events, onBack }: SearchResultsProps) {
   }
 
   return (
-    
     <div className="mt-6 mb-10">
       <button
         className="mb-4 text-green-600 border-b border-green-600 hover:border-green-700 hover:text-green-700 cursor-pointer"
@@ -79,38 +48,30 @@ export default function SearchResults({ events, onBack }: SearchResultsProps) {
 
       <h2 className="font-semibold text-xl mb-4">Search Results ({events.length} events)</h2>
       <div className="space-y-4">
-        {events.map((event, idx) => (
-          <Link href={`/event-detail/${event.id}`} key={idx}>
-            <div className="bg-white rounded-lg shadow-md p-4 mt-4 flex gap-4 hover:shadow-lg transition-shadow cursor-pointer">
-              <div className="w-48 h-32 relative flex-shrink-0">
-                <Image
-                  src={event.imgSrc}
-                  alt={event.title}
-                  fill
-                  className="rounded-md object-cover"
-                />
-              </div>
-              <div className="flex-1">
-                <div className="flex justify-between items-start">
-                  <h3 className="font-semibold text-lg">{event.title}</h3>
-                  {renderEventStatus(event)}
-                </div>
-                <div className="text-sm text-gray-600 mt-2 space-y-1">
-                  <p><MapPinIcon className="inline-block text-red-500 w-4 h-4 mr-1 -mt-1" /> {event.location}</p>
-                  <p><Calendar className="inline-block w-4 h-4 mr-1 -mt-1" /> {formatDate(event.dateStart)} - {formatDate(event.dateEnd)}</p>
-                  <div className="flex flex-wrap gap-2 mt-2">
-                    {event.category.map((cat, i) => (
-                      <span key={i} className="bg-green-50 text-green-700 text-xs px-2 py-1 rounded">
-                        {cat}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
+        {events.map((event, idx) => {
+          // Convert event to PublicEventCardData
+          const cardData: PublicEventCardData = {
+            id: event.id,
+            title: event.title,
+            description: event.description || "",
+            category: Array.isArray(event.category) ? event.category.join(", ") : event.category,
+            dateStart: event.dateStart,
+            dateEnd: event.dateEnd,
+            location: event.location,
+            organizer: event.organizer || "",
+            participants_count: event.participants_count || 0,
+            max_participants: event.max_participants || 0,
+            imgSrc: event.imgSrc,
+          };
+          return (
+            <div key={idx}>
+              <PublicEventHorizontalCard event={cardData} />
             </div>
-          </Link>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
 }
+
+export default SearchResults;
