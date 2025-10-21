@@ -11,7 +11,7 @@ import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
-import { USER_ROLES } from "../../lib/constants";
+import { USER_ROLES, ENV } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
 
 // Move the main content to a separate component
@@ -30,7 +30,9 @@ function ActivityFormContent() {
   const [description, setDescription] = useState("");
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [cover, setCover] = useState<File | null>(null);
+  const [coverUrl, setCoverUrl] = useState<string | null>(null);
   const [pictures, setPictures] = useState<File[]>([]);
+  const [existingPosters, setExistingPosters] = useState<{ id?: number | string; url: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activityCreated, setActivityCreated] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -48,7 +50,7 @@ function ActivityFormContent() {
         setIsAuthenticated(authenticated);
         setUserRole(role);
         
-        console.log('🔐 New page auth check:', { authenticated, role });
+        console.log('New page auth check:', { authenticated, role });
         
         // Redirect if not authenticated or not organizer or admin
         if (!authenticated) {
@@ -79,7 +81,7 @@ function ActivityFormContent() {
     
     if (editParam && activityDataParam) {
       try {
-        console.log('🔄 Entering edit mode for activity:', editParam);
+        console.log('Entering edit mode for activity:', editParam);
         const activityData = JSON.parse(decodeURIComponent(activityDataParam)) as Activity;
         
         setIsEditMode(true);
@@ -92,6 +94,13 @@ function ActivityFormContent() {
         setCategories(activityData.categories || []);
         setMaxParticipants(activityData.max_participants || "");
         setHour(activityData.hours_awarded || "");
+        // set existing cover image URL if available (normalize relative urls)
+        if (activityData.cover_image || activityData.cover_image_url) {
+          const raw = activityData.cover_image || activityData.cover_image_url;
+          setCoverUrl(normalizeUrl(raw));
+        } else {
+          setCoverUrl(null);
+        }
         
         // Format dates for input fields (YYYY-MM-DD)
         if (activityData.start_at) {
@@ -105,12 +114,88 @@ function ActivityFormContent() {
         }
         
         console.log('Activity data loaded for editing:', activityData);
+        // load existing poster images if present on activityData
+        try {
+          const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
+          if (Array.isArray(posters) && posters.length > 0) {
+            setExistingPosters(posters.map(p => ({ id: p.id, url: normalizeUrl(p.image || '') || '' }))); 
+          } else {
+            setExistingPosters([]);
+          }
+        } catch {
+          console.warn('Failed to parse poster images from activityData');
+        }
       } catch (error) {
         console.error('Error parsing activity data:', error);
         alert('Error loading activity data for editing');
       }
     }
+    // If edit mode requested but no activityData param provided, fetch from API
+    if (editParam && !activityDataParam) {
+      (async () => {
+        try {
+          console.log('Fetching activity data for edit:', editParam);
+          const resp = await activitiesApi.getActivity(editParam);
+          if (resp.success && resp.data) {
+            const activityData = resp.data;
+            setIsEditMode(true);
+            setActivityId(editParam);
+            setTitle(activityData.title || "");
+            setLocation(activityData.location || "");
+            setDescription(activityData.description || "");
+            setCategories(activityData.categories || []);
+            setMaxParticipants(activityData.max_participants || "");
+            setHour(activityData.hours_awarded || "");
+            if (activityData.start_at) {
+              const startDate = new Date(activityData.start_at);
+              setDateStart(startDate.toISOString().split('T')[0]);
+            }
+            if (activityData.end_at) {
+              const endDate = new Date(activityData.end_at);
+              setDateEnd(endDate.toISOString().split('T')[0]);
+            }
+            // set coverUrl from backend image field (normalize relative urls)
+            if (activityData.cover_image || activityData.cover_image_url) {
+              setCoverUrl(normalizeUrl(activityData.cover_image || activityData.cover_image_url));
+            } else {
+              setCoverUrl(null);
+            }
+            console.log('Loaded activity for edit:', activityData);
+            // if posters not present in initial payload, fetch from API to be safe
+            (async () => {
+              try {
+                if (activityData.id) {
+                  const resp = await activitiesApi.getPosterImages(activityData.id);
+                  if (resp.success && resp.data) {
+                    type PosterResp = { id?: number | string; image?: string };
+                    setExistingPosters((resp.data as PosterResp[]).map((p) => ({ id: p.id, url: normalizeUrl(p.image) as string })));
+                  }
+                }
+              } catch {
+                console.warn('Error fetching poster images for edit');
+              }
+            })();
+          } else {
+            console.warn('Failed to fetch activity for edit', resp.error);
+            alert('Unable to load activity for editing');
+          }
+        } catch (error) {
+          console.error('Error fetching activity:', error);
+        }
+      })();
+    }
   }, [searchParams]);
+
+  function normalizeUrl(url: string | null | undefined) {
+    if (!url) return url ?? null;
+    try {
+      const parsed = new URL(url);
+      return parsed.href;
+    } catch {
+      if (typeof url === 'string' && url.startsWith('/')) return `${ENV.API_BASE_URL.replace(/\/$/, '')}${url}`;
+      return url as string;
+    }
+  }
 
   /**
    * restore activity data when cancel delete confirmation
@@ -224,27 +309,46 @@ function ActivityFormContent() {
         categories: categories,
       };
   
-      console.log('📤 Sending activity data to backend:', activityData);
-      console.log('🔧 Mode:', isEditMode ? 'EDIT' : 'CREATE');
+      console.log('Sending activity data to backend:', activityData);
+      console.log('Mode:', isEditMode ? 'EDIT' : 'CREATE');
+      console.log('Pictures to upload:', pictures.length, 'file(s)');
+      console.log('Existing posters:', existingPosters.length, 'poster(s)');
 
       let result;
       
       if (isEditMode && activityId) {
-        // Update existing activity
-        result = await activitiesApi.updateActivity(parseInt(activityId), activityData);
+        // Update existing activity (include files when present)
+        console.log(`Updating activity ${activityId} with ${pictures.length} new poster(s)...`);
+        result = await activitiesApi.updateActivity(parseInt(activityId), {
+          ...activityData,
+          cover,
+          pictures,
+        });
         console.log('Backend update response:', result);
         
         if (result.success && result.data) {
           console.log('Activity updated successfully:', result.data);
-          alert('Activity updated successfully!');
+          
+          // Show warning if there was a poster upload error
+          if (result.error) {
+            alert(`Activity updated!\n\nWarning: ${result.error}`);
+          } else {
+            alert('Activity updated successfully!');
+          }
+          
           router.push(`/event-detail/${activityId}`);
         } else {
           throw new Error(result.error || 'Failed to update activity');
         }
       } else {
-        // Create new activity
-        result = await activitiesApi.createActivity(activityData);
-        console.log('📥 Backend create response:', result);
+        // Create new activity (include files when present)
+        console.log(`Creating new activity with ${pictures.length} poster(s)...`);
+        result = await activitiesApi.createActivity({
+          ...activityData,
+          cover,
+          pictures,
+        });
+        console.log('Backend create response:', result);
         
         if (result.success && result.data) {
           console.log('Activity created successfully:', result.data);
@@ -254,7 +358,13 @@ function ActivityFormContent() {
             setActivityId(result.data.id.toString());
           }
           
-          alert('Activity created successfully!');
+          // Show warning if there was a poster upload error
+          if (result.error) {
+            alert(`Activity created!\n\nWarning: ${result.error}`);
+          } else {
+            alert('Activity created successfully!');
+          }
+          
           router.push('/');
         } else {
           throw new Error(result.error || 'Failed to create activity');
@@ -266,6 +376,26 @@ function ActivityFormContent() {
       alert(`Failed to ${isEditMode ? 'update' : 'create'} activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleDeleteExistingPoster = async (posterId: number | string) => {
+    if (!activityId) {
+      alert('Cannot delete poster before activity is saved');
+      return;
+    }
+    if (!confirm('Delete this poster image?')) return;
+    try {
+      const resp = await activitiesApi.deletePosterImage(parseInt(activityId), posterId);
+      if (resp.success) {
+  setExistingPosters((prev: { id?: number | string; url: string }[]) => prev.filter((p) => String(p.id) !== String(posterId)));
+        alert('Poster deleted');
+      } else {
+        throw new Error(resp.error || 'Failed to delete poster');
+      }
+    } catch (error) {
+      console.error('Error deleting poster:', error);
+      alert('Failed to delete poster');
     }
   };
 
@@ -400,9 +530,16 @@ function ActivityFormContent() {
           {/* Image Upload Section - Optional for now */}
           <ImageUploadSection
             cover={cover}
+            coverUrl={coverUrl}
             pictures={pictures}
-            onCoverChange={setCover}
+            existingPosters={existingPosters}
+            onCoverChange={(file) => {
+              setCover(file);
+              // if user cleared file, also clear coverUrl
+              if (!file) setCoverUrl(null);
+            }}
             onPicturesChange={setPictures}
+            onDeleteExistingPoster={handleDeleteExistingPoster}
             coverError={errors.cover}
           />
 

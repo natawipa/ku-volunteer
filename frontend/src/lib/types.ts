@@ -32,6 +32,7 @@ export interface Activity {
   requires_admin_for_delete: boolean;
   capacity_reached: boolean;
   cover_image_url?: string;
+  cover_image?: string;
 }
 
 export interface ActivityApplication {

@@ -22,6 +22,7 @@ export interface User {
   first_name: string;
   last_name: string;
   role: 'student' | 'organizer' | 'admin';
+  profile_image?: string;
   created_at: string;
   updated_at: string;
   profile?: StudentProfile;
@@ -315,6 +316,63 @@ class ApiService {
         error: error instanceof Error ? error.message : 'Network error occurred' 
       };
     }
+  }
+
+  /**
+   * Upload profile image for a user
+   */
+  async uploadProfileImage(userId: number, imageFile: File): Promise<ApiResponse<User>> {
+    try {
+      const formData = new FormData();
+      formData.append('profile_image', imageFile);
+
+      const token = localStorage.getItem('access_token');
+      const response = await fetch(`${API_BASE_URL}/users/${userId}/update/`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : '',
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return { success: true, data };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.detail || 'Failed to upload profile image' };
+      }
+    } catch (error) {
+      console.error('Upload profile image error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
+  /**
+   * Get full URL for profile image
+   */
+  getProfileImageUrl(profileImage?: string | null): string {
+    if (!profileImage) {
+      return '/avatar.jpg';
+    }
+    
+    // If it's already a full URL, return it
+    if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
+      return profileImage;
+    }
+    
+    // If it starts with /media/, construct full URL
+    if (profileImage.startsWith('/media/')) {
+      return `http://localhost:8000${profileImage}`;
+    }
+    
+    // If it's a relative path without /media/, add it
+    if (profileImage.startsWith('users/')) {
+      return `http://localhost:8000/media/${profileImage}`;
+    }
+    
+    // Default case: assume it's a path that needs /media/ prefix
+    return `http://localhost:8000/media/${profileImage}`;
   }
 
   async deleteUser(userId: number): Promise<ApiResponse<null>> {

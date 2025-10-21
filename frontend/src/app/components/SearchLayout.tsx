@@ -30,7 +30,7 @@ const transformActivityToEvent = (activity: Activity) => {
 		dateEnd: activity.end_at ? activity.end_at.slice(0, 10) : new Date().toISOString().slice(0, 10),
 		location: activity.location || "Unknown Location",
 		category: activity.categories || [],
-		imgSrc: "/titleExample.jpg",
+		imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/titleExample.jpg",
 		capacity: activity.max_participants || 0,
     // raw backend status to align with SearchCard DEFAULT_STATUS
     status: activity.status || "unknown",
