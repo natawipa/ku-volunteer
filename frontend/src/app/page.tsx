@@ -48,7 +48,6 @@ const transformActivityToEvent = (activity: Activity) => {
   };
 };
 
-
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -106,34 +105,24 @@ export default function Home() {
       title: "University Activities",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
       backgroundBrain: "/brainread.svg",
-      events: events.filter(e => {
-      return Array.isArray(e.category) && e.category.some(cat => 
-          cat.includes("University Activities")
-        );
-      }),
+      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => cat.includes("University Activities"))),
     },
     {
       title: "Enhance Competencies",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
       backgroundBrain: "/brainthink.svg",
-      events: events.filter(e => {
-        return Array.isArray(e.category) && e.category.some(cat => 
-          cat.includes("Development of Morality") ||
-          cat.includes("Development of Thinking") ||
-          cat.includes("Development of Interpersonal") ||
-          cat.includes("Development of Health")
-        );
-      }),
+      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => (
+        cat.includes("Development of Morality") ||
+        cat.includes("Development of Thinking") ||
+        cat.includes("Development of Interpersonal") ||
+        cat.includes("Development of Health")
+      ))),
     },
     {
       title: "Social Engagement Activities",
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
       backgroundBrain: "/brainlove.svg",
-      events: events.filter(e => {
-        return Array.isArray(e.category) && e.category.some(cat => 
-          cat.includes("Social Engagement Activities")
-        );
-      }),
+      events: events.filter(e => Array.isArray(e.category) && e.category.some(cat => cat.includes("Social Engagement Activities"))),
     },
   ];
 
