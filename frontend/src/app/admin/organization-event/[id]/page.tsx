@@ -28,7 +28,7 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
         
         if (response.success && response.data) {
           // First try to find by organizer_profile_id
-          let organizerEvents = response.data.filter(
+          const organizerEvents = response.data.filter(
             (activity: Activity) => activity.organizer_profile_id === organizerId
           );
           
@@ -147,15 +147,17 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
           </nav>
         </header>
 
-        {/* Back button and title */}
-        <div className="max-w-6xl mx-auto mb-6 mt-20 lg:mt-32">
-          <Link 
+        {/* ---------------------- */}
+        <Link 
             href="/admin/organization-list" 
             className="inline-flex items-center text-[#215701] hover:text-[#00361C] mb-4 transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5 mr-2" />
             Back to List
           </Link>
+
+        {/* Back button and title */}
+        <div className="max-w-6xl mx-auto mb-6 mt-10">
           
           {organizerInfo && (
             <div className="mb-6">
@@ -176,7 +178,7 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
             <div className="text-center py-12">
               <UsersIcon className="w-16 h-16 text-gray-400 mx-auto mb-4" />
               <h3 className="text-xl font-semibold text-gray-600 mb-2">No events found</h3>
-              <p className="text-gray-500">This organizer hasn't created any events yet.</p>
+              <p className="text-gray-500">This organizer hasn&apos;t created any events yet.</p>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
