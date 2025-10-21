@@ -53,6 +53,26 @@ export interface UserUpdate {
 }
 
 class ApiService {
+  //Fetch all users (admin only). Returns ApiResponse<User[]> or paginated results.
+  public async getUserList(): Promise<ApiResponse<User[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/list/`, {
+        headers: this.getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Support both paginated and non-paginated responses
+        const users = Array.isArray(data) ? data : (data.results || []);
+        return { success: true, data: users };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || errorData.detail || 'Failed to fetch user list' };
+      }
+    } catch {
+      return { success: false, error: 'Network error' };
+    }
+  }
+
   private getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem('access_token');
     return {
