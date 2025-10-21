@@ -9,7 +9,6 @@ import { activitiesApi } from "@/lib/activities";
 import type { Activity } from '@/lib/types';
 import { ENV, API_ENDPOINTS } from "@/lib/constants";
 import type { DeletionRequestEvent } from "@/app/admin/events/components/AdminDeletionRequestCard";
-import { de } from "zod/v4/locales";
 
 interface ModerationResponse { detail: string }
 interface PageProps { params: Promise<{ id: string }> }
