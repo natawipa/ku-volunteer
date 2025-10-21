@@ -57,7 +57,6 @@ export default function AdminContent() {
         setPendingCount(res.data.filter(a => a.status === 'pending').length);
         setApprovedCount(res.data.filter(a => a.status === 'open').length);
         setRejectedCount(res.data.filter(a => a.status === 'rejected').length);
-        setDeletionRequestCount(res.data.filter(a => a.status === 'deletion_requested').length);
       } else {
         setError(res.error || 'Failed to load activities');
       }
