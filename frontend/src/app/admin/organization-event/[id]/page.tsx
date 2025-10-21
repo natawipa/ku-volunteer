@@ -189,7 +189,7 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
                 >
                   <div className="relative h-48">
                     <Image
-                      src="/titleExample.jpg"
+                      src={event.cover_image ?? event.cover_image_url ?? "/titleExample.jpg"}
                       alt={event.title || 'Event image'}
                       fill
                       className="object-cover"
