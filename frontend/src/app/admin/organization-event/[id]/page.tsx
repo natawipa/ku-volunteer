@@ -6,7 +6,6 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { activitiesApi } from "@/lib/activities";
 import type { Activity } from "@/lib/types";
-import { auth } from "@/lib/utils";
 
 export default function OrganizerEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const [events, setEvents] = useState<Activity[]>([]);

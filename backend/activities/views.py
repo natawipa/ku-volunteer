@@ -271,7 +271,7 @@ class ActivityDeletionRequestReviewView(APIView):
             activity = deletion_request.activity
             deletion_request.approve(request.user, note)
             # Serialize before deletion for response compatibility
-            serialized =  (deletion_request).data
+            serialized = ActivityDeletionRequestSerializer(deletion_request).data
             activity.delete()
             return Response({
                 'detail': 'Deletion request approved and activity deleted.',
