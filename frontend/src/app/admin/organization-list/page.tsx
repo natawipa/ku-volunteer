@@ -17,6 +17,13 @@ export default function OrganizationList() {
     setDeleteConfirm({ show: true, org });
   };
 
+  // Create a distinct list of organizations by organization_name
+  const uniqueOrganizations = Array.from(
+    new Map(
+      organizations.map(org => [org.organizer_profile?.organization_name, org])
+    ).values()
+  );
+
   const handleDeleteCancel = () => {
     setDeleteConfirm({ show: false, org: null });
   };
@@ -137,30 +144,32 @@ export default function OrganizationList() {
             </select>
           </div>
         <div className="flex flex-col gap-4">
-          {organizations
+          {uniqueOrganizations
             .filter(org => {
               // Filter by search
               const name = org.organizer_profile?.organization_name?.toLowerCase() || "";
               if (search && !name.includes(search.toLowerCase())) return false;
 
               const type = org.organizer_profile?.organization_type?.toLowerCase();
-                if (orgType === "internal") {
-                  return type === "internal";
-                }
-
-                if (orgType === "external") {
-                  return type === "external";
-                }
-                return true;
+              if (orgType === "internal") {
+                return type === "internal";
+              }
+              if (orgType === "external") {
+                return type === "external";
+              }
+              return true;
             })
             .slice().reverse()
             .map((org) => (
               <div key={org.id} className="flex justify-between items-center border-b pb-2">
                 <p>{org.organizer_profile?.organization_name}</p>
                 <div className="flex gap-4">
-                  <button className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1">
+                  <Link
+                    href={`/admin/organization-events/${org.id}`}
+                    className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1"
+                  >
                     <EyeIcon className="w-4 h-4" /> View Events
-                  </button>
+                  </Link>
                   <button 
                     onClick={() => handleDeleteClick(org)}
                     disabled={deleting === org.id}

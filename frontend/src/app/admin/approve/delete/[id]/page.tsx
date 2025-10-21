@@ -1,52 +1,193 @@
 "use client";
+import { useEffect, useState } from 'react';
+import Image from 'next/image';
+import Link from 'next/link';
 import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
-import Image from "next/image";
-import { use } from "react";
+import { activitiesApi } from "@/lib/activities";
+import type { Activity } from '@/lib/types';
+import { ENV, API_ENDPOINTS } from "@/lib/constants";
+import type { DeletionRequestEvent } from "@/app/admin/events/components/AdminDeletionRequestCard";
+import { de } from "zod/v4/locales";
 
-// Fetch Data from requestDelete.json
-import eventsData from "@/data/requestDelete.json";
+interface ModerationResponse { detail: string }
+interface PageProps { params: Promise<{ id: string }> }
 
-const events = eventsData.events;
+export default function Page({ params }: PageProps) {
+  // Resolve promised params in effect to keep component synchronous (cannot mark client component async)
+  const [eventId, setEventId] = useState<number | null>(null);
+  useEffect(() => {
+    let active = true;
+    Promise.resolve(params).then(p => { if (active) setEventId(parseInt(p.id, 10)); });
+    return () => { active = false; };
+  }, [params]);
 
-export default function EventPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  const eventId = parseInt(id, 10);
-  const event = events.find((e) => e.id === eventId);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  const [approveChecked, setApproveChecked] = useState(false);
+  const [rejectChecked, setRejectChecked] = useState(false);
+  const [activity, setActivity] = useState<Activity | null>(null);
+  const [deletionRequest, setDeletionRequest] = useState<DeletionRequestEvent | null>(null);
 
-  if (!event) return <p className="text-center mt-10">Event not found</p>;
+  // Fetch activity when eventId resolved
+  useEffect(() => {
+  if (eventId == null) return;
+  let mounted = true;
+
+  const fetchRequests = async () => {
+    try {
+      // 1️⃣ Fetch all deletion requests
+      const reqRes = await activitiesApi.getDeletionRequests();
+      if (!mounted) return;
+
+      if (!reqRes.success || !Array.isArray(reqRes.data)) {
+        setError(reqRes.error || "Failed to load deletion requests");
+        setLoading(false);
+        return;
+      }
+
+      // 2️⃣ Find the specific deletion request
+      const req = reqRes.data.find(r => r.id === eventId);
+      if (!req) {
+        setError("Deletion request not found");
+        setLoading(false);
+        return;
+      }
+
+      setDeletionRequest(req);
+
+      // 3️⃣ Fetch the related activity by its foreign key
+      const actRes = await activitiesApi.getActivity(req.activity);
+      if (actRes.success && actRes.data) {
+        setActivity(actRes.data);
+      } else {
+        setError("Related activity not found");
+      }
+
+    } catch (e) {
+      setError("Failed to load data");
+    } finally {
+      if (mounted) setLoading(false);
+    }
+  };
+
+  fetchRequests();
+
+  return () => { mounted = false; };
+}, [eventId]);
 
 
-    return (
-      <div className="relative">
-        {/* Background gradient */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
-  
-        {/* Mountain background */}
-        <Image
-          src="/mountain.svg"
-          alt="mountain"
-          width={920}
-          height={410}
-          className="w-full h-[200px] absolute inset-0 top-0 object-cover"
-        />
-  
-        {/* Foreground content */}
-        <div className="relative p-6"> 
-          <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-            <Image
-              src="/Logo_Kasetsart.svg"
-              alt="Small Logo"
-              width={64}
-              height={64}
-              className="object-cover"
-            />
-            <nav className="flex items-center space-x-8">
-              <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-              <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-              <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                      hover:bg-[#00361C]
-                      transition-all duration-200">
+  if (eventId == null) {
+    return <p className="text-center mt-10 text-gray-600">Resolving activity...</p>;
+  }
+  if (loading) return <p className="text-center mt-10 text-gray-600">Loading activity...</p>;
+  if (!activity) return <p className="text-center mt-10">{error || 'Event not found'}</p>;
+
+  const status = activity.status || 'pending';
+  const legacyEvent = {
+    id: activity?.id,
+    title: activity?.title || "Untitled",
+    reason: deletionRequest?.reason || "",
+    image: activity?.cover_image_url || "/titleExample.jpg",
+    post: new Date(activity?.created_at || Date.now()).toLocaleDateString('en-GB'),
+    start_at: new Date(activity?.start_at || Date.now()).toLocaleDateString('en-GB'),
+    end_at: new Date(activity?.end_at || Date.now()).toLocaleDateString('en-GB'),
+    location: activity?.location || "Unknown",
+    categories: activity?.categories || [],
+    max_participants: activity?.max_participants || 0,
+    organizer_name: activity?.organizer_name || "Organizer",
+    additionalImages: ["/titleExample.jpg", "/titleExample2.jpg"],
+    description: activity?.description || "No description"
+  };
+
+  const moderate = async (action: 'approve' | 'reject') => {
+    if (!activity) return;
+    if (action === 'reject' && !rejectReason.trim()) {
+      setMessage('Please provide a rejection reason.');
+      return;
+    }
+    
+    console.log('🔄 Starting moderation:', { action, activityId: activity.id, reason: rejectReason });
+    setActionLoading(true);
+    setMessage(null);
+    
+    try {
+      const endpoint = `${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.MODERATION_REVIEW(activity.id)}`;
+      console.log('🌐 Moderation endpoint:', endpoint);
+      
+      const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+      console.log('🔑 Auth token exists:', !!token);
+      
+      const requestBody = { action, reason: rejectReason };
+      console.log('📤 Request payload:', requestBody);
+      
+      const resp = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token && { Authorization: `Bearer ${token}` })
+        },
+        body: JSON.stringify(requestBody)
+      });
+      
+      console.log('📡 Response status:', resp.status);
+      console.log('📡 Response ok:', resp.ok);
+      
+      const responseText = await resp.text();
+      console.log('📄 Raw response:', responseText);
+      
+      let data: ModerationResponse;
+      try {
+        data = responseText ? JSON.parse(responseText) : { detail: 'Empty response' };
+      } catch (parseError) {
+        console.error('❌ JSON parse error:', parseError);
+        setMessage('Invalid response from server');
+        return;
+      }
+      
+      if (!resp.ok) {
+        console.error('❌ Moderation failed:', data);
+        setMessage(data.detail || `Moderation failed (${resp.status})`);
+      } else {
+        console.log('✅ Moderation successful:', data);
+        setMessage(data.detail);
+        const refresh = await activitiesApi.getActivity(activity.id);
+        if (refresh.success && refresh.data) setActivity(refresh.data);
+        setApproveChecked(false); setRejectChecked(false); setRejectReason('');
+      }
+    } catch (error) {
+      console.error('❌ Network error:', error);
+      setMessage(`Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  // --- UI ---
+  return (
+    <div className="relative">
+      {/* Background gradient */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
+
+      {/* Mountain background */}
+      <Image
+        src="/mountain.svg"
+        alt="mountain"
+        width={920}
+        height={410}
+        className="w-full h-[200px] absolute inset-0 top-0 object-cover"
+      />
+
+      <div className="relative p-6">
+        {/* Header */}
+        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
+          <Image src="/Logo_Kasetsart.svg" alt="Small Logo" width={64} height={64} />
+          <nav className="flex items-center space-x-8">
+            <Link href="/document">Document</Link>
+            <Link href="/all-events">All Event</Link>
+            <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C]">
               <div className="flex items-center">
               <PlusIcon className="w-4 h-4 mr-2" />
               <span className="mr-1">New</span>
