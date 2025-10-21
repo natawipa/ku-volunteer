@@ -165,7 +165,7 @@ export default function OrganizationList() {
                 <p>{org.organizer_profile?.organization_name}</p>
                 <div className="flex gap-4">
                   <Link
-                    href={`/admin/organization-events/${org.id}`}
+                    href={`/admin/organization-event/${org.id}`}
                     className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1"
                   >
                     <EyeIcon className="w-4 h-4" /> View Events
@@ -177,37 +177,37 @@ export default function OrganizationList() {
                   >
                     {deleting === org.id ? 'Deleting...' : 'Delete'}
                   </button>
-      {/* Delete Confirmation Dialog */}
-      {deleteConfirm.show && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
-            <p className="text-gray-600 mb-6">
-              Are you sure you want to delete organization ?
-              <span className="font-medium">
-                {deleteConfirm.org?.organizer_profile?.organization_name}
-              </span>
-              This action cannot be undone.
-            </p>
-            <div className="flex justify-end gap-3">
-              <button
-                onClick={handleDeleteCancel}
-                disabled={deleting !== null}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                disabled={deleting !== null}
-                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
-              >
-                {deleting === deleteConfirm.org?.id ? 'Deleting...' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                  {/* Delete Confirmation Dialog */}
+                  {deleteConfirm.show && (
+                    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                      <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                        <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
+                        <p className="text-gray-600 mb-6">
+                          Are you sure you want to delete organization ?
+                          <span className="font-medium">
+                            {deleteConfirm.org?.organizer_profile?.organization_name}
+                          </span>
+                          This action cannot be undone.
+                        </p>
+                        <div className="flex justify-end gap-3">
+                          <button
+                            onClick={handleDeleteCancel}
+                            disabled={deleting !== null}
+                            className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50 disabled:opacity-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            onClick={handleDeleteConfirm}
+                            disabled={deleting !== null}
+                            className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {deleting === deleteConfirm.org?.id ? 'Deleting...' : 'Delete'}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
