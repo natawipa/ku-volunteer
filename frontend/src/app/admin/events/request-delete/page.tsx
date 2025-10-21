@@ -60,6 +60,7 @@ export default function DeletionRequestListPage() {
   }, []);
 
   const categories = useMemo(() => {
+    if (!Array.isArray(events)) return ['All Categories'];
     const set = new Set<string>();
     events.forEach(ev => ev.category.forEach((c: string) => set.add(c)));
     return ['All Categories', ...Array.from(set.values())];
@@ -124,6 +125,7 @@ export default function DeletionRequestListPage() {
       {/* Header + quick stats */}
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-bold text-2xl">Deletion Requests</h1>
+        
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2 text-xs text-gray-600">
             <span className="inline-flex items-center rounded-full bg-rose-500/10 text-rose-800 font-medium px-3 py-1 border border-rose-500/20">

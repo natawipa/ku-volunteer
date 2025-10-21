@@ -95,11 +95,18 @@ export default function Page({ params }: PageProps) {
   if (loading) return <p className="text-center mt-10 text-gray-600">Loading activity...</p>;
   if (!activity) return <p className="text-center mt-10">{error || 'Event not found'}</p>;
 
+  // Helper to normalize image URLs
+  const normalizeUrl = (url: string) => {
+    if (!url) return '/titleExample.jpg';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/')) return url;
+    return `${ENV.API_BASE_URL}${url}`;
+  };
+
   const legacyEvent = {
     id: activity?.id,
     title: activity?.title || "Untitled",
     reason: deletionRequest?.reason || "",
-    image: activity?.cover_image_url || "/titleExample.jpg",
     post: new Date(activity?.created_at || Date.now()).toLocaleDateString('en-GB'),
     start_at: new Date(activity?.start_at || Date.now()).toLocaleDateString('en-GB'),
     end_at: new Date(activity?.end_at || Date.now()).toLocaleDateString('en-GB'),
@@ -107,8 +114,29 @@ export default function Page({ params }: PageProps) {
     categories: activity?.categories || [],
     max_participants: activity?.max_participants || 0,
     organizer_name: activity?.organizer_name || "Organizer",
-    additionalImages: ["/titleExample.jpg", "/titleExample2.jpg"],
-    description: activity?.description || "No description"
+    description: activity?.description || "No description",
+     // main image: prefer cover image, then first poster, then example
+    image: (() => {
+      const raw = activity.cover_image_url || activity.cover_image || null;
+      if (raw && typeof raw === 'string') return normalizeUrl(raw);
+      const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
+      if (Array.isArray(posters) && posters.length > 0) {
+        const first = posters.find(p => typeof p.image === 'string' && p.image.length > 0);
+        if (first && first.image) return normalizeUrl(first.image);
+      }
+      return "/titleExample.jpg";
+    })(),
+    // gallery images: posters take precedence; if none, show no gallery
+    additionalImages: (() => {
+      const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
+      if (Array.isArray(posters) && posters.length > 0) {
+        return posters
+          .map(p => p.image)
+          .filter((x): x is string => typeof x === 'string' && x.length > 0)
+          .map(normalizeUrl);
+      }
+      return [];
+    })()
   };
 
   const moderate = async (action: 'approve' | 'reject') => {

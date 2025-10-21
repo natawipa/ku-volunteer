@@ -19,6 +19,7 @@ export interface DeletionRequestEvent {
   reason: string;
   capacity: number;
   additionalImages?: string[];
+  status?: string;
 }
 
 interface Props {
