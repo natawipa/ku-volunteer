@@ -116,6 +116,70 @@ export const activitiesApi = {
     }
   },
 
+   // Get Deletion Requests
+  async getDeletionRequests(): Promise<ApiResponse<DeletionRequestEvent[]>> {
+    try {
+      const response = await httpClient.get<unknown>(API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS);
+
+      if (response.success && response.data) {
+        const data = response.data as Record<string, unknown> | unknown[];
+        const rawArray: Record<string, unknown>[] =
+          (typeof data === 'object' && data !== null && 'results' in data && Array.isArray((data as { results?: unknown[] }).results))
+            ? (data as { results: unknown[] }).results as Record<string, unknown>[]
+            : Array.isArray(data)
+              ? data as Record<string, unknown>[]
+              : [];
+
+        if (rawArray.length === 0) {
+          if (!(Array.isArray(data) || (typeof data === 'object' && data !== null && 'results' in data))) {
+            console.error('Unexpected deletion request response format:', data);
+          }
+        }
+
+        // Fetch activity details for each deletion request
+            const activityIds = rawArray
+              .map((item) => item.activity)
+              .filter((id): id is string | number => (typeof id === 'string' || typeof id === 'number') && id !== null && id !== undefined);
+        const activityResults = await Promise.all(activityIds.map((id) => this.getActivity(id)));
+        const activityMap: Record<number | string, Activity> = {};
+        activityResults.forEach((res, i) => {
+          if (res.success && res.data) {
+            activityMap[activityIds[i]] = res.data;
+          }
+        });
+
+        // Map each item to DeletionRequestEvent shape
+        const mapped: DeletionRequestEvent[] = rawArray.map((item) => {
+        const activityId = (item.activity as number | string | undefined);
+        const activity = activityId !== undefined ? activityMap[activityId] : undefined;
+          return {
+            id: item.id as number ?? 0,
+            activity: activityId ?? 0,
+            title: (item.activity_title as string) ?? activity?.title ?? '',
+            description: activity?.description ?? '',
+            category: activity?.categories ?? [],
+            post: activity?.organizer_name ?? '',
+            datestart: activity?.start_at ?? '',
+            dateend: activity?.end_at ?? '',
+            location: activity?.location ?? '',
+            organizer: activity?.organizer_name ?? '',
+            image: activity?.cover_image_url ?? '',
+            reason: typeof item.reason === 'string' ? item.reason : '',
+            capacity: activity?.max_participants ?? 0,
+            additionalImages: [],
+          } as DeletionRequestEvent;
+        });
+
+        return { success: true, data: mapped };
+      }
+
+      return { success: false, data: [], error: response.error };
+    } catch (error) {
+      console.error('❌ Error in getDeletionRequests:', error);
+      return { success: false, data: [], error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  },
+
   // Get activity by ID
   async getActivity(id: string | number): Promise<ApiResponse<Activity>> {
     return httpClient.get<Activity>(API_ENDPOINTS.ACTIVITIES.DETAIL(id));
