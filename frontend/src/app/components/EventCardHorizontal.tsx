@@ -16,13 +16,18 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
   return (
     <Link href={`/event-detail/${id}`}>
     <div className="flex items-center rounded-lg gap-4 min-w-[400px]">
-      <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden"> {/* 32 * 4 = 128px */}
+      <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200"> {/* 32 * 4 = 128px */}
         <Image
-          src={imgSrc}
+          src={imgSrc || "/titleExample.jpg"}
           alt={title}
           width={128}
           height={128}
           className="w-full h-full object-cover"
+          unoptimized={imgSrc?.startsWith('http')}
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.src = "/titleExample.jpg";
+          }}
         />
     </div>
 

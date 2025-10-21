@@ -39,6 +39,9 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
   const [formError, setFormError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [formData, setFormData] = useState(initialData);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -100,6 +103,33 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setFieldErrors(prev => ({ ...prev, profile_image: 'Please select an image file' }));
+        return;
+      }
+      
+      // Validate file size (e.g., 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setFieldErrors(prev => ({ ...prev, profile_image: 'Image size must be less than 5MB' }));
+        return;
+      }
+
+      setSelectedImage(file);
+      setFieldErrors(prev => ({ ...prev, profile_image: '' }));
+      
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPreviewUrl(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -115,6 +145,17 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
     try {
       if (!user) {
         throw new Error("User data not loaded");
+      }
+
+      // First, upload profile image if selected
+      if (selectedImage) {
+        const uploadResult = await apiService.uploadProfileImage(user.id, selectedImage);
+        if (!uploadResult.success) {
+          setFormError('Failed to upload profile image: ' + uploadResult.error);
+          setSaving(false);
+          return;
+        }
+        console.log('Profile image uploaded successfully');
       }
 
       const updateData: {
@@ -146,7 +187,13 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
       const result = await apiService.updateUser(user.id, updateData as Partial<User>);
       
       if (result.success) {
+        // Add a small delay to ensure the backend has processed the image
+        await new Promise(resolve => setTimeout(resolve, 500));
+        // Navigate to profile page with cache busting
         router.push("/profile");
+        router.refresh(); // Force page refresh to show new image
+        // Force reload to ensure fresh data
+        window.location.href = "/profile";
       } else {
         if (typeof result.error === 'object') {
           const apiErrors: Record<string, string> = {};
@@ -191,20 +238,40 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
 
         <div className="flex flex-col items-center p-8 space-y-4 ml-0 sm:ml-4 md:ml-8 lg:ml-16 transition-all duration-300">
           <div className="relative">
-            <Image
-              src="/avatar.jpg"
-              alt="profile"
-              width={120}
-              height={120}
-              className="p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA] rounded-full object-cover"
+            <div className="w-[120px] h-[120px] rounded-full p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA]">
+              <Image
+                src={previewUrl || (imageError ? '/avatar.jpg' : apiService.getProfileImageUrl(user?.profile_image))}
+                alt="profile"
+                width={120}
+                height={120}
+                className="w-full h-full rounded-full object-cover"
+                unoptimized
+                onError={() => {
+                  console.error('Failed to load profile image in edit form');
+                  setImageError(true);
+                }}
+              />
+            </div>
+            <input
+              type="file"
+              id="profile-image-upload"
+              accept="image/*"
+              onChange={handleImageChange}
+              className="hidden"
             />
-            <button type="button" className="absolute bottom-2 right-2 bg-green-500 text-white p-1 rounded-full hover:bg-green-600 transition-colors">
+            <label
+              htmlFor="profile-image-upload"
+              className="absolute bottom-2 right-2 bg-green-500 text-white p-1 rounded-full hover:bg-green-600 transition-colors cursor-pointer"
+            >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
-            </button>
+            </label>
           </div>
+          {fieldErrors.profile_image && (
+            <p className="text-sm text-red-600 mt-2">{fieldErrors.profile_image}</p>
+          )}
           
           <h1 className="text-2xl font-bold text-gray-800">Edit Profile</h1>
         </div>

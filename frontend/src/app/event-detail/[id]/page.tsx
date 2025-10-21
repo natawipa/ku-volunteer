@@ -4,6 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState, useCallback } from "react";
 import { activitiesApi } from "../../../lib/activities";
+import { ENV } from '../../../lib/constants';
 import type { Activity, ActivityApplication, CreateApplicationRequest } from "../../../lib/types";
 import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
@@ -510,10 +511,49 @@ export default function EventPage({ params }: PageProps) {
       currentParticipants: activity.current_participants || 0,
       organizer: activity.organizer_name || 'Unknown Organizer',
       description: activity.description || 'No description available',
-      image: "/titleExample.jpg",
-      additionalImages: ["/titleExample.jpg", "/titleExample.jpg", "/titleExample.jpg"]
+      // main image: prefer cover image, then first poster, then example
+      image: (() => {
+        const raw = activity.cover_image_url || activity.cover_image || null;
+        if (raw && typeof raw === 'string') return normalizeUrl(raw);
+        const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
+        if (Array.isArray(posters) && posters.length > 0) {
+          const first = posters.find(p => typeof p.image === 'string' && p.image.length > 0);
+          if (first && first.image) return normalizeUrl(first.image);
+        }
+        return "/titleExample.jpg";
+      })(),
+      // gallery images: posters take precedence; if none, show no gallery
+      additionalImages: (() => {
+        const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
+        if (Array.isArray(posters) && posters.length > 0) {
+          return posters
+            .map(p => p.image)
+            .filter((x): x is string => typeof x === 'string' && x.length > 0)
+            .map(normalizeUrl);
+        }
+        return [];
+      })(),
     };
   };
+
+  // Helper to ensure absolute URLs for images
+  function normalizeUrl(url: string) {
+    if (!url) return url;
+    // If already absolute
+    try {
+      const parsed = new URL(url);
+      return parsed.href;
+    } catch {
+      // Not absolute - make sure path starts with '/media/' and prefix with API base
+      const base = ENV.API_BASE_URL.replace(/\/$/, '');
+      let path = url.startsWith('/') ? url : `/${url}`;
+      // If backend returns paths without media prefix, add it
+      if (!path.startsWith('/media')) {
+        path = path.startsWith('/') ? `/media${path}` : `/media/${path}`;
+      }
+      return `${base}${path}`;
+    }
+  }
 
   if (loading) {
     return (
@@ -633,6 +673,7 @@ export default function EventPage({ params }: PageProps) {
               width={500}
               height={310}
               className="w-3/4 mx-auto object-cover"
+              unoptimized
             />
           )}
 
@@ -658,7 +699,9 @@ export default function EventPage({ params }: PageProps) {
               <div className="relative w-full">
                 <div className="overflow-x-auto scrollbar-hide">
                   <div className="flex space-x-4 p-2 min-w-full md:justify-center">
-                    {transformedEvent.additionalImages?.map((img, index) => (
+                    {transformedEvent.additionalImages
+                      ?.filter((i): i is string => typeof i === 'string')
+                      .map((img, index) => (
                       <div key={index} className="flex-shrink-0">
                         <Image
                           src={img}
@@ -666,9 +709,10 @@ export default function EventPage({ params }: PageProps) {
                           width={180}
                           height={120}
                           className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer"
+                          unoptimized
                         />
                       </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               </div>

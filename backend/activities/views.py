@@ -1,5 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
+from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -7,7 +8,7 @@ from rest_framework.views import APIView
 from config.constants import ActivityStatus, ApplicationStatus, StatusMessages, UserRoles
 from config.permissions import IsAdmin, IsStudent
 from config.utils import get_activity_category_groups, get_student_approved_activities, is_admin_user
-from .models import Activity, ActivityDeletionRequest, Application
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
 from .serializers import (
     ActivityDeletionRequestSerializer,
     ActivitySerializer,
@@ -15,6 +16,7 @@ from .serializers import (
     ApplicationSerializer,
     ApplicationCreateSerializer,
     ApplicationReviewSerializer,
+    ActivityPosterImageSerializer,
 )
 
 
@@ -31,6 +33,9 @@ class ActivityListCreateView(generics.ListCreateAPIView):
         if self.request.method == 'POST':
             return ActivityWriteSerializer
         return ActivitySerializer
+
+    # Accept multipart/form-data for POST (cover image upload)
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_create(self, serializer: ActivityWriteSerializer) -> None:
         """Create activity with proper authorization."""
@@ -101,6 +106,9 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         if self.request.method in ('PUT', 'PATCH'):
             return ActivityWriteSerializer
         return ActivitySerializer
+
+    # Accept multipart/form-data for PUT/PATCH when uploading cover
+    parser_classes = [MultiPartParser, FormParser]
 
     def perform_update(self, serializer: ActivityWriteSerializer) -> None:
         """Update activity with proper authorization."""
@@ -579,3 +587,119 @@ class StudentApprovedActivitiesView(generics.ListAPIView):
         return get_student_approved_activities(self.request.user).select_related(
             'organizer_profile', 'organizer_profile__user'
         )
+
+
+class ActivityPosterImageListCreateView(generics.ListCreateAPIView):
+    """API view for managing activity poster images."""
+    
+    serializer_class = ActivityPosterImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get poster images for the specified activity."""
+        activity_id = self.kwargs.get('activity_id')
+        return ActivityPosterImage.objects.filter(activity_id=activity_id)
+    # Accept multipart/form-data for poster image uploads
+    parser_classes = [MultiPartParser, FormParser]
+    def perform_create(self, serializer):
+        """Create poster image with proper authorization."""
+        activity_id = self.kwargs.get('activity_id')
+        activity = get_object_or_404(Activity, pk=activity_id)
+        
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        # Check permissions - organizer must be from same organization or admin
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    self.permission_denied(
+                        self.request,
+                        message=StatusMessages.PERMISSION_DENIED
+                    )
+            except AttributeError:
+                self.permission_denied(
+                    self.request,
+                    message=StatusMessages.PERMISSION_DENIED
+                )
+        elif not is_admin_user(user):
+            self.permission_denied(
+                self.request,
+                message=StatusMessages.PERMISSION_DENIED
+            )
+
+        # Auto-assign order if not provided or if it conflicts
+        order = serializer.validated_data.get('order')
+        if order is None:
+            # Find next available order (1-4)
+            existing_orders = set(
+                ActivityPosterImage.objects.filter(activity=activity)
+                .values_list('order', flat=True)
+            )
+            for i in range(1, 5):
+                if i not in existing_orders:
+                    serializer.validated_data['order'] = i
+                    break
+        else:
+            # If order is provided, check if it's already taken
+            if ActivityPosterImage.objects.filter(activity=activity, order=order).exists():
+                # Find next available order instead
+                existing_orders = set(
+                    ActivityPosterImage.objects.filter(activity=activity)
+                    .values_list('order', flat=True)
+                )
+                for i in range(1, 5):
+                    if i not in existing_orders:
+                        serializer.validated_data['order'] = i
+                        break
+
+        serializer.save(activity=activity)
+
+
+class ActivityPosterImageDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """API view for retrieving, updating, and deleting individual poster images."""
+    
+    serializer_class = ActivityPosterImageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get poster images for the specified activity."""
+        activity_id = self.kwargs.get('activity_id')
+        return ActivityPosterImage.objects.filter(activity_id=activity_id)
+
+    def perform_update(self, serializer):
+        """Update poster image with proper authorization."""
+        self._check_permissions(serializer.instance.activity)
+        serializer.save()
+
+    def perform_destroy(self, instance):
+        """Delete poster image with proper authorization."""
+        self._check_permissions(instance.activity)
+        instance.delete()
+
+    def _check_permissions(self, activity):
+        """Check if user has permission to modify this activity's images."""
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    self.permission_denied(
+                        self.request,
+                        message=StatusMessages.PERMISSION_DENIED
+                    )
+            except AttributeError:
+                self.permission_denied(
+                    self.request,
+                    message=StatusMessages.PERMISSION_DENIED
+                )
+        elif not is_admin_user(user):
+            self.permission_denied(
+                self.request,
+                message=StatusMessages.PERMISSION_DENIED
+            )

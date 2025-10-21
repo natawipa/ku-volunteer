@@ -10,6 +10,16 @@ from config.constants import ActivityStatus, ApplicationStatus, DeletionRequestS
 from config.utils import validate_activity_categories
 
 
+def activity_cover_image_path(instance, filename):
+    """Generate file path for activity cover images."""
+    return f'activities/{instance.id}/cover/{filename}'
+
+
+def activity_poster_image_path(instance, filename):
+    """Generate file path for activity poster images."""
+    return f'activities/{instance.activity.id}/posters/{filename}'
+
+
 class Activity(models.Model):
     """Model representing a volunteer activity."""
 
@@ -43,6 +53,13 @@ class Activity(models.Model):
         null=True,
         blank=True,
         validators=[MinValueValidator(0)]
+    )
+    # Images
+    cover_image = models.ImageField(
+        upload_to=activity_cover_image_path,
+        blank=True,
+        null=True,
+        help_text="Cover image for the activity"
     )
     # Reason provided by admin when an activity is rejected in moderation
     rejection_reason = models.TextField(blank=True, null=True)
@@ -112,6 +129,56 @@ class Activity(models.Model):
     def is_past(self) -> bool:
         """Return True if activity has ended."""
         return self.end_at < timezone.now()
+
+
+class ActivityPosterImage(models.Model):
+    """Model for activity poster images (1-4 per activity)."""
+    
+    activity = models.ForeignKey(
+        Activity, 
+        on_delete=models.CASCADE, 
+        related_name='poster_images'
+    )
+    image = models.ImageField(
+        upload_to=activity_poster_image_path,
+        help_text="Poster image for the activity"
+    )
+    order = models.PositiveIntegerField(
+        default=1,
+        help_text="Display order of the poster (1-4)"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['order', 'created_at']
+        verbose_name = "Activity Poster Image"
+        verbose_name_plural = "Activity Poster Images"
+        constraints = [
+            models.UniqueConstraint(
+                fields=['activity', 'order'],
+                name='unique_activity_poster_order'
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.activity.title} - Poster {self.order}"
+
+    def clean(self) -> None:
+        """Validate poster image constraints."""
+        super().clean()
+        
+        # Limit to 4 posters per activity
+        if self.activity_id:
+            existing_count = ActivityPosterImage.objects.filter(
+                activity=self.activity
+            ).exclude(pk=self.pk).count()
+            
+            if existing_count >= 4:
+                raise ValidationError("Maximum 4 poster images allowed per activity.")
+        
+        # Validate order is between 1-4
+        if not (1 <= self.order <= 4):
+            raise ValidationError("Poster order must be between 1 and 4.")
 
 
 class ActivityDeletionRequest(models.Model):

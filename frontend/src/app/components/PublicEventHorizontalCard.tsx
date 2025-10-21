@@ -42,6 +42,11 @@ export default function PublicEventHorizontalCard({ event }: Props) {
             width={112}
             height={112}
             className="object-cover w-full h-full"
+            unoptimized={!!event.imgSrc && event.imgSrc.startsWith('http')}
+            onError={(e) => {
+              const target = e.target as HTMLImageElement;
+              target.src = "/titleExample.jpg";
+            }}
           />
         </div>
 
