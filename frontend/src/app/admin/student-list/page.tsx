@@ -92,7 +92,7 @@ export default function StudentList() {
           <p className="text-gray-500">No students found.</p>
         )}
         {students.slice().reverse().map((s) => (
-          <div key={s.id} className="flex justify-between items-center  border-b pb-2">
+          <div key={s.id} className="flex justify-between items-center border-b pb-2">
             <p className="flex-1">
               {s.title} {s.first_name} {s.last_name}
             </p>

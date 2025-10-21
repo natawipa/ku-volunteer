@@ -9,6 +9,8 @@ export default function OrganizationList() {
   const [organizations, setOrganizations] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [orgType, setOrgType] = useState("all"); // all, internal, external
 
   useEffect(() => {
     let mounted = true;
@@ -87,18 +89,54 @@ export default function OrganizationList() {
           {/* -------------------------- */} 
     
           <h2 className="font-semibold mb-6 text-2xl pt-11 lg:pt-20 md:pt-16">Organization Name</h2>
+          {/* Search and Filter Bar */}
+          <div className="flex flex-col md:flex-row gap-4 mb-6 items-center">
+            <input
+              type="text"
+              placeholder="Search organization name..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="border rounded px-3 py-2 w-full md:w-1/2"
+            />
+            <select
+              value={orgType}
+              onChange={e => setOrgType(e.target.value)}
+              className="border rounded px-3 py-2 w-full md:w-1/4"
+            >
+              <option value="all">All</option>
+              <option value="internal">Kasetsart University</option>
+              <option value="external">External</option>
+            </select>
+          </div>
         <div className="flex flex-col gap-4">
-          {organizations.slice().reverse().map((org) => (
-            <div key={org.id} className="flex justify-between items-center border-b pb-2">
-              <p>{org.organizer_profile?.organization_name}</p>
-              <div className="flex gap-4">
-                <button className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1">
-                  <EyeIcon className="w-4 h-4" /> View Events
-                </button>
-                <button className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200">Delete</button>
+          {organizations
+            .filter(org => {
+              // Filter by search
+              const name = org.organizer_profile?.organization_name?.toLowerCase() || "";
+              if (search && !name.includes(search.toLowerCase())) return false;
+
+              const type = org.organizer_profile?.organization_type?.toLowerCase();
+                if (orgType === "internal") {
+                  return type === "internal";
+                }
+
+                if (orgType === "external") {
+                  return type === "external";
+                }
+                return true;
+            })
+            .slice().reverse()
+            .map((org) => (
+              <div key={org.id} className="flex justify-between items-center border-b pb-2">
+                <p>{org.organizer_profile?.organization_name}</p>
+                <div className="flex gap-4">
+                  <button className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1">
+                    <EyeIcon className="w-4 h-4" /> View Events
+                  </button>
+                  <button className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200">Delete</button>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
         </div>
       </div>
     </div>
