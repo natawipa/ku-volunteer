@@ -10,6 +10,7 @@ export interface StudentProfile {
 }
 
 export interface OrganizerProfile {
+  id?: number; // Add the organizer profile ID from backend
   organization_type: string;
   organization_name: string;
 }

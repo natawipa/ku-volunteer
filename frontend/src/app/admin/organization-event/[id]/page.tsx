@@ -98,10 +98,10 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
         <div className="text-center">
           <p className="text-red-600 mb-4">{error}</p>
           <Link 
-            href="/admin" 
+            href="/admin/organization-list" 
             className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C]"
           >
-            Back to Admin
+            Back to List
           </Link>
         </div>
       </div>
@@ -150,11 +150,11 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
         {/* Back button and title */}
         <div className="max-w-6xl mx-auto mb-6 mt-20 lg:mt-32">
           <Link 
-            href="/admin" 
+            href="/admin/organization-list" 
             className="inline-flex items-center text-[#215701] hover:text-[#00361C] mb-4 transition-colors"
           >
             <ArrowLeftIcon className="w-5 h-5 mr-2" />
-            Back to Admin
+            Back to List
           </Link>
           
           {organizerInfo && (

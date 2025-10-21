@@ -160,12 +160,16 @@ export default function OrganizationList() {
               return true;
             })
             .slice().reverse()
-            .map((org) => (
+            .map((org) => {
+              const organizerId = org.organizer_profile?.id || org.id;
+              console.log(`🔗 Organization "${org.organizer_profile?.organization_name}" - User ID: ${org.id}, Profile ID: ${org.organizer_profile?.id}, Using: ${organizerId}`);
+              
+              return (
               <div key={org.id} className="flex justify-between items-center border-b pb-2">
                 <p>{org.organizer_profile?.organization_name}</p>
                 <div className="flex gap-4">
                   <Link
-                    href={`/admin/organization-event/${org.id}`}
+                    href={`/admin/organization-event/${organizerId}`}
                     className="bg-gray-200 px-4 py-1 rounded-full hover:bg-gray-300 flex items-center gap-1"
                   >
                     <EyeIcon className="w-4 h-4" /> View Events
@@ -210,7 +214,8 @@ export default function OrganizationList() {
                   )}
                 </div>
               </div>
-            ))}
+              );
+            })}
         </div>
       </div>
     </div>
