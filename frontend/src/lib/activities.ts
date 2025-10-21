@@ -1,3 +1,4 @@
+import type { DeletionRequestEvent } from '@/app/admin/events/components/AdminDeletionRequestCard';
 // lib/activities.ts
 import { httpClient } from './utils';
 import { API_ENDPOINTS, ENV } from './constants';
