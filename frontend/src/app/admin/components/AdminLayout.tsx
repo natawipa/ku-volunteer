@@ -1,5 +1,6 @@
 "use client";
 import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
+import { usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import ProfileCard from "@/app/components/ProfileCard";
@@ -69,6 +70,7 @@ export default function AdminLayout({
   onEndAfterCheckedChange,
   onSearchApply
 }: AdminLayoutProps) {
+  const pathname = usePathname();
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [searchValue, setSearchValue] = useState(initialSearchValue);
@@ -178,7 +180,7 @@ export default function AdminLayout({
         </div>
 
         {/* Search Area */}
-        {!hideSearch && searchVariant === 'compact' && (
+        {!hideSearch && searchVariant === 'compact' && pathname !== '/' && (
           <section className={`transition-all duration-300 z-40 ${isScrolled ? 'sticky top-14 w-full px-4' : 'relative flex justify-center'} mb-6`}>
             <div
               ref={wrapperRef}

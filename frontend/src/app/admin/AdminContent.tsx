@@ -82,45 +82,43 @@ export default function AdminContent() {
   return (
     <>
       {/* Status Navigation */}
-      <h2 className="font-bold mb-6 text-2xl pt-2">Status Events</h2>
+      <h2 className="font-bold mb-6 text-2xl pt-2 mt-10 lg:mt-16 md:mt-12">Status Events</h2>
       <Link href="/admin/events/pending">
         <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-green-300/25 to-yellow-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
-          <h3 className="font-semibold text-xl ">
+          <h3 className="font-semibold text-xl">
             Pending Events
-            {pendingCount > 0 && (
-            <span className="text-gray-800 bg-green-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{pendingCount}</span>
-          )}
           </h3>
+          {pendingCount > 0 && (
+            <span className="text-gray-600 bg-green-200 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm">{pendingCount} events</span>
+          )}
         </div>
       </Link>
       <Link href="/admin/events/approved">
       <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-blue-300/25 to-purple-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
         <h3 className="font-semibold text-xl ">
-          Approved Events
-          {approvedCount > 0 && (
-            <span className="text-gray-800 bg-blue-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{approvedCount}</span>
+          Approved Events</h3>
+          {approvedCount >= 0 && (
+            <span className="text-gray-600 bg-blue-200 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm">{approvedCount} events</span>
           )}
-        </h3>
+        
       </div>
       </Link>
       <Link href="/admin/events/rejected">
       <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-red-300/25 to-pink-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
         <h3 className="font-semibold text-xl ">
-          Rejected Events
-          {rejectedCount > 0 && (
-            <span className="text-gray-800 bg-red-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{rejectedCount}</span>
+          Rejected Events</h3>
+          {rejectedCount >= 0 && (
+            <span className="text-gray-600 bg-red-200 px-2.5 py-1 rounded-full text-xs font-medium ml-4 shadow-sm">{rejectedCount} events</span>
           )}
-        </h3>
       </div>
       </Link>
       <Link href="/admin/events/request-delete">
       <div className="flex items-center justify-between mb-4 bg-gradient-to-r from-orange-300/25 to-amber-300/25 p-5 rounded-lg shadow-md hover:scale-102 transition-transform duration-200 flex-1">
         <h3 className="font-semibold text-xl ">
-          Deletion Request
-          {deletionRequestCount > 0 && (
-            <span className="text-gray-800 bg-orange-200 px-2.5 py-1 rounded-full text-sm font-medium ml-4 shadow-sm">{deletionRequestCount}</span>
+          Deletion Request</h3>
+          {deletionRequestCount >= 0 && (
+            <span className="text-gray-600 bg-orange-200 px-2.5 py-1 rounded-full text-xs font-medium ml-4 shadow-sm">{deletionRequestCount} events</span>
           )}
-        </h3>
       </div>
       </Link>
 
