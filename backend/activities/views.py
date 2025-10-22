@@ -267,10 +267,8 @@ class ActivityDeletionRequestReviewView(APIView):
             )
 
         if action == 'approve':
-            # Approve the request then delete the activity
             activity = deletion_request.activity
             deletion_request.approve(request.user, note)
-            # Serialize before deletion for response compatibility
             serialized = ActivityDeletionRequestSerializer(deletion_request).data
             activity.delete()
             return Response({
@@ -284,9 +282,11 @@ class ActivityDeletionRequestReviewView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             deletion_request.reject(request.user, note)
+            serialized = ActivityDeletionRequestSerializer(deletion_request).data
+            deletion_request.delete()
             return Response({
-                'detail': 'Deletion request rejected.',
-                'request': ActivityDeletionRequestSerializer(deletion_request).data,
+                'detail': 'Deletion request rejected and removed.',
+                'request': serialized,
             })
 
 
