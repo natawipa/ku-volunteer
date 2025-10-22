@@ -196,7 +196,12 @@ export default function Page({ params }: PageProps) {
         if (deletionRequest && action === 'approve') {
           // Activity is deleted on the server. Navigate away.
           setActivity(null);
-          setTimeout(() => router.push('/admin'), 600);
+          setTimeout(() => router.push('/admin'), 300);
+        } else if (deletionRequest && action === 'reject') {
+          // Deletion request was rejected and removed on the server — navigate back to requests list
+          setDeletionRequest(null);
+          setActivity(null);
+          setTimeout(() => router.push('/admin'), 300);
         } else {
           const refresh = await activitiesApi.getActivity(activity.id);
           if (refresh.success && refresh.data) setActivity(refresh.data);
