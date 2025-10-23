@@ -118,9 +118,13 @@ export const activitiesApi = {
   },
 
    // Get Deletion Requests
-  async getDeletionRequests(): Promise<ApiResponse<DeletionRequestEvent[]>> {
+  async getDeletionRequests(params?: { status?: string }): Promise<ApiResponse<DeletionRequestEvent[]>> {
     try {
-      const response = await httpClient.get<unknown>(API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS);
+      let url = API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS;
+      if (params?.status) {
+        url += `?status=${encodeURIComponent(params.status)}`;
+      }
+      const response = await httpClient.get<unknown>(url);
 
       if (response.success && response.data) {
         const data = response.data as Record<string, unknown> | unknown[];
@@ -138,9 +142,9 @@ export const activitiesApi = {
         }
 
         // Fetch activity details for each deletion request
-            const activityIds = rawArray
-              .map((item) => item.activity)
-              .filter((id): id is string | number => (typeof id === 'string' || typeof id === 'number') && id !== null && id !== undefined);
+        const activityIds = rawArray
+          .map((item) => item.activity)
+          .filter((id): id is string | number => (typeof id === 'string' || typeof id === 'number') && id !== null && id !== undefined);
         const activityResults = await Promise.all(activityIds.map((id) => this.getActivity(id)));
         const activityMap: Record<number | string, Activity> = {};
         activityResults.forEach((res, i) => {
@@ -151,8 +155,8 @@ export const activitiesApi = {
 
         // Map each item to DeletionRequestEvent shape
         const mapped: DeletionRequestEvent[] = rawArray.map((item) => {
-        const activityId = (item.activity as number | string | undefined);
-        const activity = activityId !== undefined ? activityMap[activityId] : undefined;
+          const activityId = (item.activity as number | string | undefined);
+          const activity = activityId !== undefined ? activityMap[activityId] : undefined;
           return {
             id: item.id as number ?? 0,
             activity: activityId ?? 0,

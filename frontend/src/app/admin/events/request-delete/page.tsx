@@ -25,15 +25,18 @@ export default function DeletionRequestListPage() {
     let mounted = true;
     async function fetchRequests() {
       try {
-        const reqRes = await activitiesApi.getDeletionRequests();
+        // Fetch only pending deletion requests
+        const reqRes = await activitiesApi.getDeletionRequests({ status: 'pending' });
         if (!reqRes.success || !Array.isArray(reqRes.data)) return;
+
+        const pendingRequests = reqRes.data as DeletionRequestEvent[];
 
         // Fetch all activities
         const actRes = await activitiesApi.getActivities();
         const activities = Array.isArray(actRes.data) ? actRes.data : [];
 
         // Merge by foreign key
-        const merged: MergedDeletionRequest[] = reqRes.data.map((req: DeletionRequestEvent) => {
+        const merged: MergedDeletionRequest[] = pendingRequests.map((req: DeletionRequestEvent) => {
           const act = activities.find(a => a.id === req.activity);
           return {
             ...req,

@@ -68,7 +68,7 @@ export default function AdminContent() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await activitiesApi.getDeletionRequests();
+      const res = await activitiesApi.getDeletionRequests({ status: 'pending' });
       if (res.success && Array.isArray(res.data)) {
         setDeletionRequestCount(res.data.length);
       } else {
