@@ -299,9 +299,18 @@ class Application(models.Model):
             raise ValidationError("Notes cannot exceed 225 characters.")
 
     def approve(self, reviewer) -> None:
-        """Approve the application."""
+        """Approve the application and increment activity capacity."""
         if self.status != ApplicationStatus.PENDING:
             raise ValidationError("Only pending applications can be approved.")
+        
+        # Check if activity has reached capacity
+        activity = self.activity
+        if activity.max_participants is not None and activity.current_participants >= activity.max_participants:
+            raise ValidationError("Activity has reached maximum capacity.")
+        
+        # Increment the activity's current participants count
+        activity.current_participants += 1
+        activity.save(update_fields=['current_participants'])
         
         self.status = ApplicationStatus.APPROVED
         self.decision_at = timezone.now()
