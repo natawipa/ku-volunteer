@@ -88,7 +88,7 @@ export default function AdminContent() {
           <h3 className="font-semibold text-xl">
             Pending Events
           </h3>
-          {pendingCount > 0 && (
+          {pendingCount >= 0 && (
             <span className="text-gray-600 bg-green-200 px-2.5 py-1 rounded-full text-xs font-medium shadow-sm">{pendingCount} events</span>
           )}
         </div>
