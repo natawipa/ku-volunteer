@@ -117,7 +117,7 @@ export default function Page({ params }: PageProps) {
     description: activity?.description || "No description",
      // main image: prefer cover image, then first poster, then example
     image: (() => {
-      const raw = activity.cover_image_url || activity.cover_image || "/titleExample.jpg";
+      const raw = "/titleExample.jpg";
       if (raw && typeof raw === 'string') return normalizeUrl(raw);
       const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
       if (Array.isArray(posters) && posters.length > 0) {
@@ -130,10 +130,7 @@ export default function Page({ params }: PageProps) {
     additionalImages: (() => {
       const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
       if (Array.isArray(posters) && posters.length > 0) {
-        return posters
-          .map(p => p.image)
-          .filter((x): x is string => typeof x === 'string' && x.length > 0)
-          .map(normalizeUrl);
+        return ["/titleExample.jpg"];
       }
       return [];
     })()
@@ -283,7 +280,7 @@ export default function Page({ params }: PageProps) {
                       width={180}
                       height={120}
                       className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform"
-                    />
+                  />
                   ))}
                 </div>
               </div>
