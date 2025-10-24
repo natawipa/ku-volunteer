@@ -52,12 +52,23 @@ export default function Page({ params }: PageProps) {
   if (!activity) return <p className="text-center mt-10">{error || 'Event not found'}</p>;
 
   // Helper to normalize image URLs
-  const normalizeUrl = (url: string) => {
-    if (!url) return '/titleExample.jpg';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    if (url.startsWith('/')) return url;
-    return `${ENV.API_BASE_URL}${url}`;
-  };
+  function normalizeUrl(url: string) {
+      if (!url) return '/titleExample.jpg';
+      // If already absolute
+      try {
+        const parsed = new URL(url);
+        return parsed.href;
+      } catch {
+        // Not absolute - make sure path starts with '/media/' and prefix with API base
+        const base = ENV.API_BASE_URL.replace(/\/$/, '');
+        let path = url.startsWith('/') ? url : `/${url}`;
+        // If backend returns paths without media prefix, add it
+        if (!path.startsWith('/media')) {
+          path = path.startsWith('/') ? `/media${path}` : `/media/${path}`;
+        }
+        return `${base}${path}`;
+      }
+    }
 
   const status = activity.status || 'pending';
   const legacyEvent = {
@@ -74,7 +85,7 @@ export default function Page({ params }: PageProps) {
     reason: activity.rejection_reason || '',
     // main image: prefer cover image, then first poster, then example
     image: (() => {
-      const raw = "/titleExample.jpg";
+      const raw = activity.cover_image_url || activity.cover_image || null;
       if (raw && typeof raw === 'string') return normalizeUrl(raw);
       const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
       if (Array.isArray(posters) && posters.length > 0) {
@@ -87,7 +98,10 @@ export default function Page({ params }: PageProps) {
     additionalImages: (() => {
       const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
       if (Array.isArray(posters) && posters.length > 0) {
-        return ["/titleExample.jpg"];
+        return posters
+          .map(p => p.image)
+          .filter((x): x is string => typeof x === 'string' && x.length > 0)
+          .map(normalizeUrl);
       }
       return [];
     })()
@@ -178,7 +192,7 @@ export default function Page({ params }: PageProps) {
 
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
           <h1 className="text-3xl font-bold mb-4 text-center">{legacyEvent.title}</h1>
-          <Image src={legacyEvent.image} alt={legacyEvent.title} width={500} height={310} className="w-3/4 mx-auto object-cover" />
+          <Image src={legacyEvent.image} alt={legacyEvent.title} width={500} height={310} className="w-3/4 mx-auto object-cover" unoptimized onLoadingComplete={(result) => console.debug('Loaded main image:', legacyEvent.image, result)} />
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="bg-green-50 rounded-lg p-6 shadow">
               <div className="mb-4">
@@ -196,11 +210,22 @@ export default function Page({ params }: PageProps) {
             <div className="relative w-full">
               <div className="overflow-x-auto scrollbar-hide">
                 <div className="flex space-x-4 p-2 min-w-full md:justify-center">
-                  {legacyEvent.additionalImages?.map((img: string, index: number) => (
-                    <div key={index} className="flex-shrink-0">
-                      <Image src={img} alt={`Event image ${index + 1}`} width={180} height={120} className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer" />
-                    </div>
-                  ))}
+                  {legacyEvent.additionalImages?.map((img: string, index: number) => {
+                    const resolved = normalizeUrl(img || '/titleExample.jpg');
+                    return (
+                      <div key={index} className="flex-shrink-0">
+                        <Image
+                          src={resolved}
+                          alt={`Event image ${index + 1}`}
+                          width={180}
+                          height={120}
+                          className="rounded-lg object-cover shadow-md hover:scale-105 transition-transform cursor-pointer"
+                          unoptimized
+                          onLoadingComplete={(res) => console.debug(`Loaded gallery image ${index + 1}:`, resolved, res)}
+                        />
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             </div>

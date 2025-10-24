@@ -6,6 +6,7 @@ import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { activitiesApi } from "@/lib/activities";
 import type { Activity } from "@/lib/types";
+import { ENV } from "@/lib/constants";
 
 export default function OrganizerEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const [events, setEvents] = useState<Activity[]>([]);
@@ -15,6 +16,25 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
   
   const { id } = React.use(params);
   const organizerId = parseInt(id, 10);
+
+  // Helper to ensure absolute URLs for images
+    function normalizeUrl(url: string) {
+      if (!url) return url;
+      // If already absolute
+      try {
+        const parsed = new URL(url);
+        return parsed.href;
+      } catch {
+        // Not absolute - make sure path starts with '/media/' and prefix with API base
+        const base = ENV.API_BASE_URL.replace(/\/$/, '');
+        let path = url.startsWith('/') ? url : `/${url}`;
+        // If backend returns paths without media prefix, add it
+        if (!path.startsWith('/media')) {
+          path = path.startsWith('/') ? `/media${path}` : `/media/${path}`;
+        }
+        return `${base}${path}`;
+      }
+    }
 
   // Fetch organizer's events
   useEffect(() => {
@@ -188,12 +208,61 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
                   className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300"
                 >
                   <div className="relative h-48">
-                    <Image
-                      src={event.cover_image ?? event.cover_image_url ?? "/titleExample.jpg"}
-                      alt={event.title || 'Event image'}
-                      fill
-                      className="object-cover"
-                    />
+                    {(() => {
+                      // Prefer cover_image first, then cover_image_url, then poster_images, then fallback
+                      const raw = event.cover_image || event.cover_image_url || "/titleExample.jpg";
+                      if (raw && typeof raw === 'string') {
+                        // If this is the local placeholder image in the frontend public folder,
+                        // don't normalize (normalizeUrl prefixes non-media paths with the API base).
+                        if (raw === "/titleExample.jpg" || raw.endsWith("/titleExample.jpg")) {
+                          return (
+                            <Image
+                              src={raw}
+                              alt={event.title || 'Event image'}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          );
+                        }
+
+                        return (
+                          <Image
+                            src={normalizeUrl(raw)}
+                            alt={event.title || 'Event image'}
+                            fill
+                            className="object-cover"
+                            unoptimized
+                          />
+                        );
+                      }
+
+                      const posters = (event as unknown as { poster_images?: { image?: string }[] })?.poster_images;
+                      if (Array.isArray(posters) && posters.length > 0) {
+                        const first = posters.find((p: { image?: string }) => p && typeof p.image === 'string' && p.image.length > 0);
+                        if (first && first.image) {
+                          return (
+                            <Image
+                              src={normalizeUrl(first.image)}
+                              alt={event.title || 'Event image'}
+                              fill
+                              className="object-cover"
+                              unoptimized
+                            />
+                          );
+                        }
+                      }
+
+                      return (
+                        <Image
+                          src={'/titleExample.jpg'}
+                          alt={event.title || 'Event image'}
+                          fill
+                          className="object-cover"
+                          unoptimized
+                        />
+                      );
+                    })()}
                     <div className="absolute top-4 right-4">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                         event.status === 'open' ? 'bg-green-100 text-green-800' :

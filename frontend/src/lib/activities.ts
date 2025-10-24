@@ -168,7 +168,7 @@ export const activitiesApi = {
             dateend: activity?.end_at ?? '',
             location: activity?.location ?? '',
             organizer: activity?.organizer_name ?? '',
-            image: activity?.cover_image_url ?? '',
+            image: activity?.cover_image ?? activity?.cover_image_url ?? '/titleExample.jpg',
             reason: typeof item.reason === 'string' ? item.reason : '',
             capacity: activity?.max_participants ?? 0,
             additionalImages: [],
