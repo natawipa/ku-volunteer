@@ -7,6 +7,7 @@ import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outlin
 import { PlusIcon } from '@heroicons/react/24/solid';
 import { USER_ROLES } from '@/lib/constants';
 import ProfileCard from './ProfileCard';
+import NotificationBell from './NotificationBell';
 
 interface AdminLayoutProps {
   title?: string;
@@ -244,6 +245,7 @@ const handleDateEndChange = (date: string) => {
                 </div>
               </Link>
         )}
+        <NotificationBell />
         <ProfileCard/>
       </nav>
         </header>
