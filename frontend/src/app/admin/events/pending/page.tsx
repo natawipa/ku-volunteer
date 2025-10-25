@@ -9,8 +9,15 @@ export default function PendingEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState<Activity[]>([]);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
+  const [search] = useState('');
+  const [category] = useState('All Categories');
+  const [searchStartDate, setSearchStartDate] = useState('');
+  const [searchEndDate, setSearchEndDate] = useState('');
+  const [endAfterChecked, setEndAfterChecked] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
+
+  // ...existing code...
 
   useEffect(() => {
     const load = async () => {
@@ -33,17 +40,41 @@ export default function PendingEventsPage() {
   }, [pending]);
 
   const filtered = useMemo(() => {
-    const term = search.toLowerCase();
-    return pending.filter((a: Activity) => {
-      const inCat = category === 'All Categories' || a.categories.includes(category);
-      if (!inCat) return false;
-      return (
-        a.title.toLowerCase().includes(term) ||
-        a.description.toLowerCase().includes(term) ||
-        a.location.toLowerCase().includes(term)
-      );
+    const q = searchQuery.toLowerCase().trim();
+
+    return pending.filter(ev => {
+      const matchesSearch =
+        !q ||
+        ev.title.toLowerCase().includes(q) ||
+        ev.location.toLowerCase().includes(q) ||
+        ev.description.toLowerCase().includes(q);
+
+      const matchesCategory =
+        searchSelectedCategory === 'All Categories' ||
+        (Array.isArray(ev.categories) &&
+          ev.categories.some(c => {
+            if (searchSelectedCategory === 'Social Impact') {
+              return c.includes('Social Engagement Activities');
+            }
+            return c.includes(searchSelectedCategory);
+          }));
+
+      let matchesDate = true;
+      const eventStart = new Date(ev.start_at);
+      const eventEnd = new Date(ev.end_at);
+
+      if (searchStartDate && searchEndDate) {
+        const filterStart = new Date(searchStartDate);
+        const filterEnd = new Date(searchEndDate);
+
+        matchesDate = endAfterChecked
+          ? eventEnd >= filterStart && eventStart <= filterEnd
+          : eventEnd <= filterEnd && eventStart <= filterEnd && eventEnd >= filterStart;
+      }
+
+      return matchesSearch && matchesCategory && matchesDate;
     });
-  }, [pending, search, category]);
+  }, [pending, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
 
   const count = filtered.length;
   return (
@@ -52,11 +83,14 @@ export default function PendingEventsPage() {
       title="Pending Events"
       searchVariant="compact"
       searchPlaceholder="Search pending events..."
-      onSearchChange={setSearch}
-      initialSearchValue={search}
+      onSearchChange={setSearchQuery}
+      onSearchCategoryChange={setSearchSelectedCategory}
+      onSearchStartDateChange={setSearchStartDate}
+      onSearchEndDateChange={setSearchEndDate}
+      onEndAfterCheckedChange={setEndAfterChecked}
+      initialSearchValue={searchQuery}
       searchCategoryOptions={categories}
-      searchSelectedCategory={category}
-      onSearchCategoryChange={setCategory}
+      searchSelectedCategory={searchSelectedCategory}
     >
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-bold text-2xl mb-1">Pending Events</h1>
@@ -78,3 +112,4 @@ export default function PendingEventsPage() {
     </AdminLayout>
   );
 }
+

@@ -10,6 +10,7 @@ export interface StudentProfile {
 }
 
 export interface OrganizerProfile {
+  id?: number; // Add the organizer profile ID from backend
   organization_type: string;
   organization_name: string;
 }
@@ -53,6 +54,26 @@ export interface UserUpdate {
 }
 
 class ApiService {
+  //Fetch all users (admin only). Returns ApiResponse<User[]> or paginated results.
+  public async getUserList(): Promise<ApiResponse<User[]>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/list/`, {
+        headers: this.getAuthHeaders(),
+      });
+      if (response.ok) {
+        const data = await response.json();
+        // Support both paginated and non-paginated responses
+        const users = Array.isArray(data) ? data : (data.results || []);
+        return { success: true, data: users };
+      } else {
+        const errorData = await response.json();
+        return { success: false, error: errorData.error || errorData.detail || 'Failed to fetch user list' };
+      }
+    } catch {
+      return { success: false, error: 'Network error' };
+    }
+  }
+
   private getAuthHeaders(): HeadersInit {
     const token = localStorage.getItem('access_token');
     return {
@@ -352,6 +373,72 @@ class ApiService {
     
     // Default case: assume it's a path that needs /media/ prefix
     return `http://localhost:8000/media/${profileImage}`;
+  }
+
+  async deleteUser(userId: number): Promise<ApiResponse<null>> {
+    try {
+      console.log('deleteUser called with userId:', userId);
+      
+      const url = `${API_BASE_URL}/users/delete/${userId}/`;
+      console.log('Making DELETE request to:', url);
+      
+      const headers = this.getAuthHeaders();
+      console.log('Headers:', headers);
+      
+      const response = await fetch(url, {
+        method: 'DELETE',
+        headers: headers,
+      });
+  
+      console.log('Response status:', response.status);
+      console.log('Response ok:', response.ok);
+  
+      if (response.ok) {
+        console.log('Delete successful!');
+        return { success: true, data: null };
+      } else {
+        const responseText = await response.text();
+        console.log('Raw response:', responseText);
+        
+        let responseData;
+        try {
+          responseData = responseText ? JSON.parse(responseText) : {};
+        } catch {
+          console.error('Failed to parse response as JSON:', responseText);
+          return { 
+            success: false, 
+            error: `Server returned invalid JSON: ${responseText}` 
+          };
+        }
+        
+        console.error('Delete failed:', responseData);
+        
+        let errorMessage = 'Delete failed';
+        if (responseData.detail) {
+          errorMessage = responseData.detail;
+        } else if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (typeof responseData === 'object') {
+          errorMessage = JSON.stringify(responseData);
+        } else if (typeof responseData === 'string') {
+          errorMessage = responseText;
+        }
+        
+        return { success: false, error: errorMessage };
+      }
+    } catch (error) {
+      console.error('NETWORK ERROR in deleteUser:', error);
+      console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
+      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
+      
+      if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
+        return this.deleteUser(userId);
+      }
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Network error occurred' 
+      };
+    }
   }
 }
 
