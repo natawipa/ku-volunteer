@@ -236,21 +236,6 @@ function ActivityFormContent() {
     }
   }, [searchParams]);
 
-  /**
-   * activity data 
-   */
-  const activityData = {
-    id: activityId,
-    title: title,
-    location: location,
-    dateStart: dateStart,
-    dateEnd: dateEnd,
-    hour: hour,
-    maxParticipants: maxParticipants,
-    categories: categories,
-    description: description,
-  };
-
   const handleDeleteClick = async () => {
     if (!activityId) {
       alert("Cannot delete an activity that hasn't been created yet");
