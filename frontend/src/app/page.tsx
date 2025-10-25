@@ -6,6 +6,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import ProfileCard from "./components/ProfileCard";
+import NotificationBell from "./components/NotificationBell";
 
 import { useRef, useState, useEffect} from "react";
 import { auth } from "../lib/utils";
@@ -188,6 +189,7 @@ const getNavigation = () => {
           </div>
         </Link>
       )}
+      <NotificationBell />
       <ProfileCard/>
     </nav>
   );
@@ -240,7 +242,7 @@ const getNavigation = () => {
       />
 
       <div className="relative p-6"> 
-        <header className={`flex justify-between items-center ${isAuthenticated ? `sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10` : ''}`}>
+        <header className={`flex justify-between items-center ${isAuthenticated ? `sticky top-0 z-[100] mb-6 bg-[#DAE9DC]/10` : ''}`}>
           <Image src={getLogo()} alt="Small Logo" width={64} height={64} className="object-cover" />
           {getNavigation()}
         </header>
@@ -251,7 +253,7 @@ const getNavigation = () => {
 
         {/* show SearchLayout if not loading or error */}
         {!loading && !error && (
-          <section className="sticky top-10 z-[101]">
+          <section className="sticky top-10 z-50">
             <SearchLayout
               activities={activities}
               setIsSearchActive={setIsSearchActive}

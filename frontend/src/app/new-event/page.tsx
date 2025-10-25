@@ -9,6 +9,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
+import NotificationBell from "../components/NotificationBell";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
 import { USER_ROLES, ENV } from "../../lib/constants";
@@ -482,6 +483,7 @@ function ActivityFormContent() {
             >
               All Activities
             </Link>
+            <NotificationBell />
             <Link href="/profile">
               <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
             </Link>
