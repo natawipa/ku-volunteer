@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string | number) => `/api/activities/${id}/`,
     UPDATE: (id: string | number) => `/api/activities/${id}/update/`,
     DELETE: (id: string | number) => `/api/activities/delete/${id}/`,
+    REQUEST_DELETE: (id: string | number) => `/api/activities/request-delete/${id}/`,
     APPLY: `/api/activities/applications/create/`,
     GETAPPLICATIONS: `/api/activities/applications/list/`,
     APPLICATION_DETAIL: (id: string | number) => `/api/activities/applications/${id}/`,

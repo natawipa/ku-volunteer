@@ -490,9 +490,19 @@ export const activitiesApi = {
     }
   },
 
-  // Delete activity
-  async deleteActivity(id: string | number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.ACTIVITIES.DELETE(id));
+  // Delete activity (returns 409 if participants exist, requiring deletion request)
+  async deleteActivity(id: string | number): Promise<ApiResponse<{ detail: string; requires_admin_for_delete?: boolean }>> {
+    return httpClient.delete<{ detail: string; requires_admin_for_delete?: boolean }>(
+      API_ENDPOINTS.ACTIVITIES.DELETE(id)
+    );
+  },
+
+  // Request deletion for activity (when participants exist)
+  async requestDeletion(activityId: number, reason: string): Promise<ApiResponse<DeletionRequestEvent>> {
+    return httpClient.post<DeletionRequestEvent>(
+      API_ENDPOINTS.ACTIVITIES.REQUEST_DELETE(activityId),
+      { reason }
+    );
   },
 
   // Get activity metadata (categories, etc.)
