@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Calendar, Users, MapPin, Clock } from "lucide-react";
 import { auth } from "../../../lib/utils";
-import { EventCardData, formatDate, formatPostedTime, getCategoryBackground } from "./utils";
+import { EventCardData, formatDate, formatPostedTime, getCategoryBackground, categoryColors } from "./utils";
 
 export default function EventCardHorizontal({ event }: { event: EventCardData }) {
   const router = useRouter();
@@ -30,12 +30,12 @@ export default function EventCardHorizontal({ event }: { event: EventCardData })
       tabIndex={0}
     >
       {/* Image */}
-      <div className="flex-shrink-0 w-full sm:w-28 h-40 sm:h-28 rounded-lg overflow-hidden bg-gray-100">
+      <div className="flex-shrink-0 w-full sm:w-40 h-28 rounded-lg overflow-hidden bg-gray-100">
         <Image
           src={event.imgSrc || "/default-event.jpg"}
           alt={event.title}
-          width={112}
-          height={112}
+          width={400}
+          height={120}
           className="object-cover w-full h-full"
           unoptimized
         />
@@ -57,6 +57,26 @@ export default function EventCardHorizontal({ event }: { event: EventCardData })
         </h3>
 
         <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700 mt-1">
+          {/* Category */}
+          {event.category && (
+            Array.isArray(event.category)
+              ? event.category.map((cat, idx) => (
+                  <span
+                    key={idx}
+                    className={`text-black px-2 py-0.5 rounded-full ${categoryColors[cat] || 'bg-green-100'}`}
+                  >
+                    #{cat}
+                  </span>
+                ))
+              : (
+                  <span className={`text-black px-2 py-0.5 rounded-full ${categoryColors[event.category] || 'bg-green-100'}`}>
+                    #{event.category}
+                  </span>
+                )
+          )}
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700 mt-1">
           <span className="flex items-center">
             <Calendar className="w-3 h-3 mr-1" />
             {formatDate(event.dateStart)} – {formatDate(event.dateEnd)}
@@ -66,19 +86,18 @@ export default function EventCardHorizontal({ event }: { event: EventCardData })
             <Users className="w-3 h-3 mr-1" />
             {event.participants_count}/{event.max_participants}
           </span>
-        </div>
 
-        <div className="flex items-center justify-between text-xs text-gray-600">
-          <div className="flex items-center">
+          <span className="flex items-center">
             <MapPin className="w-3 h-3 mr-1" />
             <span className="truncate max-w-[120px]" title={event.location}>
               {event.location}
             </span>
-          </div>
-          <div className="flex items-center">
+          </span>
+
+          <span className="flex items-center">
             <Clock className="w-3 h-3 mr-1" />
             <span>{formatPostedTime(event.posted_at)}</span>
-          </div>
+          </span>
         </div>
       </div>
     </div>
