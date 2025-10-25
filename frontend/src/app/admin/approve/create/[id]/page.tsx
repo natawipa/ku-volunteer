@@ -27,6 +27,7 @@ export default function Page({ params }: PageProps) {
   const [rejectReason, setRejectReason] = useState('');
   const [approveChecked, setApproveChecked] = useState(false);
   const [rejectChecked, setRejectChecked] = useState(false);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   // Fetch activity when eventId resolved
   useEffect(() => {
@@ -250,21 +251,19 @@ export default function Page({ params }: PageProps) {
                 id="rejectCheck"
                 className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
                 checked={rejectChecked}
-                onChange={() => { setRejectChecked(v => !v); if (!rejectChecked) { setApproveChecked(false); } }}
+                onChange={() => { 
+                  if (!rejectChecked) {
+                    setShowRejectModal(true);
+                    setApproveChecked(false);
+                  } else {
+                    setRejectChecked(false);
+                    setRejectReason('');
+                  }
+                }}
                 disabled={status !== 'pending' || actionLoading}
               />
               <label htmlFor="rejectCheck" className="text-sm text-red-600">Reject Creation</label>
             </div>
-            {rejectChecked && (
-              <textarea
-                className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-200 mt-2"
-                placeholder="Add reason for rejection..."
-                rows={3}
-                value={rejectReason}
-                onChange={e => setRejectReason(e.target.value)}
-                disabled={actionLoading}
-              />
-            )}
           </div>
           <div className="flex justify-between pt-4 border-t mt-6">
             <button
@@ -286,6 +285,51 @@ export default function Page({ params }: PageProps) {
           </div>
         </div>
       </div>
+
+      {/* Reject Reason Modal */}
+      {showRejectModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900">Rejection Reason</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Please provide a reason for rejecting this activity creation.
+            </p>
+            <textarea
+              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
+              placeholder="Enter rejection reason..."
+              rows={4}
+              value={rejectReason}
+              onChange={e => setRejectReason(e.target.value)}
+              autoFocus
+            />
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
+                onClick={() => {
+                  setShowRejectModal(false);
+                  setRejectReason('');
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => {
+                  if (rejectReason.trim()) {
+                    setRejectChecked(true);
+                    setShowRejectModal(false);
+                  } else {
+                    setMessage('Please enter a rejection reason.');
+                  }
+                }}
+                disabled={!rejectReason.trim()}
+              >
+                Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
