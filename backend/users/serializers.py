@@ -11,7 +11,7 @@ class StudentProfileSerializer(serializers.ModelSerializer):
 class OrganizerProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrganizerProfile
-        fields = ["organization_type", "organization_name"]
+        fields = ["id", "organization_type", "organization_name"]
 
 
 class UserSerializer(serializers.ModelSerializer):

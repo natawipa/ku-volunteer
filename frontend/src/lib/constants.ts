@@ -27,6 +27,7 @@ export const API_ENDPOINTS = {
     DETAIL: (id: string | number) => `/api/activities/${id}/`,
     UPDATE: (id: string | number) => `/api/activities/${id}/update/`,
     DELETE: (id: string | number) => `/api/activities/delete/${id}/`,
+    REQUEST_DELETE: (id: string | number) => `/api/activities/request-delete/${id}/`,
     APPLY: `/api/activities/applications/create/`,
     GETAPPLICATIONS: `/api/activities/applications/list/`,
     APPLICATION_DETAIL: (id: string | number) => `/api/activities/applications/${id}/`,
@@ -37,6 +38,8 @@ export const API_ENDPOINTS = {
     METADATA: '/api/activities/metadata/',
     MODERATION_REVIEW: (id: string | number) => `/api/activities/moderation/${id}/review/`,
     POSTERS: (activity_id: string | number) => `/api/activities/${activity_id}/posters/`,
+    DELETION_REQUESTS: '/api/activities/deletion-requests/',
+    DELETION_REQUEST_REVIEW: (id: string | number) => `/api/activities/deletion-requests/${id}/review/`,
   },
   TOKEN: {
     OBTAIN: '/api/token/',

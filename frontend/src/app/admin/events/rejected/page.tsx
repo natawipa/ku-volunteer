@@ -9,7 +9,12 @@ export default function RejectedEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [rejected, setRejected] = useState<Activity[]>([]);
-  const [search, setSearch] = useState('');
+  const [search] = useState('');
+  const [searchStartDate, setSearchStartDate] = useState('');
+  const [searchEndDate, setSearchEndDate] = useState('');
+  const [endAfterChecked, setEndAfterChecked] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
 
   useEffect(() => {
     const load = async () => {
@@ -25,16 +30,48 @@ export default function RejectedEventsPage() {
     load();
   }, []);
 
+  const categories = useMemo(() => {
+    const set = new Set<string>();
+    rejected.forEach(a => a.categories.forEach(c => set.add(c)));
+    return ['All Categories', ...Array.from(set.values())];
+  }, [rejected]);
+
   const filtered = useMemo(() => {
-    if (!search.trim()) return rejected;
-    const term = search.toLowerCase();
-    return rejected.filter((a: Activity) =>
-      a.title.toLowerCase().includes(term) ||
-      a.description.toLowerCase().includes(term) ||
-      a.location.toLowerCase().includes(term) ||
-      (a.rejection_reason?.toLowerCase().includes(term) ?? false)
-    );
-  }, [rejected, search]);
+    const q = searchQuery.toLowerCase().trim();
+
+    return rejected.filter(ev => {
+      const matchesSearch =
+        !q ||
+        ev.title.toLowerCase().includes(q) ||
+        ev.location.toLowerCase().includes(q) ||
+        ev.description.toLowerCase().includes(q);
+
+      const matchesCategory =
+        searchSelectedCategory === 'All Categories' ||
+        (Array.isArray(ev.categories) &&
+          ev.categories.some(c => {
+            if (searchSelectedCategory === 'Social Impact') {
+              return c.includes('Social Engagement Activities');
+            }
+            return c.includes(searchSelectedCategory);
+          }));
+
+      let matchesDate = true;
+      const eventStart = new Date(ev.start_at);
+      const eventEnd = new Date(ev.end_at);
+
+      if (searchStartDate && searchEndDate) {
+        const filterStart = new Date(searchStartDate);
+        const filterEnd = new Date(searchEndDate);
+
+        matchesDate = endAfterChecked
+          ? eventEnd >= filterStart && eventStart <= filterEnd
+          : eventEnd <= filterEnd && eventStart <= filterEnd && eventEnd >= filterStart;
+      }
+
+      return matchesSearch && matchesCategory && matchesDate;
+    });
+  }, [rejected, searchQuery, searchSelectedCategory, searchStartDate, searchEndDate, endAfterChecked]);
 
   const count = filtered.length;
   return (
@@ -43,8 +80,14 @@ export default function RejectedEventsPage() {
       title="Rejected Events"
       searchVariant="compact"
       searchPlaceholder="Search events name, description"
-      onSearchChange={setSearch}
-      initialSearchValue={search}
+      onSearchChange={setSearchQuery}
+      onSearchCategoryChange={setSearchSelectedCategory}
+      onSearchStartDateChange={setSearchStartDate}
+      onSearchEndDateChange={setSearchEndDate}
+      onEndAfterCheckedChange={setEndAfterChecked}
+      initialSearchValue={searchQuery}
+      searchCategoryOptions={categories}
+      searchSelectedCategory={searchSelectedCategory}
     >
       <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
