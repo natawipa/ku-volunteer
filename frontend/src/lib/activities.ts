@@ -1,3 +1,4 @@
+import type { DeletionRequestEvent } from '@/app/admin/events/components/AdminDeletionRequestCard';
 // lib/activities.ts
 import { httpClient } from './utils';
 import { API_ENDPOINTS, ENV } from './constants';
@@ -113,6 +114,74 @@ export const activitiesApi = {
         data: [],
         error: error instanceof Error ? error.message : 'Unknown error' 
       };
+    }
+  },
+
+   // Get Deletion Requests
+  async getDeletionRequests(params?: { status?: string }): Promise<ApiResponse<DeletionRequestEvent[]>> {
+    try {
+      let url = API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS;
+      if (params?.status) {
+        url += `?status=${encodeURIComponent(params.status)}`;
+      }
+      const response = await httpClient.get<unknown>(url);
+
+      if (response.success && response.data) {
+        const data = response.data as Record<string, unknown> | unknown[];
+        const rawArray: Record<string, unknown>[] =
+          (typeof data === 'object' && data !== null && 'results' in data && Array.isArray((data as { results?: unknown[] }).results))
+            ? (data as { results: unknown[] }).results as Record<string, unknown>[]
+            : Array.isArray(data)
+              ? data as Record<string, unknown>[]
+              : [];
+
+        if (rawArray.length === 0) {
+          if (!(Array.isArray(data) || (typeof data === 'object' && data !== null && 'results' in data))) {
+            console.error('Unexpected deletion request response format:', data);
+          }
+        }
+
+        // Fetch activity details for each deletion request
+        const activityIds = rawArray
+          .map((item) => item.activity)
+          .filter((id): id is string | number => (typeof id === 'string' || typeof id === 'number') && id !== null && id !== undefined);
+        const activityResults = await Promise.all(activityIds.map((id) => this.getActivity(id)));
+        const activityMap: Record<number | string, Activity> = {};
+        activityResults.forEach((res, i) => {
+          if (res.success && res.data) {
+            activityMap[activityIds[i]] = res.data;
+          }
+        });
+
+        // Map each item to DeletionRequestEvent shape
+        const mapped: DeletionRequestEvent[] = rawArray.map((item) => {
+          const activityId = (item.activity as number | string | undefined);
+          const activity = activityId !== undefined ? activityMap[activityId] : undefined;
+          return {
+            id: item.id as number ?? 0,
+            activity: activityId ?? 0,
+            title: (item.activity_title as string) ?? activity?.title ?? '',
+            description: activity?.description ?? '',
+            category: activity?.categories ?? [],
+            post: activity?.organizer_name ?? '',
+            datestart: activity?.start_at ?? '',
+            dateend: activity?.end_at ?? '',
+            location: activity?.location ?? '',
+            organizer: activity?.organizer_name ?? '',
+            image: activity?.cover_image ?? activity?.cover_image_url ?? '/titleExample.jpg',
+            reason: typeof item.reason === 'string' ? item.reason : '',
+            capacity: activity?.max_participants ?? 0,
+            additionalImages: [],
+          } as DeletionRequestEvent;
+        });
+
+        return { success: true, data: mapped };
+      }
+
+      return { success: false, data: [], error: response.error };
+    } catch (error) {
+      console.error('❌ Error in getDeletionRequests:', error);
+      return { success: false, data: [], error: error instanceof Error ? error.message : 'Unknown error' };
     }
   },
 
@@ -421,9 +490,19 @@ export const activitiesApi = {
     }
   },
 
-  // Delete activity
-  async deleteActivity(id: string | number): Promise<ApiResponse<void>> {
-    return httpClient.delete<void>(API_ENDPOINTS.ACTIVITIES.DELETE(id));
+  // Delete activity (returns 409 if participants exist, requiring deletion request)
+  async deleteActivity(id: string | number): Promise<ApiResponse<{ detail: string; requires_admin_for_delete?: boolean }>> {
+    return httpClient.delete<{ detail: string; requires_admin_for_delete?: boolean }>(
+      API_ENDPOINTS.ACTIVITIES.DELETE(id)
+    );
+  },
+
+  // Request deletion for activity (when participants exist)
+  async requestDeletion(activityId: number, reason: string): Promise<ApiResponse<DeletionRequestEvent>> {
+    return httpClient.post<DeletionRequestEvent>(
+      API_ENDPOINTS.ACTIVITIES.REQUEST_DELETE(activityId),
+      { reason }
+    );
   },
 
   // Get activity metadata (categories, etc.)
@@ -489,5 +568,17 @@ export const activitiesApi = {
 
   async reviewApplication(applicationId: string | number, data: ReviewApplicationRequest): Promise<ApiResponse<ActivityApplication>> {
     return httpClient.post<ActivityApplication>(API_ENDPOINTS.ACTIVITIES.REVIEWAPPLICATION(applicationId), data);
+  },
+
+  // Get activities by organizer ID
+  async getActivitiesByOrganizer(organizerId: number): Promise<ApiResponse<Activity[]>> {
+    const result = await this.getActivities();
+    if (result.success && result.data) {
+      const filteredData = result.data.filter(activity => 
+        activity.organizer_profile_id === organizerId
+      );
+      return { ...result, data: filteredData };
+    }
+    return result;
   },
 };

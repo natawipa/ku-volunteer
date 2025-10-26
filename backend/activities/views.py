@@ -243,9 +243,16 @@ class ActivityDeletionRequestListView(generics.ListAPIView):
     """API view for listing activity deletion requests (admin only)."""
 
     permission_classes = [permissions.IsAuthenticated, IsAdmin]
-    queryset = ActivityDeletionRequest.objects.select_related(
-        'activity', 'requested_by'
-    )
+    serializer_class = ActivityDeletionRequestSerializer
+
+    def get_queryset(self):
+        queryset = ActivityDeletionRequest.objects.select_related(
+            'activity', 'requested_by'
+        )
+        status_param = self.request.query_params.get('status')
+        if status_param:
+            queryset = queryset.filter(status=status_param)
+        return queryset
     serializer_class = ActivityDeletionRequestSerializer
 
 
@@ -267,7 +274,16 @@ class ActivityDeletionRequestReviewView(APIView):
             )
 
         if action == 'approve':
+            # Approve the request then delete the activity
+            activity = deletion_request.activity
             deletion_request.approve(request.user, note)
+            # Serialize before deletion for response compatibility
+            serialized = ActivityDeletionRequestSerializer(deletion_request).data
+            activity.delete()
+            return Response({
+                'detail': 'Deletion request approved and activity deleted.',
+                'request': serialized,
+            })
         else:
             if not (note or '').strip():
                 return Response(
@@ -275,10 +291,10 @@ class ActivityDeletionRequestReviewView(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             deletion_request.reject(request.user, note)
-
-        return Response(
-            ActivityDeletionRequestSerializer(deletion_request).data
-        )
+            return Response({
+                'detail': 'Deletion request rejected.',
+                'request': ActivityDeletionRequestSerializer(deletion_request).data,
+            })
 
 
 class ActivityMetadataView(APIView):
