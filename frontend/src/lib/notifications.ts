@@ -6,10 +6,11 @@ import { auth } from './utils';
 import type { Activity, ActivityApplication } from './types';
 
 const READ_NOTIFICATIONS_KEY = 'readNotifications';
+const PENDING_APPS_TRACKER_KEY = 'pendingAppsTracker'; // Track pending counts over time
 
 export interface Notification {
   id: string;
-  type: 'application_approved' | 'application_rejected' | 'activity_deleted' | 'activity_approved' | 'activity_rejected' | 'deletion_approved' | 'deletion_rejected';
+  type: 'application_approved' | 'application_rejected' | 'activity_deleted' | 'activity_approved' | 'activity_rejected' | 'deletion_approved' | 'deletion_rejected' | 'pending_applications_reminder';
   title: string;
   message: string;
   timestamp: string;
@@ -17,6 +18,13 @@ export interface Notification {
   activityId?: number;
   applicationId?: number;
   isNew: boolean; // Within last 24 hours
+}
+
+interface PendingAppTracker {
+  [activityId: string]: {
+    count: number;
+    firstSeenAt: string;
+  };
 }
 
 /**
@@ -46,6 +54,69 @@ export function markNotificationAsRead(notificationId: string): void {
   } catch (error) {
     console.error('Error marking notification as read:', error);
   }
+}
+
+/**
+ * Get pending applications tracker from localStorage
+ */
+function getPendingAppsTracker(): PendingAppTracker {
+  if (typeof window === 'undefined') return {};
+  
+  try {
+    const stored = localStorage.getItem(PENDING_APPS_TRACKER_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+/**
+ * Update pending applications tracker
+ */
+function updatePendingAppsTracker(activityId: number, count: number): void {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    const tracker = getPendingAppsTracker();
+    const key = activityId.toString();
+    const now = new Date().toISOString();
+    
+    if (count === 0) {
+      // No pending apps, remove from tracker
+      delete tracker[key];
+    } else if (!tracker[key]) {
+      // First time seeing this count
+      tracker[key] = { count, firstSeenAt: now };
+    } else if (tracker[key].count !== count) {
+      // Count changed, reset timer
+      tracker[key] = { count, firstSeenAt: now };
+    }
+    // If count is same, keep the original firstSeenAt timestamp
+    
+    localStorage.setItem(PENDING_APPS_TRACKER_KEY, JSON.stringify(tracker));
+  } catch (error) {
+    console.error('Error updating pending apps tracker:', error);
+  }
+}
+
+/**
+ * Check if pending apps have been waiting for 1+ days
+ */
+function shouldNotifyPendingApps(activityId: number, count: number): boolean {
+  if (typeof window === 'undefined') return false;
+  
+  const tracker = getPendingAppsTracker();
+  const key = activityId.toString();
+  
+  if (!tracker[key] || tracker[key].count !== count) {
+    return false;
+  }
+  
+  const firstSeenAt = new Date(tracker[key].firstSeenAt);
+  const now = new Date();
+  const daysSince = Math.floor((now.getTime() - firstSeenAt.getTime()) / (24 * 60 * 60 * 1000));
+  
+  return daysSince >= 1;
 }
 
 /**
@@ -234,6 +305,39 @@ async function getOrganizerNotifications(): Promise<Notification[]> {
       });
     }
 
+    // Check for pending applications and send reminders if waiting 1+ days
+    for (const activity of myActivities) {
+      try {
+        const applicationsRes = await activitiesApi.getActivityApplications(activity.id);
+        
+        if (applicationsRes.success && applicationsRes.data) {
+          const applications = applicationsRes.data as ActivityApplication[];
+          const pendingCount = applications.filter(app => app.status === 'pending').length;
+          
+          // Update tracker with current count
+          updatePendingAppsTracker(activity.id, pendingCount);
+          
+          // Check if we should send a reminder notification
+          if (pendingCount > 0 && shouldNotifyPendingApps(activity.id, pendingCount)) {
+            const notificationId = `pending-apps-${activity.id}-${pendingCount}`;
+            
+            notifications.push({
+              id: notificationId,
+              type: 'pending_applications_reminder',
+              title: 'Pending Applications',
+              message: `There ${pendingCount === 1 ? 'is' : 'are'} ${pendingCount} participant application${pendingCount > 1 ? 's' : ''} waiting for you in "${activity.title}"`,
+              timestamp: new Date().toISOString(),
+              read: readIds.has(notificationId),
+              activityId: activity.id,
+              isNew: true,
+            });
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching applications for activity ${activity.id}:`, error);
+      }
+    }
+
   } catch (error) {
     console.error('Error fetching organizer notifications:', error);
   }
@@ -258,4 +362,24 @@ export async function getUnreadCount(): Promise<number> {
 export async function getNewCount(): Promise<number> {
   const notifications = await getNotifications();
   return notifications.filter(n => n.isNew).length;
+}
+
+/**
+ * Get pending applications count for a specific activity
+ * This is used to show badge on activity cards
+ */
+export async function getPendingApplicationsForActivity(activityId: number): Promise<number> {
+  try {
+    const applicationsRes = await activitiesApi.getActivityApplications(activityId);
+    
+    if (applicationsRes.success && applicationsRes.data) {
+      const applications = applicationsRes.data as ActivityApplication[];
+      return applications.filter(app => app.status === 'pending').length;
+    }
+    
+    return 0;
+  } catch (error) {
+    console.error(`Error fetching applications for activity ${activityId}:`, error);
+    return 0;
+  }
 }

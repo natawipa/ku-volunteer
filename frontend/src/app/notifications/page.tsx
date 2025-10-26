@@ -60,6 +60,8 @@ export default function NotificationsPage() {
         return '❌';
       case 'activity_deleted':
         return '🗑️';
+      case 'pending_applications_reminder':
+        return '⏰';
       default:
         return '📢';
     }
