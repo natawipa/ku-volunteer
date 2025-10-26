@@ -6,7 +6,38 @@ import { Calendar } from "lucide-react";
 import { auth } from "../../../lib/utils";
 import { EventCardData, formatDate, statusColors, categoryColors } from "./utils";
 
-export default function EventCardSquare({ event }: { event: EventCardData }) {
+export interface EventCardSquareProps {
+  event: EventCardData;
+  // Layout customization
+  gradientBgClass?: string; // e.g., "bg-gradient-to-r from-green-400 to-blue-500"
+  showShadow?: boolean;
+  imageWidth?: string;
+  imageHeight?: string;
+
+  // Visibility toggles
+  showStatus?: boolean;
+  showDate?: boolean;
+  showCategory?: boolean;
+
+  // Style customization
+  cardPadding?: string;
+  titleClassName?: string;
+  infoTextClassName?: string;
+  hoverScale?: boolean;
+  hoverBgClass?: string;
+
+  // Behavior customization
+  onClick?: (event: EventCardData) => void;
+  requireAuth?: boolean;
+}
+
+export default function EventCardSquare({
+  event,
+  gradientBgClass = "bg-transparent",
+  showShadow = false,
+  hoverBgClass = "hover:bg-gray-100",
+  hoverScale = true,
+}: EventCardSquareProps) {
   const router = useRouter();
 
   const handleClick = (e: React.MouseEvent) => {
@@ -20,7 +51,9 @@ export default function EventCardSquare({ event }: { event: EventCardData }) {
 
   return (
     <div
-      className="bg-transparent rounded-lg p-4 w-60 relative flex-shrink-0 hover:scale-105 hover:bg-gray-100 transition-transform duration-200"
+      className={`${gradientBgClass} rounded-lg p-4 w-60 relative flex-shrink-0 ${
+        hoverScale ? "hover:scale-105" : ""
+      } ${showShadow ? "shadow-md" : ""} ${hoverBgClass} transition-transform duration-200`}
       onClick={handleClick}
       role="button"
       tabIndex={0}

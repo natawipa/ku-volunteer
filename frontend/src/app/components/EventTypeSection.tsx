@@ -1,24 +1,16 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import EventCardHorizontal from "./EventCardHorizontal";
+import EventCardHorizontal from "./EventCard/EventCardHorizontal";
+
+import type { EventCardData } from "./EventCard/utils";
+import type { EventCardHorizontalProps } from "./EventCard/EventCardHorizontal";
 
 interface EventTypeSectionProps {
   title: string;
   color: string;
   backgroundBrain: string;
-  events: Array<{
-    id: number;
-    title: string;
-    post: string;
-    dateStart: string;
-    dateEnd: string;
-    location: string;
-    category: string[];
-    imgSrc: string;
-    capacity: number;
-    status: string;
-  }>;
+  events: EventCardData[];
 }
 
 // Map event type titles to their respective routes
@@ -32,6 +24,22 @@ const getEventTypeRoute = (title: string): string => {
 };
 
 export default function EventTypeSection({ title, color, backgroundBrain, events }: EventTypeSectionProps) {
+  // Get gradient and background image from category backgrounds
+  const categoryBackgrounds: Record<string, { color: string; backgroundBrain: string }> = {
+    "University Activities": {
+      color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
+      backgroundBrain: "/brainread.svg",
+    },
+    "Enhance Competencies": {
+      color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
+      backgroundBrain: "/brainthink.svg",
+    },
+    "Social Engagement Activities": {
+      color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
+      backgroundBrain: "/brainlove.svg",
+    },
+  };
+  const bgConfig = categoryBackgrounds[title] || { color: "bg-gray-100", backgroundBrain: "" };
   const route = getEventTypeRoute(title);
   
   // Get only the most recent event (first one in the array)
@@ -39,43 +47,46 @@ export default function EventTypeSection({ title, color, backgroundBrain, events
 
   return (
     <div className="mb-8">
-      {/* Entire section wrapped in Link with gradient background */}
       <Link href={route} className="block">
-        <div className={`${color} rounded-lg p-6 cursor-pointer hover:opacity-90 transition-opacity`}>
-          
-          {/* Header section */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-2xl font-bold">{title}</h3>
-            <Image
-              src={backgroundBrain}
-              alt="brain icon"
-              width={80}
-              height={80}
-              className="object-contain"
-            />
-          </div>
-
-          {/* Event preview - Show only the most recent event */}
-          <div className="mt-4">
-            {mostRecentEvent ? (
-              <div className="bg-white/80 rounded-lg p-4 backdrop-blur-sm">
-                <EventCardHorizontal {...mostRecentEvent} />
-              </div>
-            ) : (
-              <div className="bg-white/80 rounded-lg p-8 text-center backdrop-blur-sm">
-                <p className="text-gray-500">No {title.toLowerCase()} available</p>
-                <p className="text-sm text-gray-400 mt-2">Click to view all activities</p>
-              </div>
+        {/* Event preview - Show only the most recent event */}
+        <div className="mt-4">
+          <div className={`relative rounded-lg p-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
+            {/* Large background image accent */}
+            {bgConfig.backgroundBrain && (
+              <img
+                src={bgConfig.backgroundBrain}
+                alt="background accent"
+                className="absolute right-6 bottom-4 h-32 w-32 sm:h-40 sm:w-40 object-contain opacity-80 pointer-events-none"
+                style={{ zIndex: 1 }}
+              />
             )}
+            <div className="relative z-10 w-full">
+              <h3 className="text-2xl font-bold text-black mb-2">{title}</h3>
+              {/* Transparent card, no image or empty state */}
+              {mostRecentEvent ? (
+                <div className="bg-transparent shadow-none">
+                  <EventCardHorizontal event={{ ...mostRecentEvent, imgSrc: mostRecentEvent.imgSrc }} gradientBgClass="bg-transparent" showShadow={false} />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <p className="text-gray-700 font-semibold text-lg">No {title.toLowerCase()} available</p>
+                  <p className="text-sm text-gray-500 mt-2">Click to view all activities</p>
+                  <span className="inline-block text-white font-medium text-lg bg-black/20 px-4 py-2 rounded-lg hover:bg-black/30 transition-colors mt-6">
+                    View All {events.length} {title} →
+                  </span>
+                </div>
+              )}
+            </div>
           </div>
-
-          {/* View all link */}
-          <div className="text-center mt-4 pt-4 border-t border-white/30">
-            <span className="text-white font-medium text-lg bg-black/20 px-4 py-2 rounded-lg hover:bg-black/30 transition-colors">
+        </div>
+        {/* View All button for when events exist */}
+        {mostRecentEvent && (
+          <div className="text-center mt-4">
+            <span className="inline-block text-white font-medium text-lg bg-black/20 px-4 py-2 rounded-lg hover:bg-black/30 transition-colors">
               View All {events.length} {title} →
             </span>
           </div>
-        </div>
+        )}
       </Link>
     </div>
   );
