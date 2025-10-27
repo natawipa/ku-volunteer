@@ -107,7 +107,7 @@ function DeleteConfirmationContent() {
       <div className="relative p-6">
         <header className="flex justify-between items-center mb-8">
           <Image
-            src="/Logo_Staff.svg"
+            src="/logo-organizer.svg"
             alt="Small Logo"
             width={64}
             height={64}
