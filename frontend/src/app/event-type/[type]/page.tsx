@@ -4,10 +4,10 @@ import { useEffect, useState } from "react";
 import { useParams } from "next/navigation";
 import Image from "next/image";
 
-import { activitiesApi } from "../../lib/activities";
-import type { Activity } from "../../lib/types";
-import type { EventCardData } from "../components/EventCard/utils";
-import EventCardHorizontal from "../components/EventCard/EventCardHorizontal";
+import { activitiesApi } from "../../../lib/activities";
+import type { Activity } from "../../../lib/types";
+import type { EventCardData } from "../../components/EventCard/utils";
+import EventCardHorizontal from "../../components/EventCard/EventCardHorizontal";
 
 // Map of event type params to their display titles, gradient colors, and brain images
 const EVENT_TYPE_MAP: Record<
@@ -67,10 +67,10 @@ const transformActivityToEvent = (activity: Activity): EventCardData => ({
 export default function EventTypePage() {
   const params = useParams();
   const eventTypeParam =
-    typeof params["event-type"] === "string"
-      ? params["event-type"]
-      : Array.isArray(params["event-type"])
-      ? params["event-type"][0]
+    typeof params["type"] === "string"
+      ? params["type"]
+      : Array.isArray(params["type"])
+      ? params["type"][0]
       : "";
 
   const eventTypeConfig = EVENT_TYPE_MAP[eventTypeParam];

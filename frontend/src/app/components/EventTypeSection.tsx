@@ -13,9 +13,9 @@ interface EventTypeSectionProps {
 // Map event type titles to their respective routes
 const getEventTypeRoute = (title: string): string => {
   const routeMap: { [key: string]: string } = {
-    "University Activities": "/university-activities",
-    "Enhance Competencies": "/enhance-competencies", 
-    "Social Engagement Activities": "/social-engagement-activities"
+    "University Activities": "/event-type/university-activities",
+    "Enhance Competencies": "/event-type/enhance-competencies",
+    "Social Engagement Activities": "/event-type/social-engagement-activities"
   };
   return routeMap[title] || "/";
 };
