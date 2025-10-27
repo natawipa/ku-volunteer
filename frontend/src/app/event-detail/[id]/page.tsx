@@ -693,7 +693,7 @@ export default function EventPage({ params }: PageProps) {
       <div className="relative p-6"> 
         <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
           <Image
-            src={isAuthenticated && userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/logo-kasetsart.svg"}
+            src={isAuthenticated && userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg"}
             alt="Small Logo"
             width={64}
             height={64}

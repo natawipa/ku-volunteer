@@ -120,7 +120,7 @@ export default function SocialEngagementActivities() {
   // Get logo based on user role
   const getLogo = () => {
     if (!isAuthenticated) return "/logo-kasetsart.svg";
-    return userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/logo-kasetsart.svg";
+    return userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg";
   };
 
   // Get navigation for authenticated users
