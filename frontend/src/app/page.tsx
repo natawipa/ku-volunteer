@@ -1,22 +1,15 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
-import Link from "next/link";
-import Image from "next/image";
-import { Plus } from "lucide-react";
 
 import { auth } from "../lib/utils";
-import { USER_ROLES } from "../lib/constants";
 import { activitiesApi } from "../lib/activities";
 import type { Activity } from "../lib/types";
 
 import EventTypeSection from "./components/EventTypeSection";
 import EventCardSquare from "./components/EventCard/EventCardSquare";
 import type { EventCardData } from "./components/EventCard/utils";
-import ProfileCard from "./components/ProfileCard";
-import SearchLayout from "./components/SearchLayout";
-import AdminLayout from "./admin/components/AdminLayout";
-import AdminContent from "./admin/AdminContent";
+import Header from "./components/Header";
 
 // Transform backend activity to frontend card format
 const transformActivityToEvent = (activity: Activity): EventCardData => {
@@ -114,39 +107,11 @@ function SectionUpcomingEvents({
   );
 }
 
-// Navigation Link Component
-const NavLink = ({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) => (
-  <Link
-    href={href}
-    className="relative border-b border-transparent hover:border-black transition-all duration-200"
-  >
-    {children}
-  </Link>
-);
-
-const CreateButton = () => (
-  <Link
-    href="/new-event"
-    className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C] transition-all duration-200"
-  >
-    <div className="flex items-center">
-      <Plus className="w-4 h-4 mr-1" />
-      <span>New</span>
-    </div>
-  </Link>
-);
-
 // Main Home Page Component
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [, setUserRole] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -199,107 +164,22 @@ export default function Home() {
     ),
   }));
 
-  const getLogoSrc = () => {
-    if (!isAuthenticated) return "/logo-kasetsart.svg";
-    switch (userRole) {
-      case USER_ROLES.ORGANIZER:
-        return "/logo-organizer.svg";
-      case USER_ROLES.STUDENT:
-        return "/logo-student.svg";
-      default:
-        return "/logo-kasetsart.svg";
-    }
-  };
-
-  const getNavigation = () => {
-    const commonLinks = (
-      <>
-        <NavLink href="/document">Document</NavLink>
-        <NavLink href="/all-events">My Event</NavLink>
-      </>
-    );
-
-    if (!isAuthenticated)
-      return (
-        <nav className="flex items-center space-x-8">
-          <NavLink href="/document">Document</NavLink>
-          <NavLink href="/all-events">All Event</NavLink>
-          <Link
-            href="/login"
-            className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C] transition-all duration-200"
-          >
-            Sign In
-          </Link>
-        </nav>
-      );
-
-    if (userRole === USER_ROLES.STUDENT)
-      return (
-        <nav className="flex items-center space-x-8">
-          {commonLinks}
-          <ProfileCard />
-        </nav>
-      );
-
-    if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.ORGANIZER)
-      return (
-        <nav className="flex items-center space-x-8">
-          {commonLinks}
-          <CreateButton />
-          <ProfileCard />
-        </nav>
-      );
-  };
-
-  // Admin View
-  if (isAuthenticated && userRole === USER_ROLES.ADMIN) {
-    return (
-      <AdminLayout>
-        <AdminContent />
-      </AdminLayout>
-    );
-  }
-
 // 🏠 Main Home Page Render
   return (
     <div className="relative">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={1920}
-        height={510}
-        className="w-full h-[510px] absolute inset-0 top-0 object-cover pt-11"
-      />
-
+      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11" />
       <div className="relative p-6">
         {/* Header */}
-        <header
-          className={`flex justify-between items-center ${
-            isAuthenticated ? "sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10" : ""
-          }`}
-        >
-          <Image src={getLogoSrc()} alt="Small Logo" width={64} height={64} />
-          {getNavigation()}
-        </header>
-
-        {/* Logo Center */}
-        <div className="flex justify-center">
-          <Image src={getLogoSrc()} alt="Big Logo" width={180} height={180} />
-        </div>
-
-        {/* Search Layout */}
-        {!loading && !error && (
-          <section className="sticky top-10 z-[101]">
-            <SearchLayout
-              activities={activities}
-              setIsSearchActive={setIsSearchActive}
-              searchInputRef={searchInputRef}
-              isScrolled={isScrolled}
-            />
-          </section>
-        )}
+      <Header
+        activities={activities}
+        loading={loading}
+        error={error}
+        setIsSearchActive={setIsSearchActive}
+        searchInputRef={searchInputRef}
+        isScrolled={isScrolled}
+      />
 
         {/* Main Content */}
         {!isSearchActive && (
