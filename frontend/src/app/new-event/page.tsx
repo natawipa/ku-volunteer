@@ -3,10 +3,9 @@
 import { useState, useEffect, Suspense } from "react";
 import { Trash2 } from "lucide-react";
 import Image from "next/image";
-import Link from "next/link";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import Header from "../components/Header";
 import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
 import { activitiesApi } from "../../lib/activities";
@@ -516,35 +515,7 @@ function ActivityFormContent() {
         height={510}
         className="absolute inset-0 top-0 w-full h-[120px] object-cover pt-11"
       />
-
-      {/* Main content */}
-      <div className="relative p-6">
-        <header className="flex justify-between items-center">
-          <Image
-            src="/Logo_Staff.svg"
-            alt="Small Logo"
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-          <nav className="flex items-center space-x-8">
-            <Link
-              href="/document"
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200"
-            >
-              Document
-            </Link>
-            <Link
-              href="/all-activities"
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200"
-            >
-              All Activities
-            </Link>
-            <Link href="/profile">
-              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
-            </Link>
-          </nav>
-        </header>
+      <Header />
 
         {/* Activity Form Container */}
         <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
@@ -642,7 +613,6 @@ function ActivityFormContent() {
               {isSubmitting ? 'Creating...' : (activityId ? 'Update Activity' : 'Create Activity')}
             </button>
           </div>
-        </div>
       </div>
 
       {/* Deletion Request Modal - Beautiful Popup */}

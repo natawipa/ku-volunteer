@@ -179,6 +179,8 @@ export default function Home() {
         setIsSearchActive={setIsSearchActive}
         searchInputRef={searchInputRef}
         isScrolled={isScrolled}
+        showSearch={true}
+        showBigLogo={true}
       />
 
         {/* Main Content */}

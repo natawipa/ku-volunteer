@@ -1,5 +1,4 @@
 "use client";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState, useCallback } from "react";
@@ -9,7 +8,7 @@ import type { Activity, ActivityApplication, CreateApplicationRequest } from "..
 import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
 import { useRouter } from "next/navigation";
-import ProfileCard from '../../components/ProfileCard';
+import Header from "../../components/Header";
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -677,47 +676,11 @@ export default function EventPage({ params }: PageProps) {
 
   return (
     <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
-
-      {/* Mountain background */}
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={920}
-        height={410}
-        className="w-full h-[200px] absolute inset-0 top-0 object-cover"
-      />
-
-      {/* Foreground content */}
-      <div className="relative p-6"> 
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image
-            src={isAuthenticated && userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/logo-kasetsart.svg"}
-            alt="Small Logo"
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" 
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-              {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT ? "My Event" : "All Event"}
-            </Link>     
-                    {isAuthenticated && userRole === USER_ROLES.ORGANIZER && (
-              <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-                <div className="flex items-center">
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  <span className="mr-1">New</span>
-                </div>
-              </Link>
-            )}
-            <ProfileCard/>
-          </nav>
-        </header>
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
+      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+      <div className="relative p-6">
+      <Header showBigLogo={true}/>
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
@@ -876,7 +839,6 @@ export default function EventPage({ params }: PageProps) {
                 </p>
               </div>
             )}
-          </div>
         </div>
       </div>
 
@@ -951,6 +913,7 @@ export default function EventPage({ params }: PageProps) {
           </div>
         </div>
       )}
+    </div>
     </div>
   );
 }
