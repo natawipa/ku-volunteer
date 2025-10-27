@@ -190,7 +190,12 @@ export default function Page({ params }: PageProps) {
                 <p><strong>Post at:</strong> {legacyEvent.post}</p>
               </div>
               <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
+              {/* For one-day activities */}
+              {legacyEvent.datestart === legacyEvent.dateend ? (
+                <p><strong>Date:</strong> {legacyEvent.datestart}</p>
+              ) : (
                 <p><strong>Date:</strong> {legacyEvent.datestart} - {legacyEvent.dateend}</p>
+              )}
                 <p><strong>Location:</strong> {legacyEvent.location}</p>
                 <p><strong>Type:</strong> {legacyEvent.category.join(', ')}</p>
                 <p><strong>Capacity:</strong> {legacyEvent.capacity} คน</p>

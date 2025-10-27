@@ -53,7 +53,12 @@ export default function AdminEventPreviewCard({ activity, hrefOverride }: AdminE
         </div>
         <div className="flex items-center text-sm text-gray-700 gap-2">
           <CalendarIcon className="w-4 h-4" />
-          <span>{formatDate(activity.start_at)} - {formatDate(activity.end_at)}</span>
+          {/* For one-day activities */}
+          {activity.start_at === activity.end_at ? (
+            <span>{formatDate(activity.start_at)}</span>
+          ) : (
+            <span>{formatDate(activity.start_at)} - {formatDate(activity.end_at)}</span>
+          )}
         </div>
         <div className="flex items-center text-sm text-gray-700 gap-2">
           <MapPinIcon className="w-4 h-4" />

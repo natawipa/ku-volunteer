@@ -117,7 +117,7 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [eventId, checkUserApplication, fetchEventForOrganizer]); // add checkUserApplication to dependencies
 
-  // Also check application status when the component mounts (every time user visits the page)
+  // Check application status every time user visits the page
   useEffect(() => {
     if (isAuthenticated && userRole === USER_ROLES.STUDENT && eventId) {
       console.log('🔄 Triggering application check - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'eventId:', eventId);
@@ -727,7 +727,12 @@ export default function EventPage({ params }: PageProps) {
                   <p><strong>Post at:</strong> {transformedEvent.post}</p>
                 </div>
                 <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
-                  <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
+                  {/* For one-day activities */}
+                  {transformedEvent.datestart === transformedEvent.dateend ? (
+                    <p><strong>Date:</strong> {transformedEvent.datestart}</p>
+                  ) : (
+                    <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
+                  )}
                   <p><strong>Location:</strong> {transformedEvent.location}</p>
                   <p><strong>Type:</strong> {transformedEvent.category.join(", ")}</p>
                   <p><strong>Capacity:</strong> {transformedEvent.currentParticipants} / {transformedEvent.capacity} people</p>

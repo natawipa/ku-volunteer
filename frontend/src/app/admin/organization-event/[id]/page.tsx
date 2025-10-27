@@ -255,7 +255,12 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
                     <div className="space-y-2 text-sm text-gray-600 mb-4">
                       <div className="flex items-center">
                         <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{formatDate(event.start_at)} - {formatDate(event.end_at)}</span>
+                        {/* For one-day activities */}
+                        {event.start_at === event.end_at ? (
+                          <span>{formatDate(event.start_at)}</span>
+                        ) : (
+                          <span>{formatDate(event.start_at)} - {formatDate(event.end_at)}</span>
+                        )}
                       </div>
                       <div className="flex items-center">
                         <MapPinIcon className="w-4 h-4 mr-2 flex-shrink-0" />

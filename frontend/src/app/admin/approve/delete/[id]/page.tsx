@@ -262,7 +262,12 @@ export default function Page({ params }: PageProps) {
                 <p><strong>Posted at:</strong> {legacyEvent.post}</p>
               </div>
               <div className="grid lg:grid-cols-2 gap-4">
+              {/* For one-day activities */}
+              {legacyEvent.start_at === legacyEvent.end_at ? (
+                <p><strong>Date:</strong> {legacyEvent.start_at}</p>
+              ) : (
                 <p><strong>Date:</strong> {legacyEvent.start_at} - {legacyEvent.end_at}</p>
+              )}                
                 <p><strong>Location:</strong> {legacyEvent.location}</p>
                 <p><strong>Type:</strong> {legacyEvent.categories.join(", ")}</p>
                 <p><strong>Capacity:</strong> {legacyEvent.max_participants} people</p>

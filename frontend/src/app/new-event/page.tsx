@@ -314,14 +314,35 @@ function ActivityFormContent() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0)
 
     if (!title.trim()) newErrors.title = "Title is required";
     if (!location.trim()) newErrors.location = "Location is required";
     if (!dateStart) newErrors.dateStart = "Start date is required";
     if (!dateEnd) newErrors.dateEnd = "End date is required";
-    if (dateStart && dateEnd && new Date(dateStart) > new Date(dateEnd)) {
-      newErrors.dateEnd = "End date must be after start date";
-    }
+
+    if (dateStart && dateEnd ) {
+      const startDate = new Date(dateStart);
+      const endDate = new Date(dateEnd);
+
+      startDate.setHours(0, 0, 0, 0);
+      endDate.setHours(0, 0, 0, 0);
+
+      if (startDate < today) {
+        newErrors.dateStart = "Start date cannot be in the past";
+      }
+      
+      // Check if end date is in the past
+      if (endDate < today) {
+        newErrors.dateEnd = "End date cannot be in the past";
+      } 
+      
+      // Check if end date is before start date (same date is allowed)
+      if (endDate < startDate) {
+        newErrors.dateEnd = "End date must be on or after start date";
+      }
+    } 
     if (!hour) newErrors.hour = "Hour is required";
     else if (Number(hour) < 1 || Number(hour) > 10) {
       newErrors.hour = "Hour must be between 1 and 10";
