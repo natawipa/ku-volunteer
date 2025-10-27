@@ -170,7 +170,7 @@ async function getStudentNotifications(): Promise<Notification[]> {
         message: `Your application for "${app.activity_title || 'activity'}" has been approved!`,
         timestamp: app.decision_at || app.submitted_at,
         read: readIds.has(notificationId),
-        activityId: app.activity,
+        activityId: app.activity ?? undefined,
         applicationId: app.id,
         isNew,
       });
@@ -191,36 +191,33 @@ async function getStudentNotifications(): Promise<Notification[]> {
         message: `Your application for "${app.activity_title || 'activity'}" was rejected.${reason}`,
         timestamp: app.decision_at || app.submitted_at,
         read: readIds.has(notificationId),
-        activityId: app.activity,
+        activityId: app.activity ?? undefined,
         applicationId: app.id,
         isNew,
       });
     }
 
-    // Check for deleted activities (approved apps where activity no longer exists)
-    const approvedActivityIds = approvedApps.map(app => app.activity);
-    const activitiesRes = await activitiesApi.getActivities();
+    // Check for deleted activities (approved apps where activity is null)
+    const deletedActivityApps = approvedApps.filter(app => app.activity === null);
     
-    if (activitiesRes.success && activitiesRes.data) {
-      const existingActivityIds = new Set(activitiesRes.data.map((a: Activity) => a.id));
+    for (const app of deletedActivityApps) {
+      const notificationId = `activity-deleted-${app.id}`;
       
-      for (const app of approvedApps) {
-        if (!existingActivityIds.has(app.activity)) {
-          // Activity was deleted
-          const notificationId = `activity-deleted-${app.id}`;
-          notifications.push({
-            id: notificationId,
-            type: 'activity_deleted',
-            title: 'Activity Deleted',
-            message: `The activity "${app.activity_title || 'Unknown'}" you were participating in has been deleted.`,
-            timestamp: app.decision_at || app.submitted_at,
-            read: readIds.has(notificationId),
-            activityId: app.activity,
-            applicationId: app.id,
-            isNew: true,
-          });
-        }
-      }
+      // Use current time as timestamp since we don't know when it was deleted
+      // This ensures the notification appears as "new"
+      const deletionTimestamp = new Date().toISOString();
+      
+      notifications.push({
+        id: notificationId,
+        type: 'activity_deleted',
+        title: 'Activity Deleted',
+        message: `The activity "${app.activity_title || 'Unknown'}" you were participating in has been deleted.`,
+        timestamp: deletionTimestamp,
+        read: readIds.has(notificationId),
+        activityId: undefined,
+        applicationId: app.id,
+        isNew: true, // Always show as new since we just detected the deletion
+      });
     }
 
   } catch (error) {
@@ -267,8 +264,9 @@ async function getOrganizerNotifications(): Promise<Notification[]> {
     const approvedActivities = myActivities.filter(act => act.status === 'open');
     for (const activity of approvedActivities) {
       const notificationId = `activity-approved-${activity.id}`;
-      const createdDate = new Date(activity.created_at);
-      const isNew = createdDate > oneDayAgo;
+      // Use updated_at to check when the activity was approved (status changed)
+      const updatedDate = new Date(activity.updated_at);
+      const isNew = updatedDate > oneDayAgo;
       
       // Only show if recently approved (within last day)
       if (isNew) {
@@ -277,7 +275,7 @@ async function getOrganizerNotifications(): Promise<Notification[]> {
           type: 'activity_approved',
           title: 'Activity Approved',
           message: `Your activity "${activity.title}" has been approved and is now open!`,
-          timestamp: activity.created_at,
+          timestamp: activity.updated_at,
           read: readIds.has(notificationId),
           activityId: activity.id,
           isNew: true,
@@ -336,6 +334,64 @@ async function getOrganizerNotifications(): Promise<Notification[]> {
       } catch (error) {
         console.error(`Error fetching applications for activity ${activity.id}:`, error);
       }
+    }
+
+    // Check for deletion requests (approved or rejected)
+    try {
+      const deletionRequestsRes = await activitiesApi.getDeletionRequests();
+      
+      if (deletionRequestsRes.success && deletionRequestsRes.data) {
+        const deletionRequests = deletionRequestsRes.data;
+        
+        // Backend already filters by organizer_profile_id, so all deletion requests are ours
+        // No need to filter by activity ID (which would exclude approved requests where activity=null)
+        const myDeletionRequests = deletionRequests;
+        
+        for (const request of myDeletionRequests) {
+          // Check for approved deletion requests
+          if (request.status === 'approved') {
+            const notificationId = `deletion-approved-${request.id}`;
+            const timestamp = request.reviewed_at || request.requested_at || new Date().toISOString();
+            const reviewedDate = new Date(timestamp);
+            const isNew = reviewedDate > oneDayAgo;
+            
+            notifications.push({
+              id: notificationId,
+              type: 'deletion_approved',
+              title: 'Deletion Request Approved',
+              message: `Your request to delete "${request.title}" has been approved by admin.`,
+              timestamp,
+              read: readIds.has(notificationId),
+              activityId: Number(request.activity),
+              isNew,
+            });
+          }
+          
+          // Check for rejected deletion requests
+          if (request.status === 'rejected') {
+            const notificationId = `deletion-rejected-${request.id}`;
+            const timestamp = request.reviewed_at || request.requested_at || new Date().toISOString();
+            const reviewedDate = new Date(timestamp);
+            const isNew = reviewedDate > oneDayAgo;
+            const reason = request.review_note ? `\nReason: ${request.review_note}` : '';
+            
+            notifications.push({
+              id: notificationId,
+              type: 'deletion_rejected',
+              title: 'Deletion Request Rejected',
+              message: `Your request to delete "${request.title}" was rejected by admin.${reason}`,
+              timestamp,
+              read: readIds.has(notificationId),
+              activityId: Number(request.activity),
+              isNew,
+            });
+          }
+        }
+      } else {
+        console.error('❌ Failed to fetch deletion requests:', deletionRequestsRes.error);
+      }
+    } catch (error) {
+      console.error('Error fetching deletion requests:', error);
     }
 
   } catch (error) {

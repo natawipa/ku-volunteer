@@ -141,10 +141,11 @@ export const activitiesApi = {
           }
         }
 
-        // Fetch activity details for each deletion request
+        // Fetch activity details only for requests where activity still exists (not null)
         const activityIds = rawArray
           .map((item) => item.activity)
           .filter((id): id is string | number => (typeof id === 'string' || typeof id === 'number') && id !== null && id !== undefined);
+        
         const activityResults = await Promise.all(activityIds.map((id) => this.getActivity(id)));
         const activityMap: Record<number | string, Activity> = {};
         activityResults.forEach((res, i) => {
@@ -157,10 +158,14 @@ export const activitiesApi = {
         const mapped: DeletionRequestEvent[] = rawArray.map((item) => {
           const activityId = (item.activity as number | string | undefined);
           const activity = activityId !== undefined ? activityMap[activityId] : undefined;
+          
+          // Use stored activity_title from the deletion request if activity is deleted (null)
+          const title = (item.activity_title as string) || activity?.title || 'Deleted Activity';
+          
           return {
             id: item.id as number ?? 0,
             activity: activityId ?? 0,
-            title: (item.activity_title as string) ?? activity?.title ?? '',
+            title: title,
             description: activity?.description ?? '',
             category: activity?.categories ?? [],
             post: activity?.organizer_name ?? '',
@@ -172,6 +177,10 @@ export const activitiesApi = {
             reason: typeof item.reason === 'string' ? item.reason : '',
             capacity: activity?.max_participants ?? 0,
             additionalImages: [],
+            status: typeof item.status === 'string' ? item.status : undefined,
+            requested_at: typeof item.requested_at === 'string' ? item.requested_at : undefined,
+            reviewed_at: typeof item.reviewed_at === 'string' ? item.reviewed_at : undefined,
+            review_note: typeof item.review_note === 'string' ? item.review_note : undefined,
           } as DeletionRequestEvent;
         });
 
