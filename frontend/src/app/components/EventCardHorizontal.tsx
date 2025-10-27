@@ -18,7 +18,7 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
     <div className="flex items-center rounded-lg gap-4 min-w-[400px]">
       <div className="w-32 h-32 flex-shrink-0 rounded-lg overflow-hidden bg-gray-200"> {/* 32 * 4 = 128px */}
         <Image
-          src={imgSrc || "/titleExample.jpg"}
+          src={imgSrc || "/default-event.jpg"}
           alt={title}
           width={128}
           height={128}
@@ -26,7 +26,7 @@ const EventCardHorizontal: React.FC<EventCardProps> = ({
           unoptimized={imgSrc?.startsWith('http')}
           onError={(e) => {
             const target = e.target as HTMLImageElement;
-            target.src = "/titleExample.jpg";
+            target.src = "/default-event.jpg";
           }}
         />
     </div>

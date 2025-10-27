@@ -28,15 +28,15 @@ export default function EventTypeSection({ title, color, backgroundBrain, events
   const categoryBackgrounds: Record<string, { color: string; backgroundBrain: string }> = {
     "University Activities": {
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
-      backgroundBrain: "/brainread.svg",
+      backgroundBrain: "/brain-read.svg",
     },
     "Enhance Competencies": {
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-      backgroundBrain: "/brainthink.svg",
+      backgroundBrain: "/brain-think.svg",
     },
     "Social Engagement Activities": {
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
-      backgroundBrain: "/brainlove.svg",
+      backgroundBrain: "/brain-smart.svg",
     },
   };
   const bgConfig = categoryBackgrounds[title] || { color: "bg-gray-100", backgroundBrain: "" };
@@ -52,13 +52,13 @@ export default function EventTypeSection({ title, color, backgroundBrain, events
         <div className="mt-4">
           <div className={`relative rounded-lg p-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
             {/* Large background image accent */}
-            {bgConfig.backgroundBrain && (
-              <img
-                src={bgConfig.backgroundBrain}
-                alt="background accent"
-                className="absolute right-6 bottom-4 h-32 w-32 sm:h-40 sm:w-40 object-contain opacity-80 pointer-events-none"
-                style={{ zIndex: 1 }}
-              />
+              {bgConfig.backgroundBrain && (
+                      <img
+                        src={bgConfig.backgroundBrain}
+                        alt="background accent"
+                        className="absolute right-6 bottom-0 h-52 w-52 sm:h-64 sm:w-64 object-contain opacity-80 pointer-events-none"
+                        style={{ zIndex: 1 }}
+                      />
             )}
             <div className="relative z-10 w-full">
               <h3 className="text-2xl font-bold text-black mb-2">{title}</h3>

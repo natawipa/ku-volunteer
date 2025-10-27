@@ -58,32 +58,32 @@ export function formatPostedTime(date?: string): string {
 const categoryBackgrounds: Record<string, { color: string; backgroundBrain: string }> = {
   "University Activities": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
-    backgroundBrain: "/brainread.svg",
+    backgroundBrain: "/brain-read.svg",
   },
   "Enhance Competencies": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    backgroundBrain: "/brain-think.svg",
   },
   "Social Engagement Activities": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
-    backgroundBrain: "/brainlove.svg",
+    backgroundBrain: "/brain-smart.svg",
   },
   // Enhance Competencies subcategories
   "Development of Morality and Ethics": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    backgroundBrain: "/brain-think.svg",
   },
   "Development of Thinking and Learning Skills": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    backgroundBrain: "/brain-think.svg",
   },
   "Development of Interpersonal Skills and Relationship Building": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    backgroundBrain: "/brain-think.svg",
   },
   "Development of Health and Well-being": {
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    backgroundBrain: "/brain-think.svg",
   },
 };
 

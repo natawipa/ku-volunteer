@@ -22,7 +22,7 @@ const transformActivityToEvent = (activity: Activity) => {
       dateEnd: new Date().toLocaleDateString('en-GB'),
       location: 'Unknown Location',
       category: [],
-      imgSrc: "/titleExample.jpg",
+      imgSrc: "/default-event.jpg",
       capacity: 0,
       status: 'unknown'
     };
@@ -36,7 +36,7 @@ const transformActivityToEvent = (activity: Activity) => {
     dateEnd: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
     location: activity.location || 'Unknown Location',
     category: activity.categories || [],
-    imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/titleExample.jpg",
+    imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/default-event.jpg",
     capacity: activity.max_participants || 0,
     status: activity.status === "open" ? "upcoming" : activity.status || 'unknown',
   };
@@ -119,8 +119,8 @@ export default function UniversityActivitiesPage() {
 
   // Get logo based on user role
   const getLogo = () => {
-    if (!isAuthenticated) return "/Logo_Kasetsart.svg";
-    return userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/Logo_Kasetsart.svg";
+    if (!isAuthenticated) return "/logo-kasetsart.svg";
+    return userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/logo-kasetsart.svg";
   };
 
   // Get navigation for authenticated users
@@ -263,7 +263,7 @@ export default function UniversityActivitiesPage() {
               <p className="text-gray-700">Official university events, ceremonies, and campus activities</p>
             </div>
             <Image
-              src="/brainread.svg"
+              src="/brain-read.svg"
               alt="brain icon"
               width={80}
               height={80}

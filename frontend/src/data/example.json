@@ -7,7 +7,7 @@
       "post": "10/09/2025",
       "location": "Bangkok",
       "category": ["กิจกรรมมหาวิทยาลัย", "เพื่อสังคม"],
-      "imgSrc": "/titleExample.jpg",
+      "imgSrc": "/default-event.jpg",
       "capacity": 30,
       "status": "upcoming"
     },
@@ -18,7 +18,7 @@
       "post": "15/09/2025",
       "location": "KU Campus",
       "category": ["เสริมสร้างสมรรถนะ"],
-      "imgSrc": "/titleExample2.jpg",
+      "imgSrc": "/default-event2.jpg",
       "capacity": 25,
       "status": "during"
     },
@@ -29,7 +29,7 @@
       "post": "20/10/2025",
       "location": "KU Campus",
       "category": ["เพื่อสังคม"],
-      "imgSrc": "/titleExample3.jpg",
+      "imgSrc": "/default-event3.jpg",
       "capacity": 10,
       "status": "complete"
     }

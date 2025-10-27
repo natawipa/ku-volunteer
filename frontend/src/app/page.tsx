@@ -34,7 +34,7 @@ const transformActivityToEvent = (activity: Activity): EventCardData => {
       dateEnd: now,
       location: "Unknown Location",
       category: [],
-      imgSrc: "/titleExample.jpg",
+      imgSrc: "/default-event.jpg",
       status: "unknown",
       posted_at: new Date().toISOString(),
     };
@@ -54,7 +54,7 @@ const transformActivityToEvent = (activity: Activity): EventCardData => {
     imgSrc:
       activity.cover_image_url ||
       activity.cover_image ||
-      "/titleExample.jpg",
+      "/default-event.jpg",
     status: activity.status === "open" ? "upcoming" : activity.status ?? "unknown",
     posted_at: activity.created_at ?? new Date().toISOString(),
   };
@@ -64,13 +64,13 @@ const EVENT_TYPE_DEFINITIONS = [
   {
     title: "University Activities",
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
-    backgroundBrain: "/brainread.svg",
+    backgroundBrain: "/brain-read.svg",
     match: (cat: string) => cat.includes("University Activities"),
   },
   {
     title: "Enhance Competencies",
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
-    backgroundBrain: "/brainthink.svg",
+    backgroundBrain: "/brain-think.svg",
     match: (cat: string) =>
       [
         "Development of Morality",
@@ -82,7 +82,7 @@ const EVENT_TYPE_DEFINITIONS = [
   {
     title: "Social Engagement Activities",
     color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
-    backgroundBrain: "/brainlove.svg",
+    backgroundBrain: "/brain-smart.svg",
     match: (cat: string) => cat.includes("Social Engagement Activities"),
   },
 ];
@@ -200,14 +200,14 @@ export default function Home() {
   }));
 
   const getLogoSrc = () => {
-    if (!isAuthenticated) return "/Logo_Kasetsart.svg";
+    if (!isAuthenticated) return "/logo-kasetsart.svg";
     switch (userRole) {
       case USER_ROLES.ORGANIZER:
-        return "/Logo_Organizer.svg";
+        return "/logo-organizer.svg";
       case USER_ROLES.STUDENT:
-        return "/Logo_Student.svg";
+        return "/logo-student.svg";
       default:
-        return "/Logo_Kasetsart.svg";
+        return "/logo-kasetsart.svg";
     }
   };
 

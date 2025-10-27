@@ -54,7 +54,7 @@ export default function Page({ params }: PageProps) {
 
   // Helper to normalize image URLs
   function normalizeUrl(url: string) {
-      if (!url) return '/titleExample.jpg';
+      if (!url) return '/default-event.jpg';
       // If already absolute
       try {
         const parsed = new URL(url);
@@ -93,7 +93,7 @@ export default function Page({ params }: PageProps) {
         const first = posters.find(p => typeof p.image === 'string' && p.image.length > 0);
         if (first && first.image) return normalizeUrl(first.image);
       }
-      return "/titleExample.jpg";
+      return "/default-event.jpg";
     })(),
     // gallery images: posters take precedence; if none, show no gallery
     additionalImages: (() => {
@@ -177,7 +177,7 @@ export default function Page({ params }: PageProps) {
       <Image src="/mountain.svg" alt="mountain" width={920} height={410} className="w-full h-[200px] absolute inset-0 top-0 object-cover" />
       <div className="relative p-6"> 
         <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/Logo_Kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
+          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
           <nav className="flex items-center space-x-8">
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
             <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
@@ -212,7 +212,7 @@ export default function Page({ params }: PageProps) {
               <div className="overflow-x-auto scrollbar-hide">
                 <div className="flex space-x-4 p-2 min-w-full md:justify-center">
                   {legacyEvent.additionalImages?.map((img: string, index: number) => {
-                    const resolved = normalizeUrl(img || '/titleExample.jpg');
+                    const resolved = normalizeUrl(img || '/default-event.jpg');
                     return (
                       <div key={index} className="flex-shrink-0">
                         <Image
