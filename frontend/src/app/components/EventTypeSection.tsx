@@ -13,9 +13,9 @@ interface EventTypeSectionProps {
 // Map event type titles to their respective routes
 const getEventTypeRoute = (title: string): string => {
   const routeMap: { [key: string]: string } = {
-    "University Activities": "/event-type/university",
-    "Enhance Competencies": "/event-type/enhance", 
-    "Social Engagement Activities": "/event-type/social"
+    "University Activities": "/university-activities",
+    "Enhance Competencies": "/enhance-competencies", 
+    "Social Engagement Activities": "/social-engagement-activities"
   };
   return routeMap[title] || "/";
 };
@@ -48,7 +48,7 @@ export default function EventTypeSection({ title, events }: EventTypeSectionProp
         {/* Event preview - Show only the most recent event */}
         <div className="mt-8">
           <div className={`relative rounded-lg pt-2 pb-8 px-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
-            {/* Large background image accent */}
+            {/* Brain background image */}
               {bgConfig.backgroundBrain && (
                       <Image
                         src={bgConfig.backgroundBrain}
@@ -82,7 +82,6 @@ export default function EventTypeSection({ title, events }: EventTypeSectionProp
             </div>
           </div>
         </div>
-        {/* No bottom button if no events */}
       </Link>
     </div>
   );
