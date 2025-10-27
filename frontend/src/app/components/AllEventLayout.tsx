@@ -1,12 +1,9 @@
 "use client";
 import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
 import SearchCard from '@/app/components/SearchCard';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { PlusIcon } from '@heroicons/react/24/solid';
-import { USER_ROLES } from '@/lib/constants';
-import ProfileCard from './ProfileCard';
+import Header from './Header';
 
 interface AdminLayoutProps {
   title?: string;
@@ -219,117 +216,12 @@ const handleDateEndChange = (date: string) => {
 
   return (
     <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      {/* Mountain backdrop */}
-      <Image src="/mountain.svg" alt="mountain" width={1920} height={510} className="w-full h-[510px] absolute inset-0 top-0 object-cover pt-11" />
-
-      {/* Foreground content */}
-      <div className={`relative p-6 ${containerClassName || ''}`}> 
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" 
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-              {(userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT) ? "My Event" : "All Event"}
-            </Link>        
-              {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.ADMIN && (
-              <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                        hover:bg-[#00361C]
-                        transition-all duration-200">
-                <div className="flex items-center">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                <span className="mr-1">New</span>
-                </div>
-              </Link>
-        )}
-        <ProfileCard/>
-      </nav>
-        </header>
-
-        {/* Center Logo */}
-        <div className="flex justify-center">
-          <Image src="/logo-kasetsart.svg" alt="Big Logo" width={180} height={180} className="object-cover" />
-        </div>
-
-        {/* Search Area */}
-        {!hideSearch && searchVariant === 'compact' && (
-          <section className={`transition-all duration-300 z-40 ${isScrolled ? 'sticky top-14 w-full px-4' : 'relative flex justify-center'} mb-6`}>
-            <div
-              ref={wrapperRef}
-              className={`transition-all duration-300 ${isScrolled ? 'max-w-md mx-auto scale-90' : 'relative w-full max-w-xl'}`}
-            >
-              <div
-                className="flex bg-white items-center rounded-md px-4 py-3 shadow-md cursor-text"
-                onClick={() => setIsOpen(true)}
-              >
-                <MagnifyingGlassIcon className="text-gray-400 w-5 h-5" />
-                <input
-                  type="text"
-                  value={searchValue}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
-                  placeholder={searchPlaceholder}
-                  className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none text-sm"
-                  onFocus={() => setIsOpen(true)}
-                  onKeyDown={e => {
-                    if (e.key === 'Enter') {
-                      handleApply();
-                    }
-                  }}
-                />
-                {searchValue && (
-                  <button
-                    type="button"
-                    aria-label="Clear search"
-                    className="ml-2 text-gray-400 hover:text-gray-600 focus:outline-none"
-                    onClick={() => {
-                      handleSearchChange("");
-                      handleApply();
-                    }}
-                  >
-                    &#10005;
-                  </button>
-                )}
-                <div className="h-6 w-[1px] bg-gray-200 mx-2" />
-                <ChevronDownIcon className="text-gray-400 w-5 h-5 ml-2 opacity-60" />
-              </div>
-              {isOpen && (
-                <div className="absolute top-full mt-1 w-full z-50">
-                  <SearchCard
-                    query={searchValue}
-                    setQuery={setSearchValue}
-                    categoriesSelected={selectedCategories}
-                    setCategoriesSelected={handleCategoriesChange}
-                    statusSelected={selectedStatus}
-                    setStatusSelected={handleStatusChange}
-                    dateStart={dateStart}
-                    setStartDate={handleDateStartChange}
-                    dateEnd={dateEnd}
-                    setEndDate={handleDateEndChange}
-                    endAfterChecked={endAfterChecked}
-                    setEndAfterChecked={setEndAfterChecked}
-                    history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
-                    setHistory={h => setSearchHistory(h.map(item => item.query))}
-                    onSelectHistory={item => {
-                      setSearchValue(item.query);
-                      handleApply(item.query);
-                      setIsOpen(false);
-                    }}
-                    
-                    onApply={() => {
-                      setIsOpen(false);
-                      handleApply();
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </section>
-        )}
-
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
+        <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+      <div className="relative p-6">
+        <Header showBigLogo={true} showSearch={true} />
         {!hideTitle && title && <h1 className="font-bold mb-6 text-2xl pt-4">{title}</h1>}
-
         {children}
       </div>
     </div>

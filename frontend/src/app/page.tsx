@@ -3,6 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 
 import { auth } from "../lib/utils";
+import { USER_ROLES } from "../lib/constants";
 import { activitiesApi } from "../lib/activities";
 import type { Activity } from "../lib/types";
 
@@ -10,6 +11,8 @@ import EventTypeSection from "./components/EventTypeSection";
 import EventCardSquare from "./components/EventCard/EventCardSquare";
 import type { EventCardData } from "./components/EventCard/utils";
 import Header from "./components/Header";
+import AdminLayout from "./admin/components/AdminLayout";
+import AdminContent from "./admin/AdminContent";
 
 // Transform backend activity to frontend card format
 const transformActivityToEvent = (activity: Activity): EventCardData => {
@@ -111,7 +114,7 @@ function SectionUpcomingEvents({
 export default function Home() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -163,6 +166,15 @@ export default function Home() {
       (e) => Array.isArray(e.category) && e.category.some(type.match)
     ),
   }));
+
+    // Admin View
+  if (isAuthenticated && userRole === USER_ROLES.ADMIN) {
+    return (
+      <AdminLayout>
+        <AdminContent />
+      </AdminLayout>
+    );
+  }
 
 // 🏠 Main Home Page Render
   return (

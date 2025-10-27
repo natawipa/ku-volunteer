@@ -340,7 +340,7 @@ function ActivityFormContent() {
   const handleSave = async () => {
     if (!validate()) return;
   
-    if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
+    if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole != USER_ROLES.ADMIN) {
       alert("You must be logged in as an organizer to manage activities");
       return;
     }
@@ -486,7 +486,7 @@ function ActivityFormContent() {
   }
 
   // Show error if not authorized
-  if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
+  if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole !== USER_ROLES.ADMIN) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -515,6 +515,7 @@ function ActivityFormContent() {
         height={510}
         className="absolute inset-0 top-0 w-full h-[120px] object-cover pt-11"
       />
+
       <Header />
 
         {/* Activity Form Container */}

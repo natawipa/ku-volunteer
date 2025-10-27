@@ -2,9 +2,8 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import Link from "next/link";
+import Header from "@/app/components/Header";
 import { useRouter } from "next/navigation";
-import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
 import { activitiesApi } from "@/lib/activities";
 import type { Activity } from '@/lib/types';
 import { ENV, API_ENDPOINTS } from "@/lib/constants";
@@ -244,23 +243,11 @@ export default function Page({ params }: PageProps) {
       />
 
       <div className="relative p-6">
-        {/* Header */}
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document">Document</Link>
-            <Link href="/all-events">All Event</Link>
-            <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C]">
-              <div className="flex items-center">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                <span>New</span>
-              </div>
-            </Link>
-            <Link href="/profile">
-              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C]" />
-            </Link>
-          </nav>
-        </header>
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
+        <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+        <div className="relative p-6">
+        <Header showBigLogo={true}/>
 
         {/* Event Detail Card */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
@@ -380,6 +367,7 @@ export default function Page({ params }: PageProps) {
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

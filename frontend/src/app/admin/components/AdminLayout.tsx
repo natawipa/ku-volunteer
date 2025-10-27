@@ -2,10 +2,8 @@
 import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
 import { usePathname } from 'next/navigation';
 import Image from 'next/image';
-import Link from 'next/link';
-import ProfileCard from "@/app/components/ProfileCard";
+import Header from '@/app/components/Header';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-import { PlusIcon } from '@heroicons/react/24/solid';
 
 import SearchCard from '@/app/components/SearchCard';
 
@@ -150,34 +148,11 @@ export default function AdminLayout({
 
   return (
     <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      {/* Mountain backdrop */}
-      <Image src="/mountain.svg" alt="mountain" width={1920} height={510} className="w-full h-[510px] absolute inset-0 top-0 object-cover pt-11" />
-
-      {/* Foreground content */}
-      <div className={`relative p-6 ${containerClassName || ''}`}> 
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-            <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-            <div className="flex items-center">
-            <PlusIcon className="w-4 h-4 mr-2" />
-            <span className="mr-1">New</span>
-            </div>
-          </Link>
-        <ProfileCard/>
-          </nav>
-        </header>
-
-        {/* Center Logo */}
-        <div className="flex justify-center">
-          <Image src="/logo-kasetsart.svg" alt="Big Logo" width={180} height={180} className="object-cover" />
-        </div>
+        {/* Background */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
+        <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+      <div className="relative p-6">
+        <Header showBigLogo={true} />
 
         {/* Search Area */}
         {!hideSearch && searchVariant === 'compact' && pathname !== '/' && (

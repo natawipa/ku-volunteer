@@ -2,8 +2,7 @@
 
 import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
-import Link from "next/link";
-import { UserCircleIcon } from "@heroicons/react/24/outline";
+import Header from "../components/Header";
 import { useSearchParams, useRouter } from "next/navigation";
 
 interface ActivityData { 
@@ -105,30 +104,13 @@ function DeleteConfirmationContent() {
       />
 
       <div className="relative p-6">
-        <header className="flex justify-between items-center mb-8">
-          <Image
-            src="/logo-organizer.svg"
-            alt="Small Logo"
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-              Document
-            </Link>
-            <Link href="/all-activities" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-              All Activities
-            </Link>
-            <Link href="/new-event" className="btn bg-[#215701] text-white px-3 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
-              + New
-            </Link>
-            <Link href="/profile">
-              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
-            </Link>
-          </nav>
-        </header>
-
+        <div className="relative p-6">
+          {/* Background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
+          <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+          <div className="relative p-6">
+          <Header showBigLogo={true}/>
+        
         {/* Delete Confirmation Form */}
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-16">
           <h1 className="text-2xl font-semibold text-center mb-8">
@@ -220,6 +202,8 @@ function DeleteConfirmationContent() {
           </form>
         </div>
       </div>
+    </div>
+    </div>
     </div>
   );
 }

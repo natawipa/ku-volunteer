@@ -1,6 +1,5 @@
 "use client";
-import { PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
-import Link from "next/link";
+import Header from "@/app/components/Header";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { activitiesApi } from '@/lib/activities';
@@ -173,20 +172,11 @@ export default function Page({ params }: PageProps) {
 
   return (
     <div className="relative">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
-      <Image src="/mountain.svg" alt="mountain" width={920} height={410} className="w-full h-[200px] absolute inset-0 top-0 object-cover" />
-      <div className="relative p-6"> 
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-            <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
-              <div className="flex items-center"><PlusIcon className="w-4 h-4 mr-2" /><span className="mr-1">New</span></div>
-            </Link>
-            <Link href="/profile"><UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" /></Link>
-          </nav>
-        </header>
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
+      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+      <div className="relative p-6">
+      <Header showBigLogo={true}/>
 
         {message && <div className="max-w-4xl mx-auto mb-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded">{message}</div>}
         {error && <div className="max-w-4xl mx-auto mb-4 bg-red-50 border border-red-200 text-red-700 p-3 rounded">{error}</div>}
