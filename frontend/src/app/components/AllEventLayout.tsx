@@ -227,7 +227,7 @@ const handleDateEndChange = (date: string) => {
       {/* Foreground content */}
       <div className={`relative p-6 ${containerClassName || ''}`}> 
         <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/Logo_Kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
+          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} className="object-cover" />
           <nav className="flex items-center space-x-8">
             <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
             <Link href="/all-events" 
@@ -250,7 +250,7 @@ const handleDateEndChange = (date: string) => {
 
         {/* Center Logo */}
         <div className="flex justify-center">
-          <Image src="/Logo_Kasetsart.svg" alt="Big Logo" width={180} height={180} className="object-cover" />
+          <Image src="/logo-kasetsart.svg" alt="Big Logo" width={180} height={180} className="object-cover" />
         </div>
 
         {/* Search Area */}

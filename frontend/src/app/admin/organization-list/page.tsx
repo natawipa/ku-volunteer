@@ -99,7 +99,7 @@ export default function OrganizationList() {
           <div className="relative p-6"> 
             <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
               <Image
-                src="/Logo_Kasetsart.svg"
+                src="/logo-kasetsart.svg"
                 alt="Small Logo"
                 width={64}
                 height={64}

@@ -136,7 +136,7 @@ export default function Page({ params }: PageProps) {
         const first = posters.find(p => typeof p.image === 'string' && p.image.length > 0);
         if (first && first.image) return normalizeUrl(first.image);
       }
-      return "/titleExample.jpg";
+      return "/default-event.jpg";
     })(),
     // gallery images: posters take precedence; if none, show no gallery
     additionalImages: (() => {
@@ -246,7 +246,7 @@ export default function Page({ params }: PageProps) {
       <div className="relative p-6">
         {/* Header */}
         <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image src="/Logo_Kasetsart.svg" alt="Small Logo" width={64} height={64} />
+          <Image src="/logo-kasetsart.svg" alt="Small Logo" width={64} height={64} />
           <nav className="flex items-center space-x-8">
             <Link href="/document">Document</Link>
             <Link href="/all-events">All Event</Link>
