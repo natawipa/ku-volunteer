@@ -2,14 +2,11 @@
 import Link from "next/link";
 import Image from "next/image";
 import EventCardHorizontal from "./EventCard/EventCardHorizontal";
-
 import type { EventCardData } from "./EventCard/utils";
-import type { EventCardHorizontalProps } from "./EventCard/EventCardHorizontal";
+import { CircleChevronRight } from "lucide-react";
 
 interface EventTypeSectionProps {
   title: string;
-  color: string;
-  backgroundBrain: string;
   events: EventCardData[];
 }
 
@@ -23,7 +20,7 @@ const getEventTypeRoute = (title: string): string => {
   return routeMap[title] || "/";
 };
 
-export default function EventTypeSection({ title, color, backgroundBrain, events }: EventTypeSectionProps) {
+export default function EventTypeSection({ title, events }: EventTypeSectionProps) {
   // Get gradient and background image from category backgrounds
   const categoryBackgrounds: Record<string, { color: string; backgroundBrain: string }> = {
     "University Activities": {
@@ -49,44 +46,43 @@ export default function EventTypeSection({ title, color, backgroundBrain, events
     <div className="mb-8">
       <Link href={route} className="block">
         {/* Event preview - Show only the most recent event */}
-        <div className="mt-4">
-          <div className={`relative rounded-lg p-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
+        <div className="mt-8">
+          <div className={`relative rounded-lg pt-2 pb-8 px-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
             {/* Large background image accent */}
               {bgConfig.backgroundBrain && (
-                      <img
+                      <Image
                         src={bgConfig.backgroundBrain}
                         alt="background accent"
+                        width={256}
+                        height={256}
                         className="absolute right-6 bottom-0 h-52 w-52 sm:h-64 sm:w-64 object-contain opacity-80 pointer-events-none"
                         style={{ zIndex: 1 }}
+                        priority
                       />
             )}
             <div className="relative z-10 w-full">
-              <h3 className="text-2xl font-bold text-black mb-2">{title}</h3>
+              <div className="flex items-center justify-between pt-2 mb-2">
+                <h3 className="text-2xl font-bold text-black">{title}</h3>
+                {mostRecentEvent && (
+                  <span className="flex items-center gap-2 text-black font-medium text-base transition-colors cursor-pointer hover:text-gray-500">
+                    View All ({events.length}) <CircleChevronRight size={20} />
+                  </span>
+                )}
+              </div>
               {/* Transparent card, no image or empty state */}
               {mostRecentEvent ? (
                 <div className="bg-transparent shadow-none">
                   <EventCardHorizontal event={{ ...mostRecentEvent, imgSrc: mostRecentEvent.imgSrc }} gradientBgClass="bg-transparent" showShadow={false} />
                 </div>
               ) : (
-                <div className="flex flex-col items-center justify-center h-full">
+                <div className="flex flex-col items-center justify-center min-h-[120px] w-full bg-transparent rounded-lg">
                   <p className="text-gray-700 font-semibold text-lg">No {title.toLowerCase()} available</p>
-                  <p className="text-sm text-gray-500 mt-2">Click to view all activities</p>
-                  <span className="inline-block text-white font-medium text-lg bg-black/20 px-4 py-2 rounded-lg hover:bg-black/30 transition-colors mt-6">
-                    View All {events.length} {title} →
-                  </span>
                 </div>
               )}
             </div>
           </div>
         </div>
-        {/* View All button for when events exist */}
-        {mostRecentEvent && (
-          <div className="text-center mt-4">
-            <span className="inline-block text-white font-medium text-lg bg-black/20 px-4 py-2 rounded-lg hover:bg-black/30 transition-colors">
-              View All {events.length} {title} →
-            </span>
-          </div>
-        )}
+        {/* No bottom button if no events */}
       </Link>
     </div>
   );
