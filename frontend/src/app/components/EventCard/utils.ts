@@ -15,26 +15,26 @@ export interface EventCardData {
 }
 
 export const statusColors: Record<string, string> = {
-  pending: 'bg-yellow-500',
-  open: 'bg-yellow-500',
-  full: 'bg-yellow-500',
-  closed: 'bg-yellow-400',
-  canceled: 'bg-yellow-500',
-  rejected: 'bg-yellow-500',
-  upcoming: 'bg-red-700',
-  during: 'bg-indigo-600',
-  complete: 'bg-green-600',
+pending: 'bg-gray-400',     
+open: 'bg-blue-500',
+full: 'bg-sky-500',
+closed: 'bg-gray-700',    
+cancelled: 'bg-red-600',
+rejected: 'bg-red-600',
+upcoming: 'bg-amber-300',
+during: 'bg-indigo-500',
+complete: 'bg-emerald-600',
 };
 
 export const categoryColors: Record<string, string> = {
   'University Activities': 'bg-[#B3E6FF]',
-  'Social Engagement Activities': 'bg-[#FFEA47]',
-  'Enhance Competencies': 'bg-[#FFBDBE]',
+  'Social Engagement Activities': 'bg-[#FFBDBE]',
+  'Enhance Competencies': 'bg-[#FFEA47]',
   // Enhance Competencies subcategories
-  'Development of Morality and Ethics': 'bg-[#FFBDBE]',
-  'Development of Thinking and Learning Skills': 'bg-[#FFBDBE]',
-  'Development of Interpersonal Skills and Relationship Building': 'bg-[#FFBDBE]',
-  'Development of Health and Well-being': 'bg-[#FFBDBE]',
+  'Development of Morality and Ethics': 'bg-[#FFEA47]',
+  'Development of Thinking and Learning Skills': 'bg-[#FFEA47]',
+  'Development of Interpersonal Skills and Relationship Building': 'bg-[#FFEA47]',
+  'Development of Health and Well-being': 'bg-[#FFEA47]',
 };
 
 export function formatDate(dateString: string): string {

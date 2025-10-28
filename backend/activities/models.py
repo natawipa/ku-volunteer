@@ -21,6 +21,39 @@ def activity_poster_image_path(instance, filename):
 
 
 class Activity(models.Model):
+    def auto_update_status(self):
+        """
+        Automatically update status based on current time and activity dates.
+        - upcoming: before start_at, within 1 week
+        - during: between start_at and end_at
+        - complete: after end_at
+        Only updates if status is open or upcoming/during/complete.
+        """
+        from config.constants import ActivityStatus
+        now = timezone.now()
+        if self.status in [ActivityStatus.OPEN, 'upcoming', 'during', 'complete']:
+            # Upcoming: before start, within 1 week
+            if self.start_at > now:
+                delta = self.start_at - now
+                if delta.days < 7:
+                    if self.status != 'upcoming':
+                        self.status = 'upcoming'
+                        self.save(update_fields=['status'])
+                else:
+                    if self.status != ActivityStatus.OPEN:
+                        self.status = ActivityStatus.OPEN
+                        self.save(update_fields=['status'])
+            # During: between start and end
+            elif self.start_at <= now <= self.end_at:
+                if self.status != 'during':
+                    self.status = 'during'
+                    self.save(update_fields=['status'])
+            # Complete: after end
+            elif now > self.end_at:
+                if self.status != 'complete':
+                    self.status = 'complete'
+                    self.save(update_fields=['status'])
+
     """Model representing a volunteer activity."""
 
     organizer_profile = models.ForeignKey(
@@ -72,7 +105,8 @@ class Activity(models.Model):
         verbose_name_plural = "Activities"
 
     def __str__(self) -> str:
-        return f"{self.title} ({self.get_status_display()})"
+            self.auto_update_status()
+            return f"{self.title} ({self.get_status_display()})"
 
     def clean(self) -> None:
         """Validate the activity model."""
@@ -123,11 +157,13 @@ class Activity(models.Model):
     @property
     def is_active(self) -> bool:
         """Return True if activity is currently active."""
+        self.auto_update_status()
         return self.status == ActivityStatus.OPEN
 
     @property
     def is_past(self) -> bool:
         """Return True if activity has ended."""
+        self.auto_update_status()
         return self.end_at < timezone.now()
 
 

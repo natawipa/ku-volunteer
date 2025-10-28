@@ -51,7 +51,7 @@ const transformActivityToEvent = (activity: Activity): EventCardData => {
       activity.cover_image_url ||
       activity.cover_image ||
       "/default-event.jpg",
-    status: activity.status === "open" ? "upcoming" : activity.status ?? "unknown",
+    status: activity.status ?? "unknown",
     posted_at: activity.created_at ?? new Date().toISOString(),
   };
 };
