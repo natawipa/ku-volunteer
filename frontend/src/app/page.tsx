@@ -4,6 +4,7 @@ import { useRef, useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Plus } from "lucide-react";
+import NotificationBell from "./components/NotificationBell";
 
 import { auth } from "../lib/utils";
 import { USER_ROLES } from "../lib/constants";
@@ -237,6 +238,7 @@ export default function Home() {
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
+          <NotificationBell />
           <ProfileCard />
         </nav>
       );
@@ -245,6 +247,7 @@ export default function Home() {
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
+          <NotificationBell />
           <CreateButton />
           <ProfileCard />
         </nav>
@@ -291,7 +294,7 @@ export default function Home() {
 
         {/* Search Layout */}
         {!loading && !error && (
-          <section className="sticky top-10 z-[101]">
+          <section className="sticky top-10 z-50">
             <SearchLayout
               activities={activities}
               setIsSearchActive={setIsSearchActive}

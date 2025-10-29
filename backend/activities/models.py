@@ -185,8 +185,11 @@ class ActivityDeletionRequest(models.Model):
     """Model representing a request to delete an activity."""
 
     activity = models.ForeignKey(
-        Activity, on_delete=models.CASCADE, related_name='deletion_requests'
+        Activity, on_delete=models.SET_NULL, related_name='deletion_requests',
+        null=True, blank=True
     )
+    activity_title = models.CharField(max_length=255, blank=True)  # Store title for notifications after deletion
+    organizer_profile_id = models.IntegerField(null=True, blank=True)  # Store organizer ID for filtering after deletion
     reason = models.TextField()
     status = models.CharField(
         max_length=20,
@@ -217,7 +220,17 @@ class ActivityDeletionRequest(models.Model):
         verbose_name_plural = "Activity Deletion Requests"
 
     def __str__(self) -> str:
-        return f"Deletion request for {self.activity_id} ({self.get_status_display()})"
+        title = self.activity_title or (self.activity.title if self.activity else "Unknown")
+        return f"Deletion request for {title} ({self.get_status_display()})"
+    
+    def save(self, *args, **kwargs):
+        """Store activity title and organizer profile ID if not already set."""
+        if self.activity:
+            if not self.activity_title:
+                self.activity_title = self.activity.title
+            if not self.organizer_profile_id:
+                self.organizer_profile_id = self.activity.organizer_profile_id
+        super().save(*args, **kwargs)
 
     def approve(self, reviewer, note: Optional[str] = None) -> None:
         """Approve the deletion request."""
@@ -241,9 +254,13 @@ class Application(models.Model):
 
     activity = models.ForeignKey(
         Activity,
-        on_delete=models.CASCADE,
-        related_name='applications'
+        on_delete=models.SET_NULL,
+        related_name='applications',
+        null=True,
+        blank=True
     )
+    activity_title = models.CharField(max_length=255, blank=True)  # Store title for notifications after deletion
+    activity_id_stored = models.IntegerField(null=True, blank=True)  # Store activity ID for reference after deletion
     student = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
@@ -282,7 +299,16 @@ class Application(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.student.email} -> {self.activity.title} ({self.get_status_display()})"
+        title = self.activity_title or (self.activity.title if self.activity else "Deleted Activity")
+        return f"{self.student.email} -> {title} ({self.get_status_display()})"
+
+    def save(self, *args, **kwargs):
+        """Store activity title and ID before saving."""
+        if self.activity and not self.activity_title:
+            self.activity_title = self.activity.title
+        if self.activity and not self.activity_id_stored:
+            self.activity_id_stored = self.activity.id
+        super().save(*args, **kwargs)
 
     def clean(self) -> None:
         """Validate the application model."""

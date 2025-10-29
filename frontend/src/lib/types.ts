@@ -92,9 +92,10 @@ export type ApplicationAction = 'approve' | 'reject';
 
 export interface ActivityApplication {
   id: number;
-  activity: number; // Activity ID
-  activity_id?: number;
+  activity: number | null; // Activity ID (null if activity was deleted)
+  activity_id?: number; // serialized data
   activity_title?: string;
+  activity_id_stored?: number; // Stored activity ID (persists after deletion)
 
   studentid: number;
   student_email?: string;

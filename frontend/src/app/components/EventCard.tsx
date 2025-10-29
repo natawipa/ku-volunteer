@@ -1,7 +1,10 @@
 import { CalendarIcon } from "@heroicons/react/24/outline";
 import { useRouter } from 'next/navigation';
 import { auth } from '../../lib/utils';
+import { getPendingApplicationsForActivity } from '../../lib/notifications';
+import { USER_ROLES } from '../../lib/constants';
 import Image from 'next/image';
+import { useState, useEffect } from 'react';
 
 export interface EventCardProps {
   id: number;
@@ -31,6 +34,24 @@ const categoryColors: Record<string, string> = {
 const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, category, imgSrc, status 
 }) => {
   const router = useRouter();
+  const [pendingCount, setPendingCount] = useState(0);
+  const userRole = auth.getUserRole();
+  const isOrganizer = userRole === USER_ROLES.ORGANIZER;
+
+  // Fetch pending applications count for organizers
+  useEffect(() => {
+    if (isOrganizer) {
+      const fetchPending = async () => {
+        try {
+          const count = await getPendingApplicationsForActivity(id);
+          setPendingCount(count);
+        } catch (error) {
+          console.error('Error fetching pending count:', error);
+        }
+      };
+      fetchPending();
+    }
+  }, [id, isOrganizer]);
 
   const handleClick = (e: React.MouseEvent) => {
     // If user is not authenticated, redirect to login instead of going to detail
@@ -63,6 +84,13 @@ const EventCard: React.FC<EventCardProps> = ({ id,title, dateStart, dateEnd, cat
           className={`absolute font-bold top-4 right-4 text-white text-sm px-2 py-1 rounded-tl-[5px] rounded-tr-[5px] rounded-bl-[20px] rounded-br-[5px] ${statusColors[status]}`}
         >
           {status}
+        </span>
+      )}
+
+      {/* Pending Applications Badge (for organizers) */}
+      {isOrganizer && pendingCount > 0 && (
+        <span className="absolute top-2 left-2 inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-[#DC143C] rounded-full shadow-md">
+          {pendingCount}
         </span>
       )}
 

@@ -66,7 +66,7 @@ class ActivityWriteSerializer(serializers.ModelSerializer):
 
 
 class ActivityDeletionRequestSerializer(serializers.ModelSerializer):
-    activity_title = serializers.CharField(source='activity.title', read_only=True)
+    activity_title = serializers.SerializerMethodField()
     requested_by_email = serializers.EmailField(source='requested_by.email', read_only=True)
 
     class Meta:
@@ -76,13 +76,22 @@ class ActivityDeletionRequestSerializer(serializers.ModelSerializer):
             'requested_at', 'reviewed_by', 'reviewed_at', 'review_note'
         ]
         read_only_fields = ['status', 'requested_at', 'reviewed_by', 'reviewed_at']
+    
+    def get_activity_title(self, obj):
+        """Get activity title from stored field or from activity if still exists."""
+        if obj.activity_title:
+            return obj.activity_title
+        if obj.activity:
+            return obj.activity.title
+        return "Deleted Activity"
 
 
 class ApplicationSerializer(serializers.ModelSerializer):
     """Serializer for reading Application data."""
     
-    activity_title = serializers.CharField(source='activity.title', read_only=True)
-    activity_id = serializers.IntegerField(source='activity.id', read_only=True)
+    activity_title = serializers.SerializerMethodField()
+    activity_id = serializers.SerializerMethodField()
+    activity_id_stored = serializers.IntegerField(read_only=True)
     student_email = serializers.EmailField(source='student.email', read_only=True)
     student_name = serializers.SerializerMethodField()
     decision_by_email = serializers.EmailField(source='decision_by.email', read_only=True, allow_null=True)
@@ -90,15 +99,28 @@ class ApplicationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Application
         fields = [
-            'id', 'activity', 'activity_id', 'activity_title',
+            'id', 'activity', 'activity_id', 'activity_title', 'activity_id_stored',
             'student', 'student_email', 'student_name',
             'status', 'submitted_at', 'decision_at',
             'decision_by', 'decision_by_email', 'notes'
         ]
         read_only_fields = [
-            'id', 'activity_id', 'activity_title', 'student_email', 'student_name',
+            'id', 'activity_id', 'activity_title', 'activity_id_stored',
+            'student_email', 'student_name',
             'status', 'submitted_at', 'decision_at', 'decision_by', 'decision_by_email', 'notes'
         ]
+
+    def get_activity_title(self, obj):
+        """Get activity title, falling back to stored title if activity is deleted."""
+        if obj.activity:
+            return obj.activity.title
+        return obj.activity_title or "Deleted Activity"
+    
+    def get_activity_id(self, obj):
+        """Get activity ID, falling back to stored ID if activity is deleted."""
+        if obj.activity:
+            return obj.activity.id
+        return obj.activity_id_stored
 
     def get_student_name(self, obj):
         """Get student's full name or email."""
