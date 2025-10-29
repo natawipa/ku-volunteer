@@ -146,7 +146,7 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
       <div className="relative p-6"> 
         <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
           <Image
-            src="/Logo_Kasetsart.svg"
+            src="/logo-kasetsart.svg"
             alt="Small Logo"
             width={64}
             height={64}
@@ -210,11 +210,11 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
                   <div className="relative h-48">
                     {(() => {
                       // Prefer cover_image first, then cover_image_url, then poster_images, then fallback
-                      const raw = event.cover_image || event.cover_image_url || "/titleExample.jpg";
+                      const raw = event.cover_image || event.cover_image_url || "/default-event.jpg";
                       if (raw && typeof raw === 'string') {
                         // If this is the local placeholder image in the frontend public folder,
                         // don't normalize (normalizeUrl prefixes non-media paths with the API base).
-                        if (raw === "/titleExample.jpg" || raw.endsWith("/titleExample.jpg")) {
+                        if (raw === "/default-event.jpg" || raw.endsWith("/default-event.jpg")) {
                           return (
                             <Image
                               src={raw}
@@ -255,7 +255,7 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
 
                       return (
                         <Image
-                          src={'/titleExample.jpg'}
+                          src={'/default-event.jpg'}
                           alt={event.title || 'Event image'}
                           fill
                           className="object-cover"

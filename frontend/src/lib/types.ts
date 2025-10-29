@@ -1,3 +1,7 @@
+/** ===============================
+ *  USER & AUTH TYPES
+ *  =============================== */
+
 export interface User {
   id: number;
   email: string;
@@ -10,7 +14,40 @@ export interface User {
   updated_at: string;
 }
 
-// Activity types
+export interface LoginFormData {
+  email: string;
+  password: string;
+}
+
+export interface RegisterFormData {
+  email: string;
+  password: string;
+  confirmPassword: string;
+  first_name: string;
+  last_name: string;
+  role: string;
+
+  // Student fields
+  student_id_external?: string;
+  year?: number;
+  faculty?: string;
+  major?: string;
+
+  // Organizer fields
+  organization_type?: string;
+  organization_name?: string;
+}
+
+export interface LoginResponse {
+  access: string;
+  refresh: string;
+  user: User;
+}
+
+/** ===============================
+ *  EVENT TYPES
+ *  =============================== */
+
 export interface Activity {
   id: number;
   organizer_profile_id: number;
@@ -22,18 +59,36 @@ export interface Activity {
   start_at: string;
   end_at: string;
   location: string;
-  max_participants?: number;
-  current_participants: number;
   status: string;
-  hours_awarded?: number;
-  rejection_reason?: string;
   created_at: string;
   updated_at: string;
+
+  // Optional details
+  max_participants?: number;
+  current_participants: number;
+  hours_awarded?: number;
+  rejection_reason?: string;
   requires_admin_for_delete: boolean;
   capacity_reached: boolean;
   cover_image_url?: string;
   cover_image?: string;
+  deleted?: boolean;
+  is_draft?: boolean;
+  organizer?: string;
+  participants?: number[];
+  applications?: ActivityApplication[];
 }
+
+export interface ActivityWithApplicationStatus extends Activity {
+  user_application_status: ApplicationStatus | null;
+}
+
+/** ===============================
+ *  APPLICATION TYPES
+ *  =============================== */
+
+export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
+export type ApplicationAction = 'approve' | 'reject';
 
 export interface ActivityApplication {
   id: number;
@@ -41,24 +96,28 @@ export interface ActivityApplication {
   activity_id?: number; // serialized data
   activity_title?: string;
   activity_id_stored?: number; // Stored activity ID (persists after deletion)
+
   studentid: number;
-  student_email?: string; // For serialized data
-  student_name?: string; // For serialized data
-  status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+  student_email?: string;
+  student_name?: string;
+
+  status: ApplicationStatus;
   submitted_at: string;
   decision_at?: string;
-  decision_by?: number; 
-  decision_by_email?: string; // For serialized data
-  notes?: string; // Matches your backend 'notes' field (was review_note)
+  decision_by?: number;
+  decision_by_email?: string;
+  notes?: string; // Replaces review_note
+  review_note?: string; // Deprecated backend field
+  cancelled_at?: string;
+  cancelled_by?: number;
 }
 
 export interface CreateApplicationRequest {
-  activity: number; 
+  activity: number;
 }
 
-// Application review request (for organizers)
 export interface ReviewApplicationRequest {
-  action: 'approve' | 'reject';
+  action: ApplicationAction;
   reason?: string;
 }
 
@@ -75,76 +134,37 @@ export interface ActivityApplicationWithUser extends ActivityApplication {
   };
 }
 
-export interface ActivityWithApplicationStatus extends Activity {
-  user_application_status: 'pending' | 'approved' | 'rejected' | 'cancelled' | null;
+export interface ApplicationStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
 }
 
-// Form types
-export interface LoginFormData {
-  email: string;
-  password: string;
-}
+/** ===============================
+ *  UI / COMPONENT PROP TYPES
+ *  =============================== */
 
-export interface RegisterFormData {
-  email: string;
-  password: string;
-  confirmPassword: string;
-  first_name: string;
-  last_name: string;
-  role: string;
-  // Student specific fields
-  student_id_external?: string;
-  year?: number;
-  faculty?: string;
-  major?: string;
-  // Organizer specific fields
-  organization_type?: string;
-  organization_name?: string;
-}
-
-// Event card props (legacy from current implementation)
 export interface EventCardProps {
+  id: string | number;
   title: string;
-  post: string;
+  description: string;
+  category: string | string[];
   dateStart: string;
   dateEnd: string;
   location: string;
-  category?: string[];
-  imgSrc: string;
+  organizer: string;
+  participants_count: number;
+  max_participants: number;
+  posted_at?: string;
+  imgSrc?: string;
   status?: string;
-  capacity: number;
+  cover_image_url?: string;
+  cover_image?: string;
+  current_participants?: number;
 }
 
-// API response types
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
-  message?: string;
-  success?: boolean;
-}
-
-export interface PaginatedResponse<T> {
-  count: number;
-  next?: string;
-  previous?: string;
-  results: T[];
-}
-
-export interface LoginResponse {
-  access: string;
-  refresh: string;
-  user: User;
-}
-
-// Error types
-export interface ApiError {
-  detail?: string;
-  message?: string;
-  error?: string;
-  errors?: Record<string, string[]>;
-}
-
-// Component prop types
 export interface LoadingSpinnerProps {
   size?: 'sm' | 'md' | 'lg';
   className?: string;
@@ -162,7 +182,35 @@ export interface ModalProps {
   children: React.ReactNode;
 }
 
-// Form validation types
+/** ===============================
+ *  API RESPONSE & ERROR TYPES
+ *  =============================== */
+
+export interface ApiResponse<T = unknown> {
+  data?: T;
+  error?: string;
+  message?: string;
+  success?: boolean;
+}
+
+export interface PaginatedResponse<T> {
+  count: number;
+  next?: string;
+  previous?: string;
+  results: T[];
+}
+
+export interface ApiError {
+  detail?: string;
+  message?: string;
+  error?: string;
+  errors?: Record<string, string[]>;
+}
+
+/** ===============================
+ *  FORM HANDLING & VALIDATION
+ *  =============================== */
+
 export interface ValidationError {
   field: string;
   message: string;
@@ -175,19 +223,10 @@ export interface FormState<T> {
   isValid: boolean;
 }
 
-export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
-export type ApplicationAction = 'approve' | 'reject';
+/** ===============================
+ *  DOM EVENT TYPES
+ *  =============================== */
 
-// may be add the stat but later
-export interface ApplicationStats {
-  total: number;
-  pending: number;
-  approved: number;
-  rejected: number;
-  cancelled: number;
-}
-
-// Event types for form handlers
 export type FormEvent = React.FormEvent<HTMLFormElement>;
 export type InputEvent = React.ChangeEvent<HTMLInputElement>;
 export type TextAreaEvent = React.ChangeEvent<HTMLTextAreaElement>;

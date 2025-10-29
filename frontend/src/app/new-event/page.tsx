@@ -522,7 +522,7 @@ function ActivityFormContent() {
       <div className="relative p-6">
         <header className="flex justify-between items-center">
           <Image
-            src="/Logo_Staff.svg"
+            src="/logo-organizer.svg"
             alt="Small Logo"
             width={64}
             height={64}

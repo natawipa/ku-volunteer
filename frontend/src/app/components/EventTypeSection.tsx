@@ -1,37 +1,42 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import EventCardHorizontal from "./EventCardHorizontal";
+import EventCardHorizontal from "./EventCard/EventCardHorizontal";
+import type { EventCardData } from "./EventCard/utils";
+import { CircleChevronRight } from "lucide-react";
 
 interface EventTypeSectionProps {
   title: string;
-  color: string;
-  backgroundBrain: string;
-  events: Array<{
-    id: number;
-    title: string;
-    post: string;
-    dateStart: string;
-    dateEnd: string;
-    location: string;
-    category: string[];
-    imgSrc: string;
-    capacity: number;
-    status: string;
-  }>;
+  events: EventCardData[];
 }
 
 // Map event type titles to their respective routes
 const getEventTypeRoute = (title: string): string => {
   const routeMap: { [key: string]: string } = {
-    "University Activities": "/event-type/university",
-    "Enhance Competencies": "/event-type/enhance", 
-    "Social Engagement Activities": "/event-type/social"
+    "University Activities": "/event-type/university-activities",
+    "Enhance Competencies": "/event-type/enhance-competencies",
+    "Social Engagement Activities": "/event-type/social-engagement-activities"
   };
   return routeMap[title] || "/";
 };
 
-export default function EventTypeSection({ title, color, backgroundBrain, events }: EventTypeSectionProps) {
+export default function EventTypeSection({ title, events }: EventTypeSectionProps) {
+  // Get gradient and background image from category backgrounds
+  const categoryBackgrounds: Record<string, { color: string; backgroundBrain: string }> = {
+    "University Activities": {
+      color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
+      backgroundBrain: "/brain-read.svg",
+    },
+    "Enhance Competencies": {
+      color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FFEA47]/26",
+      backgroundBrain: "/brain-think.svg",
+    },
+    "Social Engagement Activities": {
+      color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#FF999B]/26",
+      backgroundBrain: "/brain-smart.svg",
+    },
+  };
+  const bgConfig = categoryBackgrounds[title] || { color: "bg-gray-100", backgroundBrain: "" };
   const route = getEventTypeRoute(title);
   
   // Get only the most recent event (first one in the array)
@@ -39,41 +44,42 @@ export default function EventTypeSection({ title, color, backgroundBrain, events
 
   return (
     <div className="mb-8">
-      {/* Entire section wrapped in Link with gradient background */}
       <Link href={route} className="block">
-        <div className={`${color} rounded-lg p-6 cursor-pointer hover:opacity-90 transition-opacity`}>
-          
-          {/* Header section */}
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-2xl font-bold">{title}</h3>
-            <Image
-              src={backgroundBrain}
-              alt="brain icon"
-              width={80}
-              height={80}
-              className="object-contain"
-            />
-          </div>
-
-          {/* Event preview - Show only the most recent event */}
-          <div className="mt-4">
-            {mostRecentEvent ? (
-              <div className="bg-white/80 rounded-lg p-4 backdrop-blur-sm">
-                <EventCardHorizontal {...mostRecentEvent} />
-              </div>
-            ) : (
-              <div className="bg-white/80 rounded-lg p-8 text-center backdrop-blur-sm">
-                <p className="text-gray-500">No {title.toLowerCase()} available</p>
-                <p className="text-sm text-gray-400 mt-2">Click to view all activities</p>
-              </div>
+        {/* Event preview - Show only the most recent event */}
+        <div className="mt-8">
+          <div className={`relative rounded-lg pt-2 pb-8 px-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
+            {/* Brain background image */}
+              {bgConfig.backgroundBrain && (
+                      <Image
+                        src={bgConfig.backgroundBrain}
+                        alt="background accent"
+                        width={256}
+                        height={256}
+                        className="absolute right-6 bottom-0 h-52 w-52 sm:h-64 sm:w-64 object-contain opacity-80 pointer-events-none"
+                        style={{ zIndex: 1 }}
+                        priority
+                      />
             )}
-          </div>
-
-          {/* View all link */}
-          <div className="text-center mt-4 pt-4 border-t border-white/30">
-            <span className="text-white font-medium text-lg bg-black/20 px-4 py-2 rounded-lg hover:bg-black/30 transition-colors">
-              View All {events.length} {title} →
-            </span>
+            <div className="relative z-10 w-full">
+              <div className="flex items-center justify-between pt-2 mb-2">
+                <h3 className="text-2xl font-bold text-black">{title}</h3>
+                {mostRecentEvent && (
+                  <span className="flex items-center gap-2 text-black font-medium text-base transition-colors cursor-pointer hover:text-gray-500">
+                    View All ({events.length}) <CircleChevronRight size={20} />
+                  </span>
+                )}
+              </div>
+              {/* Transparent card, no image or empty state */}
+              {mostRecentEvent ? (
+                <div className="bg-transparent shadow-none">
+                  <EventCardHorizontal event={{ ...mostRecentEvent, imgSrc: mostRecentEvent.imgSrc }} gradientBgClass="bg-transparent" showShadow={false} />
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center min-h-[120px] w-full bg-transparent rounded-lg">
+                  <p className="text-gray-700 font-semibold text-lg">No {title.toLowerCase()} available</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Link>

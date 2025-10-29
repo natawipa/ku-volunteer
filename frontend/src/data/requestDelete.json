@@ -8,12 +8,12 @@
       "dateend": "2025-09-12",
       "location": "Bangkok",
       "description": "Join us for a 3-day volunteer camp in Bangkok. Activities include community service, workshops, and networking.",
-      "image": "/titleExample.jpg",
+      "image": "/default-event.jpg",
       "category": ["University Activities", "Social Impact"],
       "reason": "Help the local community",
       "capacity": 30,
       "organizer": "Kasetsart University",
-      "additionalImages": ["/brainlove.svg", "/brainread.svg", "/brainthink.svg"]
+      "additionalImages": ["/brain-smart.svg", "/brain-read.svg", "/brain-think.svg"]
     },
     {
       "id": 2,
@@ -23,7 +23,7 @@
       "dateend": "2025-09-15",
       "location": "Bangsaen Beach",
       "description": "Participate in cleaning up the beach to protect marine life. Supplies provided.",
-      "image": "/titleExample2.jpg",
+      "image": "/default-event2.jpg",
       "category": ["Environmental", "Social Impact"],
       "reason": "Protect marine ecosystem",
       "capacity": 50,
@@ -38,12 +38,12 @@
       "dateend": "2025-09-21",
       "location": "Kasetsart University, Computer Lab",
       "description": "A 2-day coding workshop for beginners to learn web development and teamwork.",
-      "image": "/titleExample3.jpg",
+      "image": "/default-event3.jpg",
       "category": ["University Activities", "Education"],
       "reason": "Improve coding skills",
       "capacity": 25,
       "organizer": "Tech Club",
-      "additionalImages": ["/brainlove.svg"]
+      "additionalImages": ["/brain-smart.svg"]
     }
   ]
 }

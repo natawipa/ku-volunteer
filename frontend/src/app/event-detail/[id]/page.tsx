@@ -604,7 +604,7 @@ export default function EventPage({ params }: PageProps) {
           const first = posters.find(p => typeof p.image === 'string' && p.image.length > 0);
           if (first && first.image) return normalizeUrl(first.image);
         }
-        return "/titleExample.jpg";
+        return "/default-event.jpg";
       })(),
       // gallery images: posters take precedence; if none, show no gallery
       additionalImages: (() => {
@@ -698,7 +698,7 @@ export default function EventPage({ params }: PageProps) {
       <div className="relative p-6"> 
         <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
           <Image
-            src={isAuthenticated && userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/Logo_Kasetsart.svg"}
+            src={isAuthenticated && userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg"}
             alt="Small Logo"
             width={64}
             height={64}

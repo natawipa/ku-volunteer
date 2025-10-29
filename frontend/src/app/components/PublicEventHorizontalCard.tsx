@@ -37,7 +37,7 @@ export default function PublicEventHorizontalCard({ event }: Props) {
         {/* Event image */}
         <div className="flex-shrink-0 w-full sm:w-28 h-40 sm:h-28 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
           <Image
-            src={event.imgSrc || "/titleExample.jpg"}
+            src={event.imgSrc || "/default-event.jpg"}
             alt={event.title}
             width={112}
             height={112}
@@ -45,7 +45,7 @@ export default function PublicEventHorizontalCard({ event }: Props) {
             unoptimized={!!event.imgSrc && event.imgSrc.startsWith('http')}
             onError={(e) => {
               const target = e.target as HTMLImageElement;
-              target.src = "/titleExample.jpg";
+              target.src = "/default-event.jpg";
             }}
           />
         </div>
