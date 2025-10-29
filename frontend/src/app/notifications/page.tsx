@@ -88,7 +88,7 @@ export default function NotificationsPage() {
   };
 
   const getLogo = () => {
-    return userRole === USER_ROLES.ORGANIZER ? "/Logo_Staff.svg" : "/Logo_Kasetsart.svg";
+    return userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg";
   };
 
   // Filter notifications

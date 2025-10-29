@@ -3,7 +3,10 @@
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Calendar } from "lucide-react";
+import { useState, useEffect } from "react";
 import { auth } from "../../../lib/utils";
+import { USER_ROLES } from "../../../lib/constants";
+import { getPendingApplicationsForActivity } from "../../../lib/notifications";
 import { EventCardData, formatDate, statusColors, categoryColors } from "./utils";
 
 export interface EventCardSquareProps {
@@ -18,6 +21,7 @@ export interface EventCardSquareProps {
   showStatus?: boolean;
   showDate?: boolean;
   showCategory?: boolean;
+  showBadge?: boolean;
 
   // Style customization
   cardPadding?: string;
@@ -37,8 +41,28 @@ export default function EventCardSquare({
   showShadow = false,
   hoverBgClass = "hover:bg-gray-100",
   hoverScale = true,
+  showBadge = true,
 }: EventCardSquareProps) {
   const router = useRouter();
+  const [pendingCount, setPendingCount] = useState(0);
+  const userRole = auth.getUserRole();
+  const isOrganizer = userRole === USER_ROLES.ORGANIZER;
+
+  // Fetch pending applications count for organizers
+  useEffect(() => {
+    if (isOrganizer && showBadge && event.id) {
+      const fetchPending = async () => {
+        try {
+          const activityId = typeof event.id === 'string' ? parseInt(event.id, 10) : event.id;
+          const count = await getPendingApplicationsForActivity(activityId);
+          setPendingCount(count);
+        } catch (error) {
+          console.error('Error fetching pending count:', error);
+        }
+      };
+      fetchPending();
+    }
+  }, [event.id, isOrganizer, showBadge]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -78,6 +102,13 @@ export default function EventCardSquare({
           }`}
         >
           {event.status}
+        </span>
+      )}
+
+      {/* Pending Applications Badge (for organizers) */}
+      {isOrganizer && showBadge && pendingCount > 0 && (
+        <span className="absolute top-2 left-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-[#DC143C] rounded-full shadow-md">
+          {pendingCount}
         </span>
       )}
 
