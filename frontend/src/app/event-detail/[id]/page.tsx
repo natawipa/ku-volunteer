@@ -9,6 +9,8 @@ import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
 import { useRouter } from "next/navigation";
 import Header from "../../components/Header";
+import Navbar from "@/app/components/Navbar";
+import HeroImage from "@/app/components/HeroImage";
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -677,10 +679,12 @@ export default function EventPage({ params }: PageProps) {
   return (
     <div className="relative">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
-      <div className="relative p-6">
-      <Header showBigLogo={true}/>
+        {/* Header */}
+        <HeroImage />
+        <Navbar />
+        <div className="relative -mt-8">
+          <Header showBigLogo={true} />
+        </div>
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
@@ -918,7 +922,6 @@ export default function EventPage({ params }: PageProps) {
           </div>
         </div>
       )}
-    </div>
     </div>
   );
 }

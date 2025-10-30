@@ -24,12 +24,12 @@ interface Event {
 const AllEventsPage: React.FC = () => {
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateStart, setDateStart] = useState('');
-  const [dateEnd, setDateEnd] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [filter, ] = useState<string>('');
+  const [searchTerm, ] = useState('');
+  const [dateStart, ] = useState('');
+  const [dateEnd, ] = useState('');
+  const [endAfterChecked, ] = useState(true);
+  const [selectedStatus, ] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -121,23 +121,6 @@ const AllEventsPage: React.FC = () => {
     <EventLayout
       title="All Events"
       hideTitle={false}
-      searchVariant="compact"
-      searchPlaceholder="Search events..."
-      searchSelectedCategories={[filter || '']}
-      initialSearchValue={searchTerm}
-      searchShowDate={true}
-      onDateStartChange={setDateStart}
-      onDateEndChange={setDateEnd}
-      endAfterChecked={endAfterChecked}
-      setEndAfterChecked={setEndAfterChecked}
-      onSearchApply={({ searchValue, selectedCategories, selectedStatus, dateStart: ds, dateEnd: de }) => {
-        setSearchTerm(searchValue);
-        const val = selectedCategories?.[0];
-        setFilter(val === 'All Categories' ? '' : (val || ''));
-        setSelectedStatus(selectedStatus || []);
-        setDateStart(ds || '');
-        setDateEnd(de || '');
-      }}
     >
       {/* Events Section */}
       {loading ? (

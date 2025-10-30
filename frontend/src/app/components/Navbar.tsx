@@ -4,10 +4,13 @@ import Link from "next/link";
 import { Plus } from "lucide-react";
 import ProfileCard from "./ProfileCard";
 import { USER_ROLES } from "../../lib/constants";
+import Image from "next/image";
+import { useEffect, useState } from "react";
+import { auth } from "@/lib/utils";
 
 interface NavbarProps {
-  isAuthenticated: boolean;
-  userRole: string | null;
+  isAuthenticated?: boolean;
+  userRole?: string | null;
 }
 
 // Navigation Link Component
@@ -39,7 +42,34 @@ const CreateButton = () => (
   </Link>
 );
 
-export default function Navbar({ isAuthenticated, userRole }: NavbarProps) {
+const getLogoSrc = (isAuthenticated: boolean, userRole: string | null) => {
+  if (!isAuthenticated) return "/logo-kasetsart.svg";
+  switch (userRole) {
+    case USER_ROLES.ORGANIZER:
+      return "/logo-organizer.svg";
+    case USER_ROLES.STUDENT:
+      return "/logo-student.svg";
+    default:
+      return "/logo-kasetsart.svg";
+  }
+};
+
+export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole: propUserRole }: NavbarProps) {
+  const [localIsAuthenticated, setLocalIsAuthenticated] = useState(false);
+  const [localUserRole, setLocalUserRole] = useState<string | null>(null);
+
+  // Check Authentication on Mount (if its not provided via props)
+  useEffect(() => {
+    if (propIsAuthenticated === undefined || propUserRole === undefined) {
+      setLocalIsAuthenticated(auth.isAuthenticated());
+      setLocalUserRole(auth.getUserRole());
+    }
+  }, [propIsAuthenticated, propUserRole]);
+
+  // use the props if provided
+  const isAuthenticated = propIsAuthenticated !== undefined ? propIsAuthenticated : localIsAuthenticated;
+  const userRole = propUserRole !== undefined ? propUserRole : localUserRole;
+
   const getNavigation = () => {
     const commonLinks = (
       <>
@@ -80,5 +110,23 @@ export default function Navbar({ isAuthenticated, userRole }: NavbarProps) {
       );
   };
 
-  return <>{getNavigation()}</>;
+  return (
+    <div className="sticky top-0 z-50 w-full">
+      <div className="absolute inset-0 bg-[#DAE9DC] w-full" 
+      style={{ width: '100vw', left: '50%', height: '80px',transform: 'translateX(-50%)' }}></div>
+    <div className="relative flex justify-between items-center w-full z-10 px-6 py-2">
+      {/* Small Logo on the left */}
+      <Image 
+        src={getLogoSrc(isAuthenticated, userRole)} 
+        alt="Small Logo" 
+        width={64}
+        height={64} 
+      />
+       <div className="flex items-center space-x-8">
+        {getNavigation()}
+      </div>
+  </div>
+    
+    </div>
+  );
 }

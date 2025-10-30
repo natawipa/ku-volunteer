@@ -1,5 +1,5 @@
 "use client";
-import { PlusIcon, UserCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { CalendarIcon, MapPinIcon, UsersIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";

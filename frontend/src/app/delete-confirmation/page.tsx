@@ -4,6 +4,8 @@ import { useState, useEffect, Suspense } from "react";
 import Image from "next/image";
 import Header from "../components/Header";
 import { useSearchParams, useRouter } from "next/navigation";
+import HeroImage from "../components/HeroImage";
+import Navbar from "../components/Navbar";
 
 interface ActivityData { 
   id: string;
@@ -105,11 +107,12 @@ function DeleteConfirmationContent() {
 
       <div className="relative p-6">
         <div className="relative p-6">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-          <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
-          <div className="relative p-6">
-          <Header showBigLogo={true}/>
+          {/* Header */}
+          <HeroImage />
+          <Navbar />
+          <div className="relative -mt-8">
+            <Header showBigLogo={true} />
+          </div>
         
         {/* Delete Confirmation Form */}
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-16">
@@ -202,7 +205,6 @@ function DeleteConfirmationContent() {
           </form>
         </div>
       </div>
-    </div>
     </div>
     </div>
   );

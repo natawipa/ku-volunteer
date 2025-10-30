@@ -7,7 +7,6 @@ import { auth } from "../../lib/utils";
 import { USER_ROLES } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
 
-import Navbar from "./Navbar";
 import SearchLayout from "./SearchLayout";
 
 interface HeaderProps {
@@ -41,7 +40,7 @@ export default function Header(props: HeaderProps){
     setUserRole(auth.getUserRole());
   }, []);
 
-  const getLogoSrc = () => {
+  const getLogoSrc = (isAuthenticated: boolean, userRole: string | null) => {
     if (!isAuthenticated) return "/logo-kasetsart.svg";
     switch (userRole) {
       case USER_ROLES.ORGANIZER:
@@ -59,34 +58,31 @@ export default function Header(props: HeaderProps){
 
   return (
     <>
-      {/* Header */}
-      <header
-        className={`flex justify-between items-center ${
-          isAuthenticated ? "sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10" : ""
-        }`}
-      >
-        <Image src={getLogoSrc()} alt="Small Logo" width={64} height={64} />
-        <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
-      </header>
+    <div className="relative mt-0">
 
-      {/* Logo Center */}
-      { shouldShowBigLogo && (
-      <div className="flex justify-center">
-        <Image src={getLogoSrc()} alt="Big Logo" width={180} height={180} />
-      </div>
+      {shouldShowBigLogo && (
+        <div className="flex items-center justify-center py-8 mt-0 relative z-10">
+          <Image
+            src={getLogoSrc(isAuthenticated, userRole)} 
+            alt="Big Logo" 
+            width={180} 
+            height={180} 
+          />
+        </div>
       )}
-
+      
       {/* Search Layout */}
       {shouldShowSearch && (
-        <section className="sticky top-10 z-[101]">
+        <div className="px-6 -mt-6 relative z-20">
           <SearchLayout
             activities={activities}
             setIsSearchActive={setIsSearchActive}
             searchInputRef={searchInputRef}
             isScrolled={isScrolled}
           />
-        </section>
+        </div>
       )}
+      </div>
     </>
   );
 }

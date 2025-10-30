@@ -9,6 +9,8 @@ import type { Activity } from "../../../lib/types";
 import type { EventCardData } from "../../components/EventCard/utils";
 import EventCardHorizontal from "../../components/EventCard/EventCardHorizontal";
 import Header from "../../components/Header";
+import Navbar from "../../components/Navbar";
+import HeroImage from "../../components/HeroImage";
 
 // Map of event type params to their display titles, gradient colors, and brain images
 const EVENT_TYPE_MAP: Record<
@@ -124,15 +126,16 @@ export default function EventTypePage() {
 
   return (
     <div className="relative">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
-    <div className="relative p-6">
-      <Header showBigLogo={true}/>
+      {/* Header */}
+      <HeroImage />
+      <Navbar />
+      <div className="relative -mt-8">
+        <Header showBigLogo={true} />
+      </div>
       
     <div className="w-full max-w-3xl mx-auto py-8 px-2 sm:px-0">
       {/* Gradient Header */}
-      <div className="relative mt-7">
+      <div className="relative mt-10">
       <div
         className={`relative rounded-lg shadow mb-8 flex items-center min-h-[110px] px-4 sm:px-8 py-4 w-full ${eventTypeConfig.color}`}
       >
@@ -220,7 +223,6 @@ export default function EventTypePage() {
           </button>
         </div>
       )}
-    </div>
     </div>
     </div>
     </div>

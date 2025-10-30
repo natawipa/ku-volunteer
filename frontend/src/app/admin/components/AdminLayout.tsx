@@ -1,7 +1,6 @@
 "use client";
 import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
 import { usePathname } from 'next/navigation';
-import Image from 'next/image';
 import Header from '@/app/components/Header';
 import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
 

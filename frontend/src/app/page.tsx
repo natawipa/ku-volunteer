@@ -13,6 +13,8 @@ import type { EventCardData } from "./components/EventCard/utils";
 import Header from "./components/Header";
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminContent from "./admin/AdminContent";
+import HeroImage from "./components/HeroImage";
+import Navbar from "./components/Navbar";
 
 // Transform backend activity to frontend card format
 const transformActivityToEvent = (activity: Activity): EventCardData => {
@@ -153,7 +155,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!isAuthenticated) return;
-    const handleScroll = () => setIsScrolled(window.scrollY > 100);
+    const handleScroll = () => setIsScrolled(window.scrollY > 200);
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isAuthenticated]);
@@ -178,28 +180,19 @@ export default function Home() {
 
 // 🏠 Main Home Page Render
   return (
-    <div className="relative">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11" />
-      <div className="relative p-6">
-        {/* Header */}
-      <Header
-        activities={activities}
-        loading={loading}
-        error={error}
-        setIsSearchActive={setIsSearchActive}
-        searchInputRef={searchInputRef}
-        isScrolled={isScrolled}
-        showSearch={true}
-        showBigLogo={true}
-      />
-
+      <div className="relative">
+      {/* Header */}
+      <HeroImage />
+      <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
+      <div className="relative -mt-8">
+        <Header activities={activities} loading={loading} error={error} setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef} isScrolled={isScrolled} showSearch={true} showBigLogo={true} />
+      </div>
+      <div className="relative p-6 pt-0">
         {/* Main Content */}
         {!isSearchActive && (
           <>
             {loading && (
-              <section className="mb-6 mt-18">
+              <section className="mb-6 ">
                 <div className="flex justify-center items-center h-48">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
                   <span className="ml-3 text-gray-600">
@@ -210,7 +203,7 @@ export default function Home() {
             )}
 
             {error && (
-              <section className="mb-6 mt-18">
+              <section className="mb-6 ">
                 <div className="flex justify-center items-center h-48">
                   <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center">
                     <h3 className="text-red-800 font-semibold mb-2">
@@ -230,16 +223,18 @@ export default function Home() {
 
             {!loading && !error && (
               <>
+              <div className="mt-8">
                 <SectionUpcomingEvents events={events} />
                 <h2 className="font-bold mb-6 text-2xl py-2">Event Types</h2>
                 {eventTypes.map((type, idx) => (
                   <EventTypeSection key={idx} {...type} />
                 ))}
+              </div>
               </>
             )}
           </>
         )}
-      </div>
+    </div>
     </div>
   );
 }

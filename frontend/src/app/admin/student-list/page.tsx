@@ -1,5 +1,5 @@
 "use client";
-import { ArrowLeftIcon, PlusIcon, UserCircleIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Header from "@/app/components/Header";
 import { useEffect, useState } from "react";
