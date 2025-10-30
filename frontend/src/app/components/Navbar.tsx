@@ -58,6 +58,15 @@ const getLogoSrc = (isAuthenticated: boolean, userRole: string | null) => {
 export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole: propUserRole }: NavbarProps) {
   const [localIsAuthenticated, setLocalIsAuthenticated] = useState(false);
   const [localUserRole, setLocalUserRole] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
+
+    useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   // Check Authentication on Mount (if its not provided via props)
   useEffect(() => {
@@ -115,8 +124,14 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
 
   return (
     <div className="sticky top-0 z-50 w-full">
-      <div className="absolute inset-0 bg-[#DAE9DC] w-full" 
-      style={{ width: '100vw', left: '50%', height: '80px',transform: 'translateX(-50%)' }}></div>
+      <div className={`absolute inset-0 w-full duration-300 ${
+          isScrolled 
+            ? 'bg-white/80 backdrop-blur-md shadow-sm' 
+            : 'bg-transparent'
+        }`}
+        style={{ width: '100vw', left: '50%', height: '80px', transform: 'translateX(-50%)', 
+                 borderBottomLeftRadius: '20px',borderBottomRightRadius: '20px' }}></div>
+
     <div className="relative flex justify-between items-center w-full z-10 px-6 py-2">
       {/* Small Logo on the left */}
       <Image 

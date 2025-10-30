@@ -81,16 +81,6 @@ export default function PendingEventsPage() {
     <AdminLayout
       hideTitle
       title="Pending Events"
-      searchVariant="compact"
-      searchPlaceholder="Search pending events..."
-      onSearchChange={setSearchQuery}
-      onSearchCategoryChange={setSearchSelectedCategory}
-      onSearchStartDateChange={setSearchStartDate}
-      onSearchEndDateChange={setSearchEndDate}
-      onEndAfterCheckedChange={setEndAfterChecked}
-      initialSearchValue={searchQuery}
-      searchCategoryOptions={categories}
-      searchSelectedCategory={searchSelectedCategory}
     >
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-bold text-2xl mb-1">Pending Events</h1>

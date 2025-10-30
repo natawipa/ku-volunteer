@@ -1,210 +1,31 @@
 "use client";
-import { useRef, useState, useEffect, ReactNode, ChangeEvent } from 'react';
-import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
 import Header from '@/app/components/Header';
-import { MagnifyingGlassIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
-
-import SearchCard from '@/app/components/SearchCard';
+import Navbar from '@/app/components/Navbar';
+import HeroImage from '@/app/components/HeroImage';
 
 interface AdminLayoutProps {
   title?: string;
   children: ReactNode;
   hideTitle?: boolean;
-  containerClassName?: string;
-  /** Show or hide the search bar entirely */
-  hideSearch?: boolean;
-  /** Visual style of the search: compact sticky (default) or future panel */
-  searchVariant?: 'compact' | 'panel';
-  /** Placeholder for search input */
-  searchPlaceholder?: string;
-  /** Callback whenever search text changes */
-  onSearchChange?: (value: string) => void;
-  /** Initial search value (for controlled external hydration) */
-  initialSearchValue?: string;
-  /** Category options to surface inside the dropdown search card */
-  searchCategoryOptions?: string[];
-  /** Currently selected category (controlled) */
-  searchSelectedCategory?: string;
-  /** Callback when category changes */
-  onSearchCategoryChange?: (value: string) => void;
-  /** Callback for category change (for page filter) */
-  onCategoryChange?: (value: string) => void;
-  /** Callback for start date change */
-  onSearchStartDateChange?: (value: string) => void;
-  /** Callback for end date change */
-  onSearchEndDateChange?: (value: string) => void;
-  /** Callback for end after checked change */
-  onEndAfterCheckedChange?: (checked: boolean) => void;
-  /** Whether to show a date picker in the dropdown (default false for admin) */
-  searchShowDate?: boolean;
-  /** Callback when search is applied */
-  onSearchApply?: (params: {
-    searchValue: string;
-    selectedCategories: string[];
-    dateStart: string;
-    dateEnd: string;
-  }) => void;
 }
 
-/**
- * AdminLayout centralizes the shared visual chrome (background gradient, mountain image,
- * header nav, sticky shrinking search bar) used across admin pages to avoid duplication.
- */
 export default function AdminLayout({
   title,
   children,
   hideTitle,
-  containerClassName,
-  hideSearch,
-  searchVariant = 'compact',
-  searchPlaceholder = 'Search events name, description',
-  onSearchChange,
-  initialSearchValue = '',
-  onSearchCategoryChange,
-  onCategoryChange,
-  onSearchStartDateChange,
-  onSearchEndDateChange,
-  onEndAfterCheckedChange,
-  onSearchApply
 }: AdminLayoutProps) {
-  const pathname = usePathname();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
-  const [searchValue, setSearchValue] = useState(initialSearchValue);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [dateStart, setDateStart] = useState<string>('');
-  const [dateEnd, setDateEnd] = useState<string>('');
-  const [endAfterChecked, setEndAfterChecked] = useState(false);
-  const [searchHistory, setSearchHistory] = useState<string[]>([]);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
-  const wrapperRef = useRef<HTMLDivElement>(null);
-
-  // Handlers for SearchCard
-  const handleCategoriesChange = (cats: string[]) => {
-    setSelectedCategories(cats);
-    if (onSearchCategoryChange) onSearchCategoryChange(cats[0] || 'All Categories');
-    if (typeof onCategoryChange === 'function') onCategoryChange(cats[0] || 'All Categories');
-  };
-  const handleDateStartChange = (date: string) => {
-    setDateStart(date);
-    if (typeof onSearchStartDateChange === 'function') onSearchStartDateChange(date);
-  };
-  const handleDateEndChange = (date: string) => {
-    setDateEnd(date);
-    if (typeof onSearchEndDateChange === 'function') onSearchEndDateChange(date);
-  };
-  const handleEndAfterCheckedChange = (checked: boolean) => {
-    setEndAfterChecked(checked);
-    if (typeof onEndAfterCheckedChange === 'function') onEndAfterCheckedChange(checked);
-  };
-  const handleApply = (query?: string) => {
-    // Optionally update search history
-    if (query && !searchHistory.includes(query)) {
-      setSearchHistory([query, ...searchHistory]);
-    }
-    handleSearchApply({
-      searchValue: query ?? searchValue,
-      selectedCategories,
-      dateStart,
-      dateEnd,
-    });
-  };
-
-  // Scroll effect for shrinking search bar (only needed for compact)
-  useEffect(() => {
-    if (searchVariant !== 'compact' || hideSearch) return;
-    const onScroll = () => setIsScrolled(window.scrollY > 100);
-    window.addEventListener('scroll', onScroll);
-    return () => window.removeEventListener('scroll', onScroll);
-  }, [searchVariant, hideSearch]);
-
-  // Close dropdown on outside click
-  useEffect(() => {
-    if (hideSearch) return;
-    const handleClickOutside = (e: MouseEvent) => {
-      if (wrapperRef.current && !wrapperRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [hideSearch]);
-
-  const handleSearchChange = (val: string) => {
-    setSearchValue(val);
-    onSearchChange?.(val);
-  };
-
-  const handleSearchApply = (params: {
-    searchValue: string;
-    selectedCategories: string[];
-    dateStart: string;
-    dateEnd: string;
-  }) => {
-    onSearchApply?.(params);
-    setIsOpen(false); // Close dropdown after applying search
-  };
 
   return (
     <div className="relative">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-        <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
+      {/* Background */}
+      <HeroImage />
       <div className="relative p-6">
-        <Header showBigLogo={true} />
-
-        {/* Search Area */}
-        {!hideSearch && searchVariant === 'compact' && pathname !== '/' && (
-          <section className={`transition-all duration-300 z-40 ${isScrolled ? 'sticky top-14 w-full px-4' : 'relative flex justify-center'} mb-6`}>
-            <div
-              ref={wrapperRef}
-              className={`transition-all duration-300 ${isScrolled ? 'max-w-md mx-auto scale-90' : 'relative w-full max-w-xl'}`}
-            >
-              <div className="flex bg-white items-center rounded-md px-4 py-3 shadow-md cursor-text" onClick={() => setIsOpen(true)}>
-                <MagnifyingGlassIcon className="text-gray-400 w-5 h-5" />
-                <input
-                  ref={searchInputRef}
-                  type="text"
-                  value={searchValue}
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => handleSearchChange(e.target.value)}
-                  placeholder={searchPlaceholder}
-                  className="font-mitr ml-2 flex-1 border-0 bg-transparent outline-none text-sm"
-                  onFocus={() => setIsOpen(true)}
-                />
-                <div className="h-6 w-[1px] bg-gray-200 mx-2" />
-                <ChevronDownIcon className="text-gray-400 w-5 h-5 ml-2 opacity-60" />
-              </div>
-              {isOpen && (
-                <div className="absolute top-full mt-1 w-full z-50">
-                  <SearchCard
-                    query={searchValue}
-                    setQuery={setSearchValue}
-                    categoriesSelected={selectedCategories}
-                    setCategoriesSelected={handleCategoriesChange}
-                    dateStart={dateStart}
-                    setStartDate={handleDateStartChange}
-                    dateEnd={dateEnd}
-                    setEndDate={handleDateEndChange}
-                    endAfterChecked={endAfterChecked}
-                    setEndAfterChecked={handleEndAfterCheckedChange}
-                    history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
-                    setHistory={h => setSearchHistory(h.map(item => item.query))}
-                    onSelectHistory={item => {
-                      setSearchValue(item.query);
-                      handleApply(item.query);
-                      setIsOpen(false);
-                    }}
-                    
-                    onApply={() => {
-                      setIsOpen(false);
-                      handleApply();
-                    }}
-                  />
-                </div>
-              )}
-            </div>
-          </section>
-        )}
+      {/* Header */}
+      <Navbar />
+      <div className="relative -mt-8">
+        <Header showBigLogo={true} showSearch={true} />
+      </div>
 
         {!hideTitle && title && <h1 className="font-bold mb-6 text-2xl pt-4">{title}</h1>}
 

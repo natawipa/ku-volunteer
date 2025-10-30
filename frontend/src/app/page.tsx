@@ -114,14 +114,13 @@ function SectionUpcomingEvents({
 
 // Main Home Page Component
 export default function Home() {
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSearchActive, setIsSearchActive] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [isSearchActive, ] = useState(false);
 
   // Check Authentication on Mount
   useEffect(() => {
@@ -181,6 +180,7 @@ export default function Home() {
   return (
     <div className="relative">
       {/* Background */}
+      <HeroImage />
       <div className="relative p-6">
       {/* Header */}
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />

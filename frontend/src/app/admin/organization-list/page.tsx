@@ -4,6 +4,8 @@ import { ArrowLeftIcon, EyeIcon } from "@heroicons/react/24/solid";
 import Header from "@/app/components/Header";
 import Link from "next/link";
 import { apiService, User } from "@/lib/api";
+import HeroImage from "@/app/components/HeroImage";
+import Navbar from "@/app/components/Navbar";
 
 export default function OrganizationList() {
   const [organizations, setOrganizations] = useState<User[]>([]);
@@ -83,12 +85,14 @@ export default function OrganizationList() {
 
   return (
     <div className="relative">
-        <div className="relative p-6">
-          {/* Background */}
-          <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-          <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
-        <div className="relative p-6">
-          <Header showBigLogo={true} />
+      {/* Background */}
+      <HeroImage />
+      <div className="relative p-6">
+      {/* Header */}
+      <Navbar />
+      <div className="relative -mt-8">
+        <Header showBigLogo={true} />
+      </div>
           
           {/* -------------------------- */} 
 
@@ -195,7 +199,6 @@ export default function OrganizationList() {
             })}
         </div>
       </div>
-    </div>
     </div>
   );
 }

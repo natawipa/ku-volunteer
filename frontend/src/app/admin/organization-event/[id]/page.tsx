@@ -8,6 +8,8 @@ import { activitiesApi } from "@/lib/activities";
 import type { Activity } from "@/lib/types";
 import { ENV } from "@/lib/constants";
 import Header from "@/app/components/Header";
+import HeroImage from "@/app/components/HeroImage";
+import Navbar from "@/app/components/Navbar";
 
 export default function OrganizerEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const [events, setEvents] = useState<Activity[]>([]);
@@ -131,13 +133,14 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="relative">
+      {/* Background */}
+      <HeroImage />
       <div className="relative p-6">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-        <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
-      <div className="relative p-6">
-        <Header showBigLogo={true} />
-      
+      {/* Header */}
+      <Navbar />
+      <div className="relative -mt-8">
+        <Header showBigLogo={true} showSearch={true} />
+      </div>
 
         {/* ---------------------- */}
         <Link 
@@ -312,7 +315,6 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
           )}
         </div>
       </div>
-    </div>
     </div>
   );
 } 

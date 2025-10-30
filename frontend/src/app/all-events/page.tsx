@@ -1,10 +1,12 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
-import EventLayout from '../components/AllEventLayout';
 import PublicEventHorizontalCard, { PublicEventCardData } from '../components/PublicEventHorizontalCard';
 import { activitiesApi } from "../../lib/activities";
 import type { Activity } from "../../lib/types";
+import Header from '../components/Header';
+import Navbar from '../components/Navbar';
+import HeroImage from '../components/HeroImage';
 
 interface Event {
   id: string;
@@ -118,10 +120,12 @@ const AllEventsPage: React.FC = () => {
 }, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
 
   return (
-    <EventLayout
-      title="All Events"
-      hideTitle={false}
-    >
+    <div className="relative pt-6 px-4">
+      <HeroImage />
+      <Navbar />
+      <div className="relative -mt-8">
+        <Header showBigLogo={true} showSearch={true} />
+      </div>
       {/* Events Section */}
       {loading ? (
         <div className="text-center py-12">
@@ -140,7 +144,7 @@ const AllEventsPage: React.FC = () => {
           ))}
         </div>
       )}
-    </EventLayout>
+    </div>
   );
 };
 

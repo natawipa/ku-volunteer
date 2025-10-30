@@ -113,16 +113,6 @@ export default function DeletionRequestListPage() {
     <AdminLayout
       hideTitle
       title="Deletion Requests"
-      searchVariant="compact"
-      searchPlaceholder="Search events name, description"
-      onSearchChange={setSearchQuery}
-      onSearchCategoryChange={setSearchSelectedCategory}
-      onSearchStartDateChange={setSearchStartDate}
-      onSearchEndDateChange={setSearchEndDate}
-      onEndAfterCheckedChange={setEndAfterChecked}
-      initialSearchValue={searchQuery}
-      searchCategoryOptions={categories}
-      searchSelectedCategory={searchSelectedCategory}
       
     >
       {/* Header + quick stats */}
