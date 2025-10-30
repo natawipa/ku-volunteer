@@ -168,7 +168,6 @@ export default function Home() {
       (e) => Array.isArray(e.category) && e.category.some(type.match)
     ),
   }));
-
     // Admin View
   if (isAuthenticated && userRole === USER_ROLES.ADMIN) {
     return (
@@ -180,14 +179,15 @@ export default function Home() {
 
 // 🏠 Main Home Page Render
   return (
-      <div className="relative">
+    <div className="relative">
+      {/* Background */}
+      <div className="relative p-6">
       {/* Header */}
-      <HeroImage />
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
       <div className="relative -mt-8">
-        <Header activities={activities} loading={loading} error={error} setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef} isScrolled={isScrolled} showSearch={true} showBigLogo={true} />
+        <Header showBigLogo={true} showSearch={true} />
       </div>
-      <div className="relative p-6 pt-0">
+
         {/* Main Content */}
         {!isSearchActive && (
           <>

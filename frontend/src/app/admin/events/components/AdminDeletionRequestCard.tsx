@@ -20,6 +20,10 @@ export interface DeletionRequestEvent {
   capacity: number;
   additionalImages?: string[];
   status?: string;
+  // for notifications
+  requested_at?: string;
+  reviewed_at?: string;
+  review_note?: string;
 }
 
 interface Props {

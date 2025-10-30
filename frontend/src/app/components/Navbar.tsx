@@ -7,6 +7,7 @@ import { USER_ROLES } from "../../lib/constants";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { auth } from "@/lib/utils";
+import NotificationBell from "./NotificationBell";
 
 interface NavbarProps {
   isAuthenticated?: boolean;
@@ -96,6 +97,7 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
+          <NotificationBell />
           <ProfileCard />
         </nav>
       );
@@ -104,6 +106,7 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
+          <NotificationBell />
           <CreateButton />
           <ProfileCard />
         </nav>

@@ -240,19 +240,40 @@ class ActivityRequestDeleteView(APIView):
 
 
 class ActivityDeletionRequestListView(generics.ListAPIView):
-    """API view for listing activity deletion requests (admin only)."""
+    """API view for listing activity deletion requests.
+    - Admins can see all requests
+    - Organizers can only see requests for their own activities
+    """
 
-    permission_classes = [permissions.IsAuthenticated, IsAdmin]
+    permission_classes = [permissions.IsAuthenticated]
     serializer_class = ActivityDeletionRequestSerializer
 
     def get_queryset(self):
+        user = self.request.user
         queryset = ActivityDeletionRequest.objects.select_related(
             'activity', 'requested_by'
         )
-        status_param = self.request.query_params.get('status')
-        if status_param:
-            queryset = queryset.filter(status=status_param)
-        return queryset
+        
+        # Admins can see all deletion requests
+        if is_admin_user(user):
+            status_param = self.request.query_params.get('status')
+            if status_param:
+                queryset = queryset.filter(status=status_param)
+            return queryset
+        
+        # Organizers can only see their own deletion requests
+        if hasattr(user, 'organizer_profile'):
+            queryset = queryset.filter(
+                organizer_profile_id=user.organizer_profile.id
+            )
+            status_param = self.request.query_params.get('status')
+            if status_param:
+                queryset = queryset.filter(status=status_param)
+            return queryset
+        
+        # Students and others see no deletion requests
+        return ActivityDeletionRequest.objects.none()
+    
     serializer_class = ActivityDeletionRequestSerializer
 
 

@@ -1,17 +1,21 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, Suspense} from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-
+import { UserCircleIcon } from "@heroicons/react/24/solid";
 import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
+import NotificationBell from "../components/NotificationBell";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
 import { USER_ROLES, ENV } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
+import Image from "next/image";
+import Link from "next/link";
 import HeroImage from "../components/HeroImage";
 import Navbar from "../components/Navbar";
+
 
 // Move the main content to a separate component
 function ActivityFormContent() {
@@ -527,9 +531,45 @@ function ActivityFormContent() {
     <div className="relative">
       {/* Debug info - remove in production */}
 
-      {/* Header */}
-      <HeroImage />
-      <Navbar />
+      {/* Background styling */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[130px]"></div>
+      <Image
+        src="/mountain.svg"
+        alt="mountain"
+        width={1920}
+        height={510}
+        className="absolute inset-0 top-0 w-full h-[120px] object-cover pt-11"
+      />
+
+      {/* Main content */}
+      <div className="relative p-6">
+        <header className="flex justify-between items-center">
+          <Image
+            src="/logo-organizer.svg"
+            alt="Small Logo"
+            width={64}
+            height={64}
+            className="object-cover"
+          />
+          <nav className="flex items-center space-x-8">
+            <Link
+              href="/document"
+              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200"
+            >
+              Document
+            </Link>
+            <Link
+              href="/all-activities"
+              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200"
+            >
+              All Activities
+            </Link>
+            <NotificationBell />
+            <Link href="/profile">
+              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
+            </Link>
+          </nav>
+        </header>
 
         {/* Activity Form Container */}
         <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
@@ -700,6 +740,7 @@ function ActivityFormContent() {
           </div>
         </div>
       )}
+      </div>
     </div>
   );
 }

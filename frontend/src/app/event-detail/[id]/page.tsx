@@ -469,13 +469,18 @@ export default function EventPage({ params }: PageProps) {
           </button>
           <button
             onClick={() => setActiveSection('applicants')}
-            className={`py-3 px-4 font-medium transition-all duration-200 ${
+            className={`py-3 px-4 font-medium transition-all duration-200 flex items-center gap-2 ${
               activeSection === 'applicants'
                 ? 'border-b-2 border-green-600 text-green-600'
                 : 'text-gray-500 hover:text-gray-700'
             }`}
           >
             Participants Apply
+            {applications.filter(app => app.status === APPLICATION_STATUS.PENDING).length > 0 && (
+              <span className="inline-flex items-center justify-center w-6 h-6 text-xs font-bold text-white bg-[#DC143C] rounded-full">
+                {applications.filter(app => app.status === APPLICATION_STATUS.PENDING).length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveSection('approved')}
