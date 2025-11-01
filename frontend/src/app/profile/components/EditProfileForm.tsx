@@ -12,6 +12,7 @@ import {
   YEAR_OPTIONS, 
   ORGANIZATION_TYPE_OPTIONS 
 } from "../validation";
+import HeroImage from '@/app/components/HeroImage';
 
 interface EditProfileFormProps {
   user: User;
@@ -215,23 +216,14 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
   };
 
   return (
-    <div className="relative">
-      <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white">
-        <Image
-          src="/mountain.svg"
-          alt="mountain"
-          width={1920}
-          height={510}
-          className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90"
-        />
-      </div>
+    <div className="relative pt-6 px-4">
+      <HeroImage containerHeight='120px' mountainHeight='140px' />
 
       <div className="relative p-6">
         <button
           onClick={() => router.back()}
-          className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-          hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-        >
+            className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
+          hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
           <ChevronLeftIcon className="w-5 h-5" />
           Back
         </button>
@@ -438,7 +430,7 @@ export const EditProfileForm: React.FC<EditProfileFormProps> = ({ user, initialD
             <button
               type="submit"
               disabled={saving}
-              className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 disabled:opacity-50 transition-colors"
+              className="px-6 py-2 bg-[#215701] text-white rounded-lg hover:bg-[#00361C] disabled:opacity-50 transition-colors"
             >
               {saving ? "Saving..." : "Save Changes"}
             </button>

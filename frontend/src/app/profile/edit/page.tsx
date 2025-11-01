@@ -2,9 +2,9 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
-import Image from "next/image";
 import { apiService, type User } from "../../../lib/api";
 import { EditProfileForm } from "../components/EditProfileForm";
+import HeroImage from "@/app/components/HeroImage";
 
 export default function EditProfile() {
   const router = useRouter();
@@ -33,22 +33,13 @@ export default function EditProfile() {
 
   if (loading) {
     return (
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white">
-          <Image
-            src="/mountain.svg"
-            alt="mountain"
-            width={1920}
-            height={510}
-            className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90"
-          />
-        </div>
+      <div className="relative pt-6 px-4">
+        <HeroImage containerHeight='120px' mountainHeight='140px' />
         <div className="relative p-6">
           <button
             onClick={() => router.back()}
-            className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-            hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-          >
+            className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
+          hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
             <ChevronLeftIcon className="w-5 h-5" />
             Back
           </button>
@@ -62,22 +53,13 @@ export default function EditProfile() {
 
   if (formError || !user) {
     return (
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white">
-          <Image
-            src="/mountain.svg"
-            alt="mountain"
-            width={1920}
-            height={510}
-            className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90"
-          />
-        </div>
+      <div className="relative min-h-screen pt-6 px-4">
+        <HeroImage containerHeight='120px' mountainHeight='140px' />
         <div className="relative p-6">
           <button
             onClick={() => router.back()}
-            className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-            hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-          >
+            className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
+           hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
             <ChevronLeftIcon className="w-5 h-5" />
             Back
           </button>

@@ -32,7 +32,6 @@ export default function CategorySelect({ value, onChange }: CategorySelectProps)
 
   return (
     <div className="flex flex-col text-sm space-y-2 relative" ref={ref}>
-      <label className="flex flex-col text-sm">Category</label>
 
       {/* Selected categories display */}
       <div

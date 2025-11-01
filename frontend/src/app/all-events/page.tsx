@@ -3,6 +3,7 @@
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { activitiesApi } from "../../lib/activities";
 import type { Activity } from '../../lib/types';
+import { auth } from "@/lib/utils";
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import HeroImage from '../components/HeroImage';
@@ -12,6 +13,8 @@ import { EventCardData, transformActivityToEvent } from '../components/EventCard
 const AllEventsPage: React.FC = () => {
   const [activities, setActivities] = useState<Activity[]>([]); 
   const [events, setEvents] = useState<EventCardData[]>([]);
+  const [UserRole, setUserRole] = useState<string | null>(null);
+  const [IsAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, ] = useState<string>('');
   const [searchTerm, ] = useState('');
@@ -19,7 +22,7 @@ const AllEventsPage: React.FC = () => {
   const [dateEnd, ] = useState('');
   const [endAfterChecked, ] = useState(true);
   const [selectedStatus, ] = useState<string[]>([]);
-  const [, setIsSearchActive] = useState(false); // Add this
+  const [, setIsSearchActive] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
@@ -44,6 +47,10 @@ const AllEventsPage: React.FC = () => {
       }
     };
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    setIsAuthenticated(auth.isAuthenticated());
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -97,13 +104,16 @@ const AllEventsPage: React.FC = () => {
     });
 }, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
 
+  const pageTitle = IsAuthenticated ? "My Events" : "All Events";
+
   return (
     <div className="relative pt-6 px-4">
       <HeroImage />
       <Navbar />
-      <div className="relative -mt-8">
+      <div className="relative">
         <Header showBigLogo={true} showSearch={true} activities={activities} setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
       </div>
+      <h1 className="text-3xl font-bold align-center mt-7">{pageTitle}</h1>
       {/* Events Section */}
       {loading ? (
         <div className="text-center py-12">
@@ -116,7 +126,7 @@ const AllEventsPage: React.FC = () => {
           <p className="text-gray-600">Try adjusting your search criteria or filter settings.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5 mb-10">
+        <div className="flex flex-col gap-5 mb-10 mt-7">
           {filteredEvents.map(ev => (
             <EventCardHorizontal key={ev.id} event={ev} showShadow={true}
               showBadge={true} hoverScale={true}cardPadding="p-4" />

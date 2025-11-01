@@ -138,13 +138,13 @@ export default function Home() {
 
 // 🏠 Main Home Page Render
   return (
-    <div className="relative">
+    <div className="relative pt-6 px-4">
       {/* Background */}
       <HeroImage />
-      <div className="relative p-6">
       {/* Header */}
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
-      <Header showBigLogo={true} showSearch={true} activities={activities} 
+      <div className="relative">
+        <Header showBigLogo={true} showSearch={true} activities={activities} 
               setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
 
         {/* Main Content */}

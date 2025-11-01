@@ -23,7 +23,7 @@ export default function AdminLayout({
       <div className="relative p-6">
       {/* Header */}
       <Navbar />
-      <div className="relative -mt-8">
+      <div className="relative">
         <Header showBigLogo={true} showSearch={true} />
       </div>
 

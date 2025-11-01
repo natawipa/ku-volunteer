@@ -67,7 +67,7 @@ export default function EventPage({ params }: PageProps) {
   // Check if user has already applied to this activity - FIXED: useCallback
   const checkUserApplication = useCallback(async () => {
     if (eventId == null || Number.isNaN(eventId)) {
-      console.log('❌ Cannot check application: eventId is null or NaN');
+      console.log('Cannot check application status: invalid eventId', eventId);
       return;
     }
     try {
@@ -83,21 +83,21 @@ export default function EventPage({ params }: PageProps) {
         );
         
         if (userApp) {
-          console.log('✅ Found existing application:', userApp);
+          console.log('Found existing application:', userApp);
           setUserApplication(userApp);
           setApplicationStatus(userApp.status);
         } else {
-          console.log('ℹ️ No application found for this activity');
+          console.log('No application found for this activity');
           setUserApplication(null);
           setApplicationStatus(null);
         }
       } else {
-        console.log('❌ Failed to get applications:', applicationsResponse.error);
+        console.log('Failed to get applications:', applicationsResponse.error);
         setUserApplication(null);
         setApplicationStatus(null);
       }
     } catch (error) {
-      console.error('❌ Error checking user application:', error);
+      console.error('Error checking user application:', error);
       setUserApplication(null);
       setApplicationStatus(null);
     }
@@ -122,7 +122,7 @@ export default function EventPage({ params }: PageProps) {
   // Check application status every time user visits the page
   useEffect(() => {
     if (isAuthenticated && userRole === USER_ROLES.STUDENT && eventId) {
-      console.log('🔄 Triggering application check - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'eventId:', eventId);
+      console.log('Triggering application check - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'eventId:', eventId);
       checkUserApplication();
     }
   }, [isAuthenticated, userRole, eventId, checkUserApplication]);
@@ -130,7 +130,7 @@ export default function EventPage({ params }: PageProps) {
   // Force check when eventId becomes available
   useEffect(() => {
     if (eventId && isAuthenticated && userRole === USER_ROLES.STUDENT) {
-      console.log('🔄 EventId available, checking application status...');
+      console.log('EventId available, checking application status...');
       checkUserApplication();
     }
   }, [eventId, isAuthenticated, userRole, checkUserApplication]);
@@ -590,6 +590,8 @@ export default function EventPage({ params }: PageProps) {
       post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
       datestart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),
       dateend: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
+      timestart: new Date(activity.start_at || new Date()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit',timeZone: 'UTC' }),
+      timeend: new Date(activity.end_at || new Date()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit',timeZone: 'UTC' }),
       location: activity.location || 'Unknown Location',
       category: activity.categories || [],
       capacity: activity.max_participants || 0,
@@ -682,12 +684,12 @@ export default function EventPage({ params }: PageProps) {
   const transformedEvent = transformActivityData(event);
 
   return (
-    <div className="relative">
+    <div className="relative pt-6 px-4">
       {/* Background */}
         {/* Header */}
         <HeroImage />
         <Navbar />
-        <div className="relative -mt-8">
+        <div className="relative">
           <Header showBigLogo={true} />
         </div>
 
@@ -738,9 +740,9 @@ export default function EventPage({ params }: PageProps) {
                 <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
                   {/* For one-day activities */}
                   {transformedEvent.datestart === transformedEvent.dateend ? (
-                    <p><strong>Date:</strong> {transformedEvent.datestart}</p>
+                    <p><strong>Date:</strong> {transformedEvent.datestart} at {transformedEvent.timestart} - {transformedEvent.timeend}</p>
                   ) : (
-                    <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
+                    <p><strong>Date:</strong> {transformedEvent.datestart} {transformedEvent.timestart} - {transformedEvent.dateend} {transformedEvent.timeend}</p>
                   )}
                   <p><strong>Location:</strong> {transformedEvent.location}</p>
                   <p><strong>Type:</strong> {transformedEvent.category.join(", ")}</p>

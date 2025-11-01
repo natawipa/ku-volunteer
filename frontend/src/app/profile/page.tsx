@@ -10,6 +10,7 @@ import { apiService, type User } from "../../lib/api";
 import { activitiesApi } from "../../lib/activities";
 import { type Activity } from "../../lib/types";
 import Link from "next/link";
+import HeroImage from "../components/HeroImage";
 
 
 export default function Profile() {
@@ -82,9 +83,8 @@ export default function Profile() {
         <div className="relative p-6">
           <button
             onClick={() => router.push("/")}
-            className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-            hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-          >
+            className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
+          hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
             <ChevronLeftIcon className="w-5 h-5" />
             Back
           </button>
@@ -114,9 +114,8 @@ export default function Profile() {
             onClick={() => {
               router.push('/');
             }}
-            className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-            hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-          >
+            className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
+          hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
             <ChevronLeftIcon className="w-5 h-5" />
             Back
           </button>
@@ -143,18 +142,8 @@ export default function Profile() {
     : 'Unknown User';
 
   return (
-    <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[20vh]"></div>
-
-      {/* Mountain background */}
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={1920}
-        height={510}
-        className="w-full h-[50vh] absolute inset-0 -top-26 object-cover"
-      />
+    <div className="relative pt-6 px-4">
+      <HeroImage containerHeight='120px' mountainHeight='140px' />
 
       {/* content */}
       <div className="relative p-6">

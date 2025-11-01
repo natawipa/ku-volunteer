@@ -58,10 +58,10 @@ export default function Header(props: HeaderProps){
 
   return (
     <>
-    <div className="relative mt-0">
+    <div className="relative">
 
       {shouldShowBigLogo && (
-        <div className="flex items-center justify-center py-8 mt-0 relative z-10">
+        <div className="flex items-center justify-center py-8 -mt-10 relative z-10">
           <Image
             src={getLogoSrc(isAuthenticated, userRole)} 
             alt="Big Logo" 
@@ -73,7 +73,7 @@ export default function Header(props: HeaderProps){
       
       {/* Search Layout */}
       {shouldShowSearch && (
-        <div className="px-6 -mt-6 relative z-20">
+        <div className="px-6 -mt-3 relative z-20">
           <SearchLayout
             activities={activities}
             setIsSearchActive={setIsSearchActive}

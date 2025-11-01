@@ -138,7 +138,7 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
       <div className="relative p-6">
       {/* Header */}
       <Navbar />
-      <div className="relative -mt-8">
+      <div className="relative">
         <Header showBigLogo={true} showSearch={true} />
       </div>
 

@@ -3,16 +3,12 @@
 import { useState, useEffect, Suspense} from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { UserCircleIcon } from "@heroicons/react/24/solid";
 import FormFields from "./components/FormFields";
 import ImageUploadSection from "./components/ImageUploadSection";
-import NotificationBell from "../components/NotificationBell";
 import { activitiesApi } from "../../lib/activities";
 import { auth } from "../../lib/utils";
 import { USER_ROLES, ENV } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
-import Image from "next/image";
-import Link from "next/link";
 import HeroImage from "../components/HeroImage";
 import Navbar from "../components/Navbar";
 
@@ -27,6 +23,8 @@ function ActivityFormContent() {
   const [location, setLocation] = useState("");
   const [dateStart, setDateStart] = useState<string>("");
   const [dateEnd, setDateEnd] = useState<string>("");
+  const [timeStart, setTimeStart] = useState<string>("00:00");
+  const [timeEnd, setTimeEnd] = useState<string>("23:59");
   const [hour, setHour] = useState<number | "">("");
   const [maxParticipants, setMaxParticipants] = useState<number | "">("");
   const [categories, setCategories] = useState<string[]>([]);
@@ -114,11 +112,13 @@ function ActivityFormContent() {
         if (activityData.start_at) {
           const startDate = new Date(activityData.start_at);
           setDateStart(startDate.toISOString().split('T')[0]);
+          setTimeStart(startDate.toTimeString().slice(0, 5));
         }
         
         if (activityData.end_at) {
           const endDate = new Date(activityData.end_at);
           setDateEnd(endDate.toISOString().split('T')[0]);
+          setTimeEnd(endDate.toTimeString().slice(0, 5));
         }
         
         console.log('Activity data loaded for editing:', activityData);
@@ -157,10 +157,12 @@ function ActivityFormContent() {
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
               setDateStart(startDate.toISOString().split('T')[0]);
+              setTimeStart(startDate.toTimeString().slice(0, 5));
             }
             if (activityData.end_at) {
               const endDate = new Date(activityData.end_at);
               setDateEnd(endDate.toISOString().split('T')[0]);
+              setTimeEnd(endDate.toTimeString().slice(0, 5));
             }
             // set coverUrl from backend image field (normalize relative urls)
             if (activityData.cover_image || activityData.cover_image_url) {
@@ -221,6 +223,8 @@ function ActivityFormContent() {
         setLocation(parsedData.location || "");
         setDateStart(parsedData.dateStart || "");
         setDateEnd(parsedData.dateEnd || "");
+        setTimeStart(parsedData.timeStart || "00:00");
+        setTimeEnd(parsedData.timeEnd || "00:00");
         setHour(parsedData.hour || "");
         setMaxParticipants(parsedData.maxParticipants || "");
         setCategories(parsedData.categories || []);
@@ -318,34 +322,34 @@ function ActivityFormContent() {
 
   const validate = () => {
     const newErrors: Record<string, string> = {};
-    const today = new Date();
-    today.setHours(0, 0, 0, 0)
-
+    const now = new Date();
+    
     if (!title.trim()) newErrors.title = "Title is required";
     if (!location.trim()) newErrors.location = "Location is required";
     if (!dateStart) newErrors.dateStart = "Start date is required";
     if (!dateEnd) newErrors.dateEnd = "End date is required";
+    if (!timeStart) newErrors.timeStart = "Start time is required";
+    if (!timeEnd) newErrors.timeEnd = "End time is required";
 
-    if (dateStart && dateEnd ) {
-      const startDate = new Date(dateStart);
-      const endDate = new Date(dateEnd);
+    if (dateStart && dateEnd && timeStart && timeEnd) {
+      const startDateTime = new Date(`${dateStart}T${timeStart}`);
+      const endDateTime = new Date(`${dateEnd}T${timeEnd}`);
 
-      startDate.setHours(0, 0, 0, 0);
-      endDate.setHours(0, 0, 0, 0);
-
-      if (startDate < today) {
-        newErrors.dateStart = "Start date cannot be in the past";
-      }
-      
       // Check if end date is in the past
-      if (endDate < today) {
-        newErrors.dateEnd = "End date cannot be in the past";
+      if (endDateTime < now) {
+        newErrors.dateEnd = "End date can not be in the past";
       } 
       
-      // Check if end date is before start date (same date is allowed)
-      if (endDate < startDate) {
-        newErrors.dateEnd = "End date must be on or after start date";
+      // Check if start date is in the past
+      if (startDateTime < now) {
+        newErrors.dateStart = "Start date can not be in the past";
       }
+
+      // Check if end datetime is before start datetime
+      if (endDateTime < startDateTime) {
+        newErrors.dateEnd = "End date and time must be after start date and time";
+      }
+
     } 
     if (!hour) newErrors.hour = "Hour is required";
     else if (Number(hour) < 1 || Number(hour) > 10) {
@@ -380,12 +384,17 @@ function ActivityFormContent() {
     setIsSubmitting(true);
   
     try {
+      const formatLocalDateTime = (dateStr: string, timeStr: string) => {
+       return `${dateStr}T${timeStr}:00`; // Returns string like "2024-01-13T15:00:00"
+      };
+      const startDateTime = formatLocalDateTime(dateStart, timeStart);
+      const endDateTime = formatLocalDateTime(dateEnd, timeEnd);
       const activityData = {
         title: title.trim(),
         description: description.trim(),
         location: location.trim(),
-        start_at: new Date(dateStart).toISOString(),
-        end_at: new Date(dateEnd).toISOString(),
+        start_at: startDateTime,
+        end_at: endDateTime,
         max_participants: Number(maxParticipants),
         hours_awarded: Number(hour),
         categories: categories,
@@ -529,56 +538,17 @@ function ActivityFormContent() {
 
   return (
     <div className="relative">
-      {/* Debug info - remove in production */}
+      <HeroImage containerHeight="100px" mountainHeight="120px" />
+      <Navbar />
 
-      {/* Background styling */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[130px]"></div>
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={1920}
-        height={510}
-        className="absolute inset-0 top-0 w-full h-[120px] object-cover pt-11"
-      />
-
-      {/* Main content */}
-      <div className="relative p-6">
-        <header className="flex justify-between items-center">
-          <Image
-            src="/logo-organizer.svg"
-            alt="Small Logo"
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-          <nav className="flex items-center space-x-8">
-            <Link
-              href="/document"
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200"
-            >
-              Document
-            </Link>
-            <Link
-              href="/all-activities"
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200"
-            >
-              All Activities
-            </Link>
-            <NotificationBell />
-            <Link href="/profile">
-              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
-            </Link>
-          </nav>
-        </header>
-
-        {/* Activity Form Container */}
+      {/* Activity Form Container */}
         <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
           
           {/* Status message*/}
           {searchParams.get('savedActivityData') && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-green-700 text-sm">
-                ✅ Edit mode restored. You can continue editing your activity.
+                You can continue editing your activity.
               </p>
             </div>
           )}
@@ -633,6 +603,8 @@ function ActivityFormContent() {
             location={location}
             dateStart={dateStart}
             dateEnd={dateEnd}
+            timeStart={timeStart}
+            timeEnd={timeEnd}
             hour={hour}
             maxParticipants={maxParticipants}
             categories={categories}
@@ -642,6 +614,8 @@ function ActivityFormContent() {
             onLocationChange={(value) => { setLocation(value); clearError("location"); }}
             onDateStartChange={(value) => { setDateStart(value); clearError("dateStart"); }}
             onDateEndChange={(value) => { setDateEnd(value); clearError("dateEnd"); }}
+            onTimeStartChange={(value) => { setTimeStart(value); clearError("timeStart"); }}
+            onTimeEndChange={(value) => { setTimeEnd(value); clearError("timeEnd"); }}
             onHourChange={(value) => { setHour(value); clearError("hour"); }}
             onMaxParticipantsChange={(value) => { setMaxParticipants(value); clearError("maxParticipants"); }}
             onCategoriesChange={(value) => { setCategories(value); clearError("categories"); }}
@@ -740,7 +714,6 @@ function ActivityFormContent() {
           </div>
         </div>
       )}
-      </div>
     </div>
   );
 }

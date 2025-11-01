@@ -94,23 +94,12 @@ function DeleteConfirmationContent() {
   };
 
   return (
-    <div className="relative min-h-screen">
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[130px]"></div>
 
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={1920}
-        height={510}
-        className="absolute inset-0 top-0 w-full h-[120px] object-cover pt-11"
-      />
-
-      <div className="relative p-6">
-        <div className="relative p-6">
+      <div className="relative pt-6 px-4">
           {/* Header */}
           <HeroImage />
           <Navbar />
-          <div className="relative -mt-8">
+          <div className="relative">
             <Header showBigLogo={true} />
           </div>
         
@@ -205,8 +194,6 @@ function DeleteConfirmationContent() {
           </form>
         </div>
       </div>
-    </div>
-    </div>
   );
 }
 

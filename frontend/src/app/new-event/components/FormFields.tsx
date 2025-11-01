@@ -8,6 +8,8 @@ interface FormFieldsProps {
   location: string;
   dateStart: string;
   dateEnd: string;
+  timeStart: string;
+  timeEnd: string; 
   hour: number | "";
   maxParticipants: number | "";
   categories: string[];
@@ -18,6 +20,8 @@ interface FormFieldsProps {
   onLocationChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
+  onTimeStartChange: (value: string) => void;
+  onTimeEndChange: (value: string) => void;
   onHourChange: (value: number | "") => void;
   onMaxParticipantsChange: (value: number | "") => void;
   onCategoriesChange: (value: string[]) => void;
@@ -31,6 +35,8 @@ export default function FormFields({
   location,
   dateStart,
   dateEnd,
+  timeStart,
+  timeEnd,
   hour,
   maxParticipants,
   categories,
@@ -38,6 +44,8 @@ export default function FormFields({
   onLocationChange,
   onDateStartChange,
   onDateEndChange,
+  onTimeStartChange,
+  onTimeEndChange,
   onHourChange,
   onMaxParticipantsChange,
   onCategoriesChange,
@@ -49,89 +57,120 @@ export default function FormFields({
       {/* Basic Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Location */}
-        <label className="flex flex-col text-sm">
-          Location
+        <div>
+        <label className="block text-sm"> Location </label>
           <input
             type="text"
-            className="border border-gray-400 rounded px-2 py-1"
+            className="w-full border border-gray-400 rounded px-2 py-1"
             placeholder="Enter location"
             value={location}
             onChange={(e) => onLocationChange(e.target.value)}
           />
           {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
-        </label>
+        </div>
 
-        {/* Date */}
-        <label className="flex flex-col text-sm">
-          Date
-          <div className="flex gap-2">
+        <div className="grid grid-cols-4 gap-2">
+          {/* Start Date & Time */}
+          <div>
+            <label className="block text-sm">Start Date</label>
+              <input
+                type="date"
+                value={dateStart}
+                onChange={(e) => onDateStartChange(e.target.value)}
+                className="w-full border border-gray-400 rounded px-2 py-1 flex-1"
+              />
+              {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
+          </div>
+          
+          <div>
+            <label className="block text-sm">Start Time</label>
             <input
-              type="date"
-              value={dateStart}
-              onChange={(e) => onDateStartChange(e.target.value)}
-              className="border border-gray-400 rounded px-2 py-1 flex-1"
+              type="time"
+              value={timeStart}
+              onChange={(e) => onTimeStartChange(e.target.value)}
+              className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
             />
-            <div className=""> to </div>
+            {errors.timeStart && <p className="text-red-600 text-sm">{errors.timeStart}</p>}
+          </div>
+
+          {/* End Date & Time */}
+          <div>
+            <label className="block text-sm">End Date *</label>
             <input
               type="date"
               value={dateEnd}
-              className="border border-gray-400 rounded px-2 py-1 flex-1"
               onChange={(e) => onDateEndChange(e.target.value)}
+              className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
             />
+            {errors.dateEnd && <p className="text-red-600 text-sm">{errors.dateEnd}</p>}
           </div>
-          {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
-          {errors.dateEnd && <p className="text-red-600 text-sm">{errors.dateEnd}</p>}
-        </label>
+
+          <div>
+            <label className="block text-sm">End Time</label>
+              <input
+                type="time"
+                value={timeEnd}
+                onChange={(e) => onTimeEndChange(e.target.value)}
+                className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+              />
+              {errors.timeEnd && <p className="text-red-600 text-sm">{errors.timeEnd}</p>}
+            </div>
+          </div>
+        </div>
 
         {/* Hour */}
-        <label className="flex flex-col text-sm">
-          Hour
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label className="block text-sm">Hour Reward</label>
           <input
             type="number"
             min="1"
             max="10"
-            className="border border-gray-400 rounded px-2 py-1"
+            className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
             value={hour}
             onChange={(e) => onHourChange(e.target.value ? Number(e.target.value) : "")}
             placeholder="Enter hours reward"
           />
           {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
-        </label>
+        </div>
 
         {/* Max Participants */}
-        <label className="flex flex-col text-sm">
-          Max Participants
+        <div>
+          <label className="block text-sm">Max Participants</label>
           <input
             type="number"
             min="1"
             value={maxParticipants}
             onChange={(e) => onMaxParticipantsChange(e.target.value ? Number(e.target.value) : "")}
-            className="border border-gray-400 rounded px-2 py-1"
+            className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
             placeholder="Enter max participants"
           />
           {errors.maxParticipants && <p className="text-red-600 text-sm">{errors.maxParticipants}</p>}
-        </label>
-      </div>
+          </div>
+        </div>
 
-      {/* Category Select */}
-      <CategorySelect
-        value={categories}
-        onChange={onCategoriesChange}
-      />
-      {errors.categories && <p className="text-red-600 text-sm">{errors.categories}</p>}
+        {/* Category Select */}
+        <div>
+        <label className="block text-sm">Category</label>
+          <CategorySelect
+            value={categories}
+            onChange={onCategoriesChange}
+          />
+          {errors.categories && <p className="text-red-600 text-sm">{errors.categories}</p>}
+        </div>
 
       {/* Description */}
-      <label className="flex flex-col text-sm">
-        Description
+      <div>
+      <label className="block text-sm">Description</label>
         <textarea
           rows={4}
           value={description}
           onChange={(e) => onDescriptionChange(e.target.value)}
-          className="border border-gray-400 rounded px-2 py-1"
+          className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
           placeholder="Write your event description..."
         />
         {errors.description && <p className="text-red-600 text-sm">{errors.description}</p>}
-      </label>
+      </div>
     </>
   );
 }

@@ -107,13 +107,11 @@ export default function EventTypePage() {
   }
 
   return (
-    <div className="relative">
+    <div className="relative pt-6 px-4">
       {/* Header */}
       <HeroImage />
       <Navbar />
-      <div className="relative -mt-8">
-        <Header showBigLogo={true} />
-      </div>
+      <Header showBigLogo={true} />
       
     <div className="w-full max-w-3xl mx-auto py-8 px-2 sm:px-0">
       {/* Gradient Header */}
