@@ -1,5 +1,6 @@
 "use client";
-import EventCard from "../components/EventCard";
+import EventCardSquare from "../components/EventCard/EventCardSquare";
+import { transformActivityToEvent } from "../components/EventCard/utils"
 import { ChevronRightIcon } from "@heroicons/react/24/outline";
 import { ChevronLeftIcon } from "@heroicons/react/20/solid";
 import Image from "next/image";
@@ -10,38 +11,6 @@ import { activitiesApi } from "../../lib/activities";
 import { type Activity } from "../../lib/types";
 import Link from "next/link";
 
-// Transform Activity to EventCard format
-const transformActivityToEvent = (activity: Activity) => {
-  if (!activity) {
-    console.warn('⚠️ Empty activity passed to transform function');
-    return {
-      id: 0,
-      title: 'Unknown Activity',
-      post: new Date().toLocaleDateString('en-GB'),
-      dateStart: new Date().toLocaleDateString('en-GB'),
-      dateEnd: new Date().toLocaleDateString('en-GB'),
-      location: 'Unknown Location',
-      category: [],
-      imgSrc: "/default-event.jpg",
-      capacity: 0,
-      status: 'unknown'
-    };
-  }
-
-  return {
-    id: activity.id || 0,
-    title: activity.title || 'Untitled Activity',
-    post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
-    dateStart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),
-    dateEnd: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
-    location: activity.location || 'Unknown Location',
-    category: activity.categories || [],
-    imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/default-event.jpg",
-    capacity: activity.max_participants || 0,
-    status: activity.status === "open" ? "upcoming" : activity.status || 'unknown',
-  };
-};
-
 
 export default function Profile() {
   const router = useRouter();
@@ -49,7 +18,6 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [events, setEvents] = useState<Activity[]>([]);
-  const [favoriteEvents, setFavoriteEvents] = useState<Activity[]>([]);
   const [imageError, setImageError] = useState(false);
 
   useEffect(() => {
@@ -83,7 +51,6 @@ export default function Profile() {
           } else if (userData.role === 'student') {
             // student dont have event yet
             setEvents([]);
-            setFavoriteEvents([]);
           }
         } else {
           setError(result.error || 'Failed to load profile');
@@ -342,7 +309,7 @@ export default function Profile() {
             <div className="flex gap-4 overflow-x-auto pb-2">
               {events.length > 0 ? (
                 events.map((activity, i) => (
-                  <EventCard key={i} {...transformActivityToEvent(activity)} />
+                  <EventCardSquare key={activity.id || i} event={transformActivityToEvent(activity)} />
                 ))
               ) : (
                 <p className="text-gray-600">No events found</p>
@@ -356,28 +323,6 @@ export default function Profile() {
           </div>
         </section>
 
-        {/* Favorite Event */}
-        <section className="px-6">
-          <h3 className="font-extrabold text-2xl mb-4">
-            Favorite Event <span>⭐</span>
-          </h3>
-          <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {favoriteEvents.length > 0 ? (
-                favoriteEvents.map((activity, i) => (
-                  <EventCard key={i} {...transformActivityToEvent(activity)} />
-                ))
-              ) : (
-                <p className="text-gray-600">No favorite events found</p>
-              )}
-            </div>
-            {favoriteEvents.length > 4 && (
-              <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300 flex-shrink-0">
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </section>
       </div>
     </div>
   );

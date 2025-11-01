@@ -1,30 +1,17 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import PublicEventHorizontalCard, { PublicEventCardData } from '../components/PublicEventHorizontalCard';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { activitiesApi } from "../../lib/activities";
-import type { Activity } from "../../lib/types";
+import type { Activity } from '../../lib/types';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import HeroImage from '../components/HeroImage';
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  dateStart: string; // ISO date string
-  dateEnd: string; // ISO date string
-  location: string;
-  organizer: string;
-  image_url?: string;
-  participants_count: number;
-  max_participants: number;
-  status: string;
-}
+import EventCardHorizontal from '../components/EventCard/EventCardHorizontal';
+import { EventCardData, transformActivityToEvent } from '../components/EventCard/utils';
 
 const AllEventsPage: React.FC = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]); 
+  const [events, setEvents] = useState<EventCardData[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, ] = useState<string>('');
   const [searchTerm, ] = useState('');
@@ -32,6 +19,8 @@ const AllEventsPage: React.FC = () => {
   const [dateEnd, ] = useState('');
   const [endAfterChecked, ] = useState(true);
   const [selectedStatus, ] = useState<string[]>([]);
+  const [, setIsSearchActive] = useState(false); // Add this
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -40,22 +29,11 @@ const AllEventsPage: React.FC = () => {
         const result = await activitiesApi.getActivities();
         if (result.success && result.data) {
           // Map Activity to Event type
-          const mappedEvents: Event[] = result.data.map((activity: Activity) => ({
-            id: activity.id.toString(),
-            title: activity.title,
-            description: activity.description,
-            category: activity.categories?.[0] || '',
-            dateStart: (activity.start_at || '').split('T')[0],
-            dateEnd: (activity.end_at || '').split('T')[0],
-            location: activity.location,
-            organizer: activity.organizer_name || activity.organizer_email || '',
-            imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/default-event.jpg",
-            participants_count: activity.current_participants,
-            max_participants: activity.max_participants || 0,
-            status: activity.status || 'unknown',
-          }));
+          setActivities(result.data);
+          const mappedEvents = result.data.map(transformActivityToEvent);
           setEvents(mappedEvents);
         } else {
+          setActivities([]);
           setEvents([]);
         }
       } catch (error) {
@@ -112,7 +90,7 @@ const AllEventsPage: React.FC = () => {
 
       const matchesStatus = selectedStatus.length === 0 || 
                      selectedStatus.some(status => 
-                       status.toLowerCase() === event.status.toLowerCase()
+                       status.toLowerCase() === (event.status || "unknown").toLowerCase()
                      );
 
       return matchesCategory && matchesSearch && matchesDate && matchesStatus;
@@ -124,7 +102,7 @@ const AllEventsPage: React.FC = () => {
       <HeroImage />
       <Navbar />
       <div className="relative -mt-8">
-        <Header showBigLogo={true} showSearch={true} />
+        <Header showBigLogo={true} showSearch={true} activities={activities} setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
       </div>
       {/* Events Section */}
       {loading ? (
@@ -140,7 +118,8 @@ const AllEventsPage: React.FC = () => {
       ) : (
         <div className="flex flex-col gap-5 mb-10">
           {filteredEvents.map(ev => (
-            <PublicEventHorizontalCard key={ev.id} event={ev as PublicEventCardData} />
+            <EventCardHorizontal key={ev.id} event={ev} showShadow={true}
+              showBadge={true} hoverScale={true}cardPadding="p-4" />
           ))}
         </div>
       )}

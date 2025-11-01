@@ -6,7 +6,7 @@ import Image from "next/image";
 
 import { activitiesApi } from "../../../lib/activities";
 import type { Activity } from "../../../lib/types";
-import type { EventCardData } from "../../components/EventCard/utils";
+import { EventCardData, transformActivityToEvent } from "../../components/EventCard/utils";
 import EventCardHorizontal from "../../components/EventCard/EventCardHorizontal";
 import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
@@ -47,24 +47,6 @@ const EVENT_TYPE_MATCHERS: Record<string, (cat: string) => boolean> = {
   "Social Engagement Activities": (cat) =>
     cat.includes("Social Engagement Activities"),
 };
-
-// Transform Activity from backend to EventCardData
-const transformActivityToEvent = (activity: Activity): EventCardData => ({
-  id: activity.id ?? 0,
-  title: activity.title ?? "Untitled Activity",
-  description: activity.description ?? "No description",
-  organizer: activity.organizer_name ?? "Unknown Organizer",
-  participants_count: activity.current_participants ?? 0,
-  max_participants: activity.max_participants ?? 0,
-  dateStart: activity.start_at ?? new Date().toISOString(),
-  dateEnd: activity.end_at ?? new Date().toISOString(),
-  location: activity.location ?? "Unknown Location",
-  category: activity.categories ?? [],
-  imgSrc:
-    activity.cover_image_url || activity.cover_image || "/default-event.jpg",
-  status: activity.status ?? "unknown",
-  posted_at: activity.created_at ?? new Date().toISOString(),
-});
 
 // Main Component
 export default function EventTypePage() {

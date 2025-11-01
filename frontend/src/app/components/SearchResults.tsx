@@ -1,5 +1,6 @@
 "use client";
-import PublicEventHorizontalCard, { PublicEventCardData } from "./PublicEventHorizontalCard";
+import EventCardHorizontal from "./EventCard/EventCardHorizontal"
+import { EventCardData } from "./EventCard/utils"
 
 interface SearchEvent {
   id: string | number;
@@ -14,6 +15,7 @@ interface SearchEvent {
   max_participants?: number;
   imgSrc?: string;
   status?: string;
+  posted_at?: string;
 }
 
 interface SearchResultsProps {
@@ -49,12 +51,12 @@ const SearchResults = ({ events, onBack }: SearchResultsProps) => {
       <h2 className="font-semibold text-xl mb-4">Search Results ({events.length} events)</h2>
       <div className="space-y-4">
         {events.map((event, idx) => {
-          // Convert event to PublicEventCardData
-          const cardData: PublicEventCardData = {
+          // Convert event to EventCardData
+          const cardData: EventCardData = {
             id: event.id,
             title: event.title,
             description: event.description || "",
-            category: Array.isArray(event.category) ? event.category.join(", ") : event.category,
+            category: Array.isArray(event.category) ? event.category.join(", ") : [event.category],
             dateStart: event.dateStart,
             dateEnd: event.dateEnd,
             location: event.location,
@@ -62,10 +64,11 @@ const SearchResults = ({ events, onBack }: SearchResultsProps) => {
             participants_count: event.participants_count || 0,
             max_participants: event.max_participants || 0,
             imgSrc: event.imgSrc,
+            posted_at: event.posted_at || "",
           };
           return (
             <div key={idx}>
-              <PublicEventHorizontalCard event={cardData} />
+              <EventCardHorizontal event={cardData} gradientBgClass="bg-white" showShadow />
             </div>
           );
         })}

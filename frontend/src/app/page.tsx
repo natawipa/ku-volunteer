@@ -9,54 +9,13 @@ import type { Activity } from "../lib/types";
 
 import EventTypeSection from "./components/EventTypeSection";
 import EventCardSquare from "./components/EventCard/EventCardSquare";
-import type { EventCardData } from "./components/EventCard/utils";
+import { EventCardData, transformActivityToEvent } from "./components/EventCard/utils";
 import Header from "./components/Header";
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminContent from "./admin/AdminContent";
 import HeroImage from "./components/HeroImage";
 import Navbar from "./components/Navbar";
 
-// Transform backend activity to frontend card format
-const transformActivityToEvent = (activity: Activity): EventCardData => {
-  if (!activity) {
-    console.warn("Empty activity passed to transform function");
-    const now = new Date().toLocaleDateString("en-GB");
-    return {
-      id: 0,
-      title: "Unknown Activity",
-      description: "No description",
-      organizer: "Unknown Organizer",
-      participants_count: 0,
-      max_participants: 0,
-      dateStart: now,
-      dateEnd: now,
-      location: "Unknown Location",
-      category: [],
-      imgSrc: "/default-event.jpg",
-      status: "unknown",
-      posted_at: new Date().toISOString(),
-    };
-  }
-
-  return {
-    id: activity.id ?? 0,
-    title: activity.title ?? "Untitled Activity",
-    description: activity.description ?? "No description",
-    organizer: activity.organizer_name ?? "Unknown Organizer",
-    participants_count: activity.current_participants ?? 0,
-    max_participants: activity.max_participants ?? 0,
-    dateStart: activity.start_at ?? new Date().toISOString(),
-    dateEnd: activity.end_at ?? new Date().toISOString(),
-    location: activity.location ?? "Unknown Location",
-    category: activity.categories ?? [],
-    imgSrc:
-      activity.cover_image_url ||
-      activity.cover_image ||
-      "/default-event.jpg",
-    status: activity.status ?? "unknown",
-    posted_at: activity.created_at ?? new Date().toISOString(),
-  };
-};
 
 const EVENT_TYPE_DEFINITIONS = [
   {
@@ -120,7 +79,8 @@ export default function Home() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSearchActive, ] = useState(false);
+  const [isSearchActive, setIsSearchActive] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
 
   // Check Authentication on Mount
   useEffect(() => {
@@ -184,9 +144,8 @@ export default function Home() {
       <div className="relative p-6">
       {/* Header */}
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
-      <div className="relative -mt-8">
-        <Header showBigLogo={true} showSearch={true} />
-      </div>
+      <Header showBigLogo={true} showSearch={true} activities={activities} 
+              setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
 
         {/* Main Content */}
         {!isSearchActive && (

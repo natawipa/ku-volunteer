@@ -1,3 +1,5 @@
+import { Activity } from "@/lib/types";
+
 export interface EventCardData {
   id: string | number;
   title: string;
@@ -93,3 +95,48 @@ export function getCategoryBackground(category: string): { color: string; backgr
     backgroundBrain: "",
   };
 }
+
+export const transformActivityToEvent = (activity: Activity): EventCardData => {
+  if (!activity) {
+    console.warn('⚠️ Empty activity passed to transform function');
+    return getDefaultEventCardData();
+  }
+
+  return {
+    id: activity.id ?? 0,
+    title: activity.title ?? "Untitled Activity",
+    description: activity.description ?? "No description",
+    organizer: activity.organizer_name ?? "Unknown Organizer",
+    participants_count: activity.current_participants ?? 0,
+    max_participants: activity.max_participants ?? 0,
+    dateStart: activity.start_at ?? new Date().toISOString(),
+    dateEnd: activity.end_at ?? new Date().toISOString(),
+    location: activity.location ?? "Unknown Location",
+    category: activity.categories ?? [],
+    imgSrc: activity.cover_image_url || activity.cover_image || "/default-event.jpg",
+    status: activity.status ?? "unknown",
+    posted_at: activity.created_at ?? new Date().toISOString(),
+  };
+};
+
+
+export const getDefaultEventCardData = (): EventCardData => ({
+  id: 0,
+  title: 'Unknown Activity',
+  description: 'No description available',
+  organizer: 'Unknown Organizer',
+  participants_count: 0,
+  max_participants: 0,
+  dateStart: new Date().toISOString(),
+  dateEnd: new Date().toISOString(),
+  location: 'Unknown Location',
+  category: [],
+  imgSrc: "/default-event.jpg",
+  status: 'unknown',
+  posted_at: new Date().toISOString(),
+});
+
+
+export const transformMultipleActivitiesToEvents = (activities: Activity[]): EventCardData[] => {
+  return activities.map(transformActivityToEvent);
+};
