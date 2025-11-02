@@ -5,20 +5,20 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ChevronLeft, Camera } from "lucide-react";
 import HeroImage from "../components/HeroImage";
-import { apiService, User, UserUpdate } from "../../lib/api";
+import { apiService, User, UserUpdate, StudentProfileUpdate, OrganizerProfile } from "../../lib/api";
 import { activitiesApi } from "../../lib/activities";
 import EventCardSquare from "../components/EventCard/EventCardSquare";
 import { getMyEvents } from "../components/EventCard/utils";
 import type { EventCardData, EventFilterConfig } from "../components/EventCard/utils";
 import type { Activity, ActivityApplication } from "../../lib/types";
 import { auth } from "../../lib/utils";
-import { validateImageFile } from "./validation";
+import { validateImageFile, validateProfileForm, YEAR_OPTIONS, ORGANIZATION_TYPE_OPTIONS } from "./validation";
 
 // Profile field configuration
 const profileFields = [
   { key: 'first_name', label: 'First Name', type: 'text', roles: ['student', 'organizer'] },
   { key: 'last_name', label: 'Last Name', type: 'text', roles: ['student', 'organizer'] },
-  { key: 'profile.student_id_external', label: 'Student ID', type: 'text', roles: ['student'] },
+  { key: 'profile.student_id_external', label: 'Student ID', type: 'text', roles: ['student'], editable: false },
   { key: 'profile.year', label: 'Year', type: 'number', roles: ['student'] },
   { key: 'profile.faculty', label: 'Faculty', type: 'text', roles: ['student'] },
   { key: 'profile.major', label: 'Major', type: 'text', roles: ['student'] },
@@ -169,6 +169,14 @@ export default function Profile() {
   };
 
   const handleChange = (field: string, value: string | number) => {
+    // clear field-specific error when user edits the field
+    setFormErrors((prev) => {
+      if (!prev || !prev[field]) return prev;
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+
     if (field === 'first_name' || field === 'last_name' || field === 'email') {
       setFormData((prev) => ({ ...prev, [field]: value }));
     } else if (field === 'profile.student_id_external') {
@@ -186,7 +194,8 @@ export default function Profile() {
         ...prev,
         profile: {
           student_id_external: prev.profile?.student_id_external,
-          year: Number(value),
+          // allow clearing the year (empty string) which will become undefined
+          year: value === "" ? undefined : Number(value),
           faculty: prev.profile?.faculty,
           major: prev.profile?.major,
         },
@@ -234,15 +243,84 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!user?.id) return;
+    // Validate before submitting
+    const base = validateProfileForm({
+      first_name: (formData.first_name as string) || "",
+      last_name: (formData.last_name as string) || "",
+      email: (formData.email as string) || "",
+    });
+
+    const errors: Record<string, string> = { ...(base || {}) };
+
+    // Role-specific validations
+    if (user?.role === 'student') {
+      const pf = (formData.profile as StudentProfileUpdate) || {};
+      if (!pf.student_id_external || String(pf.student_id_external).trim() === '') {
+        errors['profile.student_id_external'] = 'Student ID is required';
+      }
+      if (!pf.year || Number(pf.year) <= 0) {
+        errors['profile.year'] = 'Year is required';
+      }
+    }
+
+    if (user?.role === 'organizer') {
+      const op = (formData.organizer_profile as OrganizerProfile) || {};
+      if (!op.organization_name || String(op.organization_name).trim() === '') {
+        errors['organizer_profile.organization_name'] = 'Organization name is required';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // scroll to first error (optional)
+      const firstKey = Object.keys(errors)[0];
+      // try to focus corresponding input by name attribute if present
+      const el = document.querySelector(`[name="${firstKey}"]`) as HTMLElement | null;
+      if (el) el.focus();
+      return;
+    }
+
     setSaveLoading(true);
-    
     // Cast formData to Partial<User> for the API call
-    const res = await apiService.updateUser(user.id, formData as Partial<User>);
+    // Backend UserSerializer expects student profile fields (year, faculty, major)
+    // and organizer fields (organization_type, organization_name) as top-level
+    // write-only fields. Flatten nested objects accordingly before sending.
+    type UpdatePayload = Partial<User> & {
+      year?: number;
+      faculty?: string;
+      major?: string;
+      organization_type?: string;
+      organization_name?: string;
+      profile?: unknown;
+      organizer_profile?: unknown;
+    };
+
+    const payload: UpdatePayload = { ...(formData as Partial<User>) };
+
+    if (formData.profile) {
+      const pf = formData.profile as StudentProfileUpdate;
+      if (pf.year !== undefined) payload.year = pf.year;
+      if (pf.faculty !== undefined) payload.faculty = pf.faculty;
+      if (pf.major !== undefined) payload.major = pf.major;
+      // student_id_external is intentionally read-only on update in the backend serializer,
+      // so we don't attempt to send it here (and the field is non-editable in the UI).
+      delete payload.profile;
+    }
+
+    if (formData.organizer_profile) {
+      const op = formData.organizer_profile as OrganizerProfile;
+      if (op.organization_type !== undefined) payload.organization_type = op.organization_type;
+      if (op.organization_name !== undefined) payload.organization_name = op.organization_name;
+      delete payload.organizer_profile;
+    }
+
+    const res = await apiService.updateUser(user.id, payload as Partial<User>);
     setSaveLoading(false);
 
     if (res.success && res.data) {
       setUser(res.data);
       setIsEditing(false);
+      setFormErrors({});
     } else {
       alert(res.error);
     }
@@ -272,12 +350,12 @@ export default function Profile() {
   const displayName = `${formData.first_name || ""} ${formData.last_name || ""}`.trim() || "User";
 
   return (
-    <div className="relative min-h-screen bg-gray-50">
-      {/* Smaller Hero Image */}
-      <HeroImage containerHeight="220px" mountainHeight="180px" />
-      
+    <div className="relative min-h-screen">
+      <HeroImage containerHeight="160px" mountainHeight="130px" />
+      <div className="h-[160px]" aria-hidden="true" />
+
+      {/* Back Button */}
       <div className="relative pt-6 px-4">
-        {/* Back Button */}
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
@@ -285,8 +363,10 @@ export default function Profile() {
           <ChevronLeft className="w-5 h-5" />
           <span>Back</span>
         </button>
+      </div>
 
-          {/* Profile Info */}
+      {/* Profile Info */}
+      <div className="relative px-4">
         <div className="flex w-full items-center justify-between mb-8">
           <div className="flex items-center gap-6">
             {/* Profile Image */}
@@ -296,9 +376,8 @@ export default function Profile() {
             >
               <Image
                 src={
-                  imageError
-                    ? "/avatar.jpg"
-                    : imagePreview || "/avatar.jpg"
+                  imagePreview || 
+                  (imageError ? "/avatar.jpg" : apiService.getProfileImageUrl(user?.profile_image))
                 }
                 alt="profile"
                 width={80}
@@ -358,31 +437,72 @@ export default function Profile() {
             </div>
           )}
         </div>
+      </div>
 
-        {/* Profile Details */}
+      {/* Profile Details */}
+      <div className="relative px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
           {profileFields
             .filter(field => field.roles.includes(user?.role || ''))
-            .map((field) => (
-              <div key={field.key}>
-                <label className="block text-sm font-semibold text-gray-600 mb-1">
-                  {field.label}
-                </label>
-                <input
-                  type={field.type}
-                  value={getNestedValue(formData, field.key) || ""}
-                  onChange={(e) => handleChange(field.key, e.target.value)}
-                  disabled={!isEditing}
-                  className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
-                />
-              </div>
-            ))}
-        </div>
+            .map((field) => {
+              const disabled = !isEditing || field.editable === false;
+              return (
+                <div key={field.key}>
+                  <label className="block text-sm font-semibold text-gray-600 mb-1">
+                    {field.label}
+                  </label>
 
-        {/* My Events Section */}
-        {auth.isAuthenticated() && (
-          <div className="mt-8">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">My Event</h3>
+                  {/* Render dropdown for year and organization type, or default input. Honor field.editable */}
+                  {field.key === 'profile.year' ? (
+                    <select
+                      name={field.key}
+                      value={String(getNestedValue(formData, field.key) ?? "")}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={disabled}
+                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
+                    >
+                      <option value="">Select year</option>
+                      {YEAR_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : field.key === 'organizer_profile.organization_type' ? (
+                    <select
+                      name={field.key}
+                      value={String(getNestedValue(formData, field.key) ?? "")}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={disabled}
+                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
+                    >
+                      <option value="">Select organization type</option>
+                      {ORGANIZATION_TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      name={field.key}
+                      type={field.type}
+                      value={getNestedValue(formData, field.key) || ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={disabled}
+                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
+                    />
+                  )}
+
+                  {formErrors[field.key] && (
+                    <p className="text-sm text-red-600 mt-1">{formErrors[field.key]}</p>
+                  )}
+                </div>
+              );
+            })}
+        </div>
+      </div>
+
+      {/* My Events Section */}
+      {auth.isAuthenticated() && (
+        <div className="relative px-4 mt-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6">My Event</h3>
 
             {eventsLoading ? (
               <div className="flex items-center justify-center h-32">
@@ -401,7 +521,6 @@ export default function Profile() {
             )}
           </div>
         )}
-      </div>
     </div>
   );
 }
