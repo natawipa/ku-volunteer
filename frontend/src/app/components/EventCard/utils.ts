@@ -210,7 +210,7 @@ export function getMyEvents(config: EventFilterConfig): EventCardData[] {
 
 // Filter events for "All Events" section based on user role
 export function getAllEvents(config: EventFilterConfig): EventCardData[] {
-  const { activities, userRole, isAuthenticated, userApplications = [], organizerProfileId } = config;
+  const { activities, userRole, isAuthenticated } = config;
   
   if (!isAuthenticated) {
     // Not authenticated: show events students can apply to (open, upcoming)

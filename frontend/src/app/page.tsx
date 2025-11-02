@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from "react";
 
 import { auth } from "../lib/utils";
-import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../lib/constants";
+import { USER_ROLES } from "../lib/constants";
 import { activitiesApi } from "../lib/activities";
 import type { Activity, ActivityApplication } from "../lib/types";
 import { apiService } from "../lib/api";
@@ -102,7 +102,6 @@ function SectionAllEvents({
 
 // Main Home Page Component
 export default function Home() {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -113,7 +112,6 @@ export default function Home() {
   
   // Student-specific state
   const [userApplications, setUserApplications] = useState<ActivityApplication[]>([]);
-  const [approvedActivities, setApprovedActivities] = useState<Activity[]>([]);
   
   // Organizer-specific state
   const [organizerProfileId, setOrganizerProfileId] = useState<number | null>(null);
@@ -173,15 +171,9 @@ export default function Home() {
         setLoading(false);
       }
     };
+    
     fetchData();
   }, []);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    const handleScroll = () => setIsScrolled(window.scrollY > 200);
-    window.addEventListener("scroll", handleScroll);
-    return () => window.removeEventListener("scroll", handleScroll);
-  }, [isAuthenticated]);
 
   // Create filter configuration
   const filterConfig: EventFilterConfig = {
@@ -214,10 +206,10 @@ export default function Home() {
 
 // 🏠 Main Home Page Render
   return (
-    <div className="relative">
+    <div className="relative pt-6 px-4">
       {/* Background */}
       <HeroImage />
-      <div className="relative p-6">
+      <div className="relative">
       {/* Header */}
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
       <Header showBigLogo={true} showSearch={true} activities={activities} 
