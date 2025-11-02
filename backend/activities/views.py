@@ -28,6 +28,34 @@ class ActivityListCreateView(generics.ListCreateAPIView):
     )
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_queryset(self):
+        """Filter queryset based on user role and update activity statuses."""
+        # Update all activity statuses efficiently before filtering
+        Activity.update_all_statuses()
+        
+        # Get the base queryset after status updates
+        queryset = super().get_queryset()
+        
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        if user_role == UserRoles.ORGANIZER:
+            # Get user's organization name from their organizer profile
+            try:
+                organizer_profile = user.organizer_profile
+                organization_name = organizer_profile.organization_name
+                # Show all activities from the same organization
+                return queryset.filter(
+                    organizer_profile__organization_name=organization_name
+                )
+            except AttributeError:
+                # If no organizer profile found, show no activities
+                return queryset.none()
+        if is_admin_user(user):
+            return queryset
+        # Students: see all activities except pending
+        return queryset.exclude(status=ActivityStatus.PENDING)
+
     def get_serializer_class(self):
         """Return appropriate serializer based on request method."""
         if self.request.method == 'POST':
@@ -50,28 +78,6 @@ class ActivityListCreateView(generics.ListCreateAPIView):
             )
         serializer.save()
 
-    def get_queryset(self):
-        """Filter queryset based on user role."""
-        user = self.request.user
-        user_role = getattr(user, 'role', None)
-
-        if user_role == UserRoles.ORGANIZER:
-            # Get user's organization name from their organizer profile
-            try:
-                organizer_profile = user.organizer_profile
-                organization_name = organizer_profile.organization_name
-                # Show all activities from the same organization
-                return self.queryset.filter(
-                    organizer_profile__organization_name=organization_name
-                )
-            except AttributeError:
-                # If no organizer profile found, show no activities
-                return self.queryset.none()
-        if is_admin_user(user):
-            return self.queryset.all()
-        # Students: see all activities except pending
-        return self.queryset.exclude(status=ActivityStatus.PENDING)
-
 
 class ActivityListOnlyView(ActivityListCreateView):
     """API view for listing activities only."""
@@ -80,11 +86,17 @@ class ActivityListOnlyView(ActivityListCreateView):
 
     def get_queryset(self):
         """Filter queryset based on user authentication and role."""
+        # Update all activity statuses efficiently before filtering
+        Activity.update_all_statuses()
+        
+        # Get the base queryset after status updates
+        queryset = super().get_queryset()
+            
         # If user is not authenticated, show only open activities
         if not self.request.user.is_authenticated:
-            return self.queryset.filter(status=ActivityStatus.OPEN)
+            return queryset.filter(status=ActivityStatus.OPEN )
 
-        # For authenticated users, use the parent logic
+        # For authenticated users, use the parent logic (which now includes status updates)
         return super().get_queryset()
 
 
@@ -100,6 +112,12 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
         'organizer_profile', 'organizer_profile__user'
     )
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_object(self):
+        """Get the activity object and update its status."""
+        obj = super().get_object()
+        obj.auto_update_status()
+        return obj
 
     def get_serializer_class(self):
         """Return appropriate serializer based on request method."""
@@ -621,9 +639,14 @@ class StudentApprovedActivitiesView(generics.ListAPIView):
 
     def get_queryset(self):
         """Get all activities where student has approved applications."""
-        return get_student_approved_activities(self.request.user).select_related(
+        # Update all activity statuses efficiently
+        Activity.update_all_statuses()
+        
+        queryset = get_student_approved_activities(self.request.user).select_related(
             'organizer_profile', 'organizer_profile__user'
         )
+            
+        return queryset
 
 
 class ActivityPosterImageListCreateView(generics.ListCreateAPIView):

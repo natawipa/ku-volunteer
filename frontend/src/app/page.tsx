@@ -3,19 +3,19 @@
 import { useRef, useState, useEffect } from "react";
 
 import { auth } from "../lib/utils";
-import { USER_ROLES } from "../lib/constants";
+import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../lib/constants";
 import { activitiesApi } from "../lib/activities";
-import type { Activity } from "../lib/types";
+import type { Activity, ActivityApplication } from "../lib/types";
+import { apiService } from "../lib/api";
 
 import EventTypeSection from "./components/EventTypeSection";
 import EventCardSquare from "./components/EventCard/EventCardSquare";
-import { EventCardData, transformActivityToEvent } from "./components/EventCard/utils";
+import { transformActivityToEvent, getMyEvents, getAllEvents, getOpeningEvents, type EventFilterConfig } from "./components/EventCard/utils";
 import Header from "./components/Header";
 import AdminLayout from "./admin/components/AdminLayout";
 import AdminContent from "./admin/AdminContent";
 import HeroImage from "./components/HeroImage";
 import Navbar from "./components/Navbar";
-
 
 const EVENT_TYPE_DEFINITIONS = [
   {
@@ -44,7 +44,7 @@ const EVENT_TYPE_DEFINITIONS = [
   },
 ];
 
-function SectionUpcomingEvents({
+function SectionMyEvents({
   events,
 }: {
   events: ReturnType<typeof transformActivityToEvent>[];
@@ -52,8 +52,9 @@ function SectionUpcomingEvents({
   if (!events.length) {
     return (
       <section className="mb-6">
+        <h2 className="font-bold mb-4 text-2xl">My Events</h2>
         <div className="flex justify-center items-center h-48">
-          <p className="text-gray-600">No activities available at the moment.</p>
+          <p className="text-gray-600">No events found.</p>
         </div>
       </section>
     );
@@ -61,7 +62,35 @@ function SectionUpcomingEvents({
 
   return (
     <section className="mb-6">
-      <h2 className="font-bold mb-4 text-2xl">Upcoming Events</h2>
+      <h2 className="font-bold mb-4 text-2xl">My Events</h2>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {events.slice(0, 6).map((e) => (
+          <EventCardSquare key={e.id} event={e} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function SectionAllEvents({
+  events,
+}: {
+  events: ReturnType<typeof transformActivityToEvent>[];
+}) {
+  if (!events.length) {
+    return (
+      <section className="mb-6">
+        <h2 className="font-bold mb-4 text-2xl">All Events</h2>
+        <div className="flex justify-center items-center h-48">
+          <p className="text-gray-600">No events available at the moment.</p>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="mb-6">
+      <h2 className="font-bold mb-4 text-2xl">All Events</h2>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {events.slice(0, 6).map((e) => (
           <EventCardSquare key={e.id} event={e} />
@@ -73,7 +102,7 @@ function SectionUpcomingEvents({
 
 // Main Home Page Component
 export default function Home() {
-  const [, setIsScrolled] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -81,24 +110,59 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [isSearchActive, setIsSearchActive] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
+  
+  // Student-specific state
+  const [userApplications, setUserApplications] = useState<ActivityApplication[]>([]);
+  const [approvedActivities, setApprovedActivities] = useState<Activity[]>([]);
+  
+  // Organizer-specific state
+  const [organizerProfileId, setOrganizerProfileId] = useState<number | null>(null);
 
   // Check Authentication on Mount
   useEffect(() => {
     setIsAuthenticated(auth.isAuthenticated());
     setUserRole(auth.getUserRole());
+    
+    // Get organizer profile ID if organizer
+    const fetchUserProfile = async () => {
+      if (auth.getUserRole() === USER_ROLES.ORGANIZER) {
+        try {
+          const result = await apiService.getCurrentUser();
+          if (result.success && result.data && result.data.organizer_profile) {
+            setOrganizerProfileId(result.data.organizer_profile.id || null);
+            console.log('Organizer profile ID set to:', result.data.organizer_profile.id);
+          } else {
+            console.warn('No organizer profile found in user data:', result.data);
+          }
+        } catch (err) {
+          console.error('Failed to fetch user profile:', err);
+        }
+      }
+    };
+    
+    fetchUserProfile();
   }, []);
 
-  // Fetch Activities
+  // Fetch Activities and Student Applications
   useEffect(() => {
-    const fetchActivities = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
+        // Fetch all activities
         const response = await activitiesApi.getActivities();
 
         if (response.success && Array.isArray(response.data)) {
           setActivities(response.data);
         } else {
           throw new Error(response.error || "Failed to fetch activities");
+        }
+        
+        // If student, fetch applications and approved activities
+        if (auth.isAuthenticated() && auth.getUserRole() === USER_ROLES.STUDENT) {
+          const applicationsResponse = await activitiesApi.getUserApplications();
+          if (applicationsResponse.success && applicationsResponse.data) {
+            setUserApplications(applicationsResponse.data);
+          }
         }
       } catch (err: unknown) {
         const message =
@@ -109,7 +173,7 @@ export default function Home() {
         setLoading(false);
       }
     };
-    fetchActivities();
+    fetchData();
   }, []);
 
   useEffect(() => {
@@ -119,11 +183,23 @@ export default function Home() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, [isAuthenticated]);
 
-  const events = activities.map(transformActivityToEvent);
+  // Create filter configuration
+  const filterConfig: EventFilterConfig = {
+    activities,
+    userRole,
+    isAuthenticated,
+    userApplications,
+    organizerProfileId
+  };
+
+  // Get filtered events using utility functions
+  const myEvents = getMyEvents(filterConfig);
+  const allEvents = getAllEvents(filterConfig);
+  const eventTypeEvents = getOpeningEvents(activities);
 
   const eventTypes = EVENT_TYPE_DEFINITIONS.map((type) => ({
     ...type,
-    events: events.filter(
+    events: eventTypeEvents.filter(
       (e) => Array.isArray(e.category) && e.category.some(type.match)
     ),
   }));
@@ -138,13 +214,13 @@ export default function Home() {
 
 // 🏠 Main Home Page Render
   return (
-    <div className="relative pt-6 px-4">
+    <div className="relative">
       {/* Background */}
       <HeroImage />
+      <div className="relative p-6">
       {/* Header */}
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
-      <div className="relative">
-        <Header showBigLogo={true} showSearch={true} activities={activities} 
+      <Header showBigLogo={true} showSearch={true} activities={activities} 
               setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
 
         {/* Main Content */}
@@ -183,7 +259,17 @@ export default function Home() {
             {!loading && !error && (
               <>
               <div className="mt-8">
-                <SectionUpcomingEvents events={events} />
+                {isAuthenticated && (
+                  <>
+                    <SectionMyEvents events={myEvents} />
+                    <SectionAllEvents events={allEvents} />
+                  </>
+                )}
+                
+                {!isAuthenticated && (
+                  <SectionAllEvents events={allEvents} />
+                )}
+                
                 <h2 className="font-bold mb-6 text-2xl py-2">Event Types</h2>
                 {eventTypes.map((type, idx) => (
                   <EventTypeSection key={idx} {...type} />

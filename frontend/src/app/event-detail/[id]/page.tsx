@@ -434,7 +434,7 @@ export default function EventPage({ params }: PageProps) {
     }
 
     // No application - show apply button
-    const canApply = !event?.capacity_reached && event?.status === ACTIVITY_STATUS.OPEN;
+    const canApply = !event?.capacity_reached && (event?.status === ACTIVITY_STATUS.OPEN || event?.status === ACTIVITY_STATUS.UPCOMING);
     return (
       <button
         onClick={handleApply}

@@ -17,15 +17,21 @@ class UserRoles:
 # Activity statuses
 class ActivityStatus:
     PENDING = 'pending'
+    UPCOMING = 'upcoming'
     OPEN = 'open'
+    DURING = 'during'
     FULL = 'full'
     CLOSED = 'closed'
+    COMPLETE = 'complete'
     CANCELLED = 'cancelled'
     REJECTED = 'rejected'
 
     CHOICES = [
         (PENDING, 'Pending'),
+        (UPCOMING, 'Upcoming'),
         (OPEN, 'Open'),
+        (DURING, 'During'),
+        (COMPLETE, 'Complete'),
         (FULL, 'Full'),
         (CLOSED, 'Closed'),
         (CANCELLED, 'Cancelled'),

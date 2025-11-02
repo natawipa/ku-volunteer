@@ -57,9 +57,13 @@ export const USER_ROLES = {
 // Activity statuses
 export const ACTIVITY_STATUS = {
   PENDING: 'pending',
+  UPCOMING: 'upcoming',
   OPEN: 'open',
+  DURING: 'during',
+  COMPLETE: 'complete',
   FULL: 'full',
   CLOSED: 'closed',
+  REJECTED: 'rejected',
   CANCELLED: 'cancelled',
 } as const;
 
