@@ -58,6 +58,32 @@ export default function EventTypePage() {
       ? params["type"][0]
       : "";
 
+  const getBorderEventCardColors = () => {
+  if (eventTypeParam === "university-activities") {
+    return {
+    middleColorBorder: "#D7E4FF",
+    endColorBorder: "#C5D8FF",
+    };
+  }
+  if (eventTypeParam === "enhance-competencies") {
+    return {
+      middleColorBorder: "#FFF9CF",
+      endColorBorder: "#FFF7BC",
+    };
+  }
+  if (eventTypeParam === "social-engagement-activities") {
+    return {
+    middleColorBorder: "#FFDEE0",
+    endColorBorder: "#FFCCCF",
+    };
+  }
+  return {
+      middleColorBorder: "#DAE9DC",
+      endColorBorder: "#CEF7CE",
+    };
+  };
+
+  const borderColors = getBorderEventCardColors();
   const eventTypeConfig = EVENT_TYPE_MAP[eventTypeParam];
   const eventTypeTitle = eventTypeConfig?.title || "Unknown";
 
@@ -176,7 +202,10 @@ export default function EventTypePage() {
             key={event.id}
             event={event}
             gradientBgClass="bg-white"
+            middleColorBorder={borderColors.middleColorBorder}
+            endColorBorder={borderColors.endColorBorder}
             showShadow
+            hoverScale={false}
           />
         ))}
       </div>

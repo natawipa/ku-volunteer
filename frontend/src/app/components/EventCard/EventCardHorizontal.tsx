@@ -16,6 +16,8 @@ export interface EventCardHorizontalProps {
   showShadow?: boolean;
   imageWidth?: string; // e.g., "w-40", "w-32"
   imageHeight?: string; // e.g., "h-28", "h-32"
+  middleColorBorder?: string;
+  endColorBorder?: string;
   
   // Visibility toggles
   showCategory?: boolean;
@@ -24,6 +26,7 @@ export interface EventCardHorizontalProps {
   showLocation?: boolean;
   showPostedTime?: boolean;
   showBadge?: boolean;
+  showGradientBorder?: boolean;
   
   // Style customization
   cardPadding?: string;
@@ -43,12 +46,15 @@ export default function EventCardHorizontal({
   showShadow = true,
   imageWidth = "sm:w-40",
   imageHeight = "h-28",
+  middleColorBorder = "#DAE9DC",
+  endColorBorder = "#CEF7CE",
   showCategory = true,
   showDate = true,
   showParticipants = true,
   showLocation = true,
   showPostedTime = true,
   showBadge = false,
+  showGradientBorder = true,
   cardPadding = "p-4",
   titleClassName = "font-semibold text-lg leading-snug line-clamp-2",
   infoTextClassName = "text-xs text-gray-700",
@@ -97,6 +103,7 @@ export default function EventCardHorizontal({
 
   const mainCategory = Array.isArray(event.category) ? event.category[0] : event.category;
   const { color } = getCategoryBackground(mainCategory);
+// FFDEE0, FFCCCF - pink
 
   const cardClasses = [
     "relative flex flex-col sm:flex-row gap-4 items-start sm:items-stretch overflow-hidden rounded-lg",
@@ -105,16 +112,24 @@ export default function EventCardHorizontal({
     "transition-transform duration-200 w-full cursor-pointer group",
     hoverBgClass,
     hoverScale ? "hover:scale-105" : "",
-    showShadow ? "shadow-md" : "",
   ].filter(Boolean).join(" ");
 
   return (
     <div
-      className={cardClasses}
+      className="relative p-0.5 rounded-lg transition-transform duration-200 w-full cursor-pointer group"
+      style={{
+      ...(showGradientBorder !== false ? {
+          background: `linear-gradient(to right, white, ${middleColorBorder} 50%, ${endColorBorder})`
+        } : {}),     
+      ...(hoverScale ? { transform: "scale(1.03)" } : {}),
+        ...(showShadow ? { boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)" } : {}),
+      }}
       onClick={handleClick}
       role="button"
       tabIndex={0}
     >
+
+      <div className={cardClasses}>
       {/* Image */}
       <div className={`flex-shrink-0 w-full ${imageWidth} ${imageHeight} rounded-lg overflow-hidden bg-gray-100`}>
         <Image
@@ -193,6 +208,7 @@ export default function EventCardHorizontal({
           )}
         </div>
       </div>
+    </div>
     </div>
   );
 }

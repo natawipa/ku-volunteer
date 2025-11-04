@@ -126,10 +126,10 @@ const AllEventsPage: React.FC = () => {
           <p className="text-gray-600">Try adjusting your search criteria or filter settings.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5 mb-10 mt-7">
+        <div className="flex flex-col gap-5 mb-10 mt-7 px-5">
           {filteredEvents.map(ev => (
             <EventCardHorizontal key={ev.id} event={ev} showShadow={true}
-              showBadge={true} hoverScale={true}cardPadding="p-4" />
+              showBadge={true} hoverScale={false} cardPadding="p-4" gradientBgClass="bg-white"/>
           ))}
         </div>
       )}

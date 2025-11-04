@@ -72,7 +72,7 @@ export default function EventTypeSection({ title, events }: EventTypeSectionProp
               {/* Transparent card, no image or empty state */}
               {mostRecentEvent ? (
                 <div className="bg-transparent shadow-none">
-                  <EventCardHorizontal event={{ ...mostRecentEvent, imgSrc: mostRecentEvent.imgSrc }} gradientBgClass="bg-transparent" showShadow={false} />
+                  <EventCardHorizontal event={{ ...mostRecentEvent, imgSrc: mostRecentEvent.imgSrc }} gradientBgClass="bg-transparent" showShadow={false} showGradientBorder={false} />
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center min-h-[120px] w-full bg-transparent rounded-lg">
