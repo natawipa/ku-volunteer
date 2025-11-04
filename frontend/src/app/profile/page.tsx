@@ -1,384 +1,599 @@
 "use client";
-import EventCard from "../components/EventCard";
-import { ChevronRightIcon } from "@heroicons/react/24/outline";
-import { ChevronLeftIcon } from "@heroicons/react/20/solid";
+
+import React, { useEffect, useState, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { apiService, type User } from "../../lib/api";
+import { ChevronLeft, Camera } from "lucide-react";
+import HeroImage from "../components/HeroImage";
+import { apiService, User, UserUpdate, StudentProfileUpdate, OrganizerProfile } from "../../lib/api";
 import { activitiesApi } from "../../lib/activities";
-import { type Activity } from "../../lib/types";
-import Link from "next/link";
+import EventCardSquare from "../components/EventCard/EventCardSquare";
+import { getMyEvents } from "../components/EventCard/utils";
+import type { EventCardData, EventFilterConfig } from "../components/EventCard/utils";
+import type { Activity, ActivityApplication } from "../../lib/types";
+import { auth } from "../../lib/utils";
+import { validateImageFile, validateProfileForm, YEAR_OPTIONS, ORGANIZATION_TYPE_OPTIONS, TITLE_OPTIONS } from "./validation";
+import Navbar from "../components/Navbar";
 
-// Transform Activity to EventCard format
-const transformActivityToEvent = (activity: Activity) => {
-  if (!activity) {
-    console.warn('⚠️ Empty activity passed to transform function');
-    return {
-      id: 0,
-      title: 'Unknown Activity',
-      post: new Date().toLocaleDateString('en-GB'),
-      dateStart: new Date().toLocaleDateString('en-GB'),
-      dateEnd: new Date().toLocaleDateString('en-GB'),
-      location: 'Unknown Location',
-      category: [],
-      imgSrc: "/default-event.jpg",
-      capacity: 0,
-      status: 'unknown'
-    };
-  }
+// Profile field configuration
+const profileFields = [
+  {key : 'email', label: 'Email', type: 'email', roles: ['student', 'organizer'] },
+  {key : 'title', label: 'Title', type: 'text', roles: ['student', 'organizer'] },
+  { key: 'first_name', label: 'First Name', type: 'text', roles: ['student', 'organizer'] },
+  { key: 'last_name', label: 'Last Name', type: 'text', roles: ['student', 'organizer'] },
+  { key: 'profile.student_id_external', label: 'Student ID', type: 'text', roles: ['student'], editable: false },
+  { key: 'profile.year', label: 'Year', type: 'number', roles: ['student'] },
+  { key: 'profile.faculty', label: 'Faculty', type: 'text', roles: ['student'] },
+  { key: 'profile.major', label: 'Major', type: 'text', roles: ['student'] },
+  { key: 'organizer_profile.organization_name', label: 'Organization Name', type: 'text', roles: ['organizer'] },
+  { key: 'organizer_profile.organization_type', label: 'Organization Type', type: 'text', roles: ['organizer'] },
+];
 
-  return {
-    id: activity.id || 0,
-    title: activity.title || 'Untitled Activity',
-    post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
-    dateStart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),
-    dateEnd: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
-    location: activity.location || 'Unknown Location',
-    category: activity.categories || [],
-    imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/default-event.jpg",
-    capacity: activity.max_participants || 0,
-    status: activity.status === "open" ? "upcoming" : activity.status || 'unknown',
-  };
+const getNestedValue = (obj: unknown, path: string): string | number | undefined => {
+  if (typeof obj !== 'object' || obj === null) return undefined;
+
+  const result = path.split('.').reduce<unknown>((acc, part) => {
+    if (typeof acc === 'object' && acc !== null && Object.prototype.hasOwnProperty.call(acc, part)) {
+      return (acc as Record<string, unknown>)[part];
+    }
+    return undefined;
+  }, obj);
+
+  if (typeof result === 'string' || typeof result === 'number') return result;
+  return undefined;
 };
-
 
 export default function Profile() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [events, setEvents] = useState<Activity[]>([]);
-  const [favoriteEvents, setFavoriteEvents] = useState<Activity[]>([]);
+  const [formData, setFormData] = useState<UserUpdate>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [saveLoading, setSaveLoading] = useState(false);
 
+  // Events state (for My Events section)
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [userApplications, setUserApplications] = useState<ActivityApplication[]>([]);
+  const [myEvents, setMyEvents] = useState<EventCardData[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Fetch current user
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const result = await apiService.getCurrentUser();
-        if (result.success && result.data) {
-          const userData = result.data;
-          setUser(userData);
-          
-          // get user's events based on role
-          if (userData.role === 'organizer') {
-            const eventsResult = await activitiesApi.getActivities();
-            if (eventsResult.success && eventsResult.data) {
-              // Filter events
-              const userOrganizationName = userData.organizer_profile?.organization_name;
-              
-              if (userOrganizationName) {
-                const userEvents = eventsResult.data.filter(activity => 
-                  activity.organizer_name === userOrganizationName
-                ) || [];
-                
-                setEvents(userEvents.slice(0, 4));
-                console.log(`Found ${userEvents.length} activities for organization: ${userOrganizationName}`);
-              } else {
-                // show empty for no event with this organization name
-                setEvents([]);
-                console.log('No organization name found for user');
+    async function fetchUser() {
+      const res = await apiService.getCurrentUser();
+      if (res.success && res.data) {
+        setUser(res.data);
+        setFormData({
+          first_name: res.data.first_name,
+          last_name: res.data.last_name,
+          email: res.data.email,
+          profile: res.data.profile
+            ? {
+                student_id_external: res.data.profile.student_id_external,
+                year: res.data.profile.year,
+                faculty: res.data.profile.faculty,
+                major: res.data.profile.major,
               }
-            }
-          } else if (userData.role === 'student') {
-            // student dont have event yet
-            setEvents([]);
-            setFavoriteEvents([]);
-          }
-        } else {
-          setError(result.error || 'Failed to load profile');
-        }
-      } catch (err) {
-        console.error('Network error:', err);
-        setError('Network error occurred');
-      } finally {
-        setLoading(false);
+            : undefined,
+          organizer_profile: res.data.organizer_profile
+            ? {
+                organization_name: res.data.organizer_profile.organization_name,
+                organization_type: res.data.organizer_profile.organization_type,
+              }
+            : undefined,
+        });
       }
-    };
-  
-    fetchUserData();
+    }
+    fetchUser();
   }, []);
 
-  // Show loading state
-  if (loading) {
-    return (
-      <div className="relative">
-        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[99px]">
-          <Image
-            src="/images/wavewave.png"
-            alt="mountain"
-            width={1920}
-            height={510}
-            className="fixed w-full h-[310px] inset-0 -top-16 object-cover"
-          />
-        </div>
-        <div className="relative p-6">
-          <button
-            onClick={() => router.push("/")}
-            className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-            hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-          >
-            <ChevronLeftIcon className="w-5 h-5" />
-            Back
-          </button>
-          <div className="flex justify-center items-center h-96">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // Fetch activities and applications for My Events section
+  useEffect(() => {
+    const fetchEvents = async () => {
+      setEventsLoading(true);
+      try {
+        const activitiesRes = await activitiesApi.getActivities();
+        if (activitiesRes.success && activitiesRes.data) {
+          setActivities(activitiesRes.data);
+        } else {
+          setActivities([]);
+        }
 
-  // Show error state
-  if (error) {
-    return (
-      <div className="relative min-h-screen">
-        <div className="absolute inset-0 h-[115px] bg-gradient-to-b from-[#B4DDB6] to-white">
-          <Image
-            src="/mountain.svg"
-            alt="mountain"
-            width={1920}
-            height={510}
-            className="flex absolute inset-x-0 top-0 w-full h-40 object-cover opacity-90"
-          />
-        </div>
-        <div className="relative p-6">
-          <button
-            onClick={() => {
-              router.push('/');
-            }}
-            className="absolute flex items-center gap-1 font-extrabold text-lg bg-white rounded-lg px-3 py-1 ring-[2px] ring-[#B4DDB6]
-            hover:scale-105 transition-transform duration-200 hover:cursor-pointer hover:shadow-md"
-          >
-            <ChevronLeftIcon className="w-5 h-5" />
-            Back
-          </button>
-          <div className="flex justify-center items-center h-96">
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md">
-              <h3 className="text-red-800 font-semibold mb-2">Error Loading Profile</h3>
-              <p className="text-red-600">{error}</p>
-              <button
-                onClick={() => window.location.reload()}
-                className="mt-4 bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
-              >
-                Try Again
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+        // If authenticated student, fetch their applications
+        if (auth.isAuthenticated()) {
+          const appsRes = await activitiesApi.getUserApplications();
+          if (appsRes.success && appsRes.data) setUserApplications(appsRes.data);
+        }
 
+        // compute my events whenever we have activities and user info
+      } catch (err) {
+        console.error('Failed to fetch events for profile page', err);
+        setActivities([]);
+        setUserApplications([]);
+      } finally {
+        setEventsLoading(false);
+      }
+    };
 
-  const displayName = user 
-    ? `${user.title || ''} ${user.first_name || ''} ${user.last_name || ''}`.trim() || user.email
-    : 'Unknown User';
+    fetchEvents();
+  }, []);
+
+  // Recompute myEvents when activities, user, or applications change
+  useEffect(() => {
+    const cfg: EventFilterConfig = {
+      activities,
+      userRole: user?.role || auth.getUserRole(),
+      isAuthenticated: auth.isAuthenticated(),
+      userApplications,
+      organizerProfileId: user?.organizer_profile?.id ?? null,
+    };
+
+    try {
+      const computed = getMyEvents(cfg);
+      setMyEvents(computed || []);
+    } catch (e) {
+      console.error('Failed to compute myEvents', e);
+      setMyEvents([]);
+    }
+  }, [activities, user, userApplications]);
+
+  const handleImageClick = () => {
+    if (isEditing) fileInputRef.current?.click();
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const validation = validateImageFile(file);
+    if (!validation.valid) {
+      setFormErrors({ profile_image: validation.error || "" });
+      return;
+    }
+
+    // Preview image
+    const reader = new FileReader();
+    reader.onloadend = () => setImagePreview(reader.result as string);
+    reader.readAsDataURL(file);
+
+    if (user?.id) {
+      const res = await apiService.uploadProfileImage(user.id, file);
+      if (res.success && res.data) {
+        setUser(res.data);
+        setImagePreview(apiService.getProfileImageUrl(res.data.profile_image));
+      } else {
+        setFormErrors({ profile_image: res.error || "Upload failed" });
+      }
+    }
+  };
+
+  const handleChange = (field: string, value: string | number) => {
+    // clear field-specific error when user edits the field
+    setFormErrors((prev) => {
+      if (!prev || !prev[field]) return prev;
+      const copy = { ...prev };
+      delete copy[field];
+      return copy;
+    });
+
+    if (field === 'title' || field === 'first_name' || field === 'last_name' || field === 'email') {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    } else if (field === 'profile.student_id_external') {
+      setFormData((prev) => ({
+        ...prev,
+        profile: {
+          student_id_external: value as string,
+          year: prev.profile?.year,
+          faculty: prev.profile?.faculty,
+          major: prev.profile?.major,
+        },
+      }));
+    } else if (field === 'profile.year') {
+      setFormData((prev) => ({
+        ...prev,
+        profile: {
+          student_id_external: prev.profile?.student_id_external,
+          // allow clearing the year (empty string) which will become undefined
+          year: value === "" ? undefined : Number(value),
+          faculty: prev.profile?.faculty,
+          major: prev.profile?.major,
+        },
+      }));
+    } else if (field === 'profile.faculty') {
+      setFormData((prev) => ({
+        ...prev,
+        profile: {
+          student_id_external: prev.profile?.student_id_external,
+          year: prev.profile?.year,
+          faculty: value as string,
+          major: prev.profile?.major,
+        },
+      }));
+    } else if (field === 'profile.major') {
+      setFormData((prev) => ({
+        ...prev,
+        profile: {
+          student_id_external: prev.profile?.student_id_external,
+          year: prev.profile?.year,
+          faculty: prev.profile?.faculty,
+          major: value as string,
+        },
+      }));
+    } else if (field === 'organizer_profile.organization_name') {
+      setFormData((prev) => ({
+        ...prev,
+        organizer_profile: {
+          organization_name: value as string,
+          organization_type: prev.organizer_profile?.organization_type || '',
+          id: prev.organizer_profile?.id,
+        },
+      }));
+    } else if (field === 'organizer_profile.organization_type') {
+      setFormData((prev) => ({
+        ...prev,
+        organizer_profile: {
+          organization_name: prev.organizer_profile?.organization_name || '',
+          organization_type: value as string,
+          id: prev.organizer_profile?.id,
+        },
+      }));
+    }
+  };
+
+  const handleSave = async () => {
+    if (!user?.id) return;
+    // Validate before submitting
+    const base = validateProfileForm({
+      first_name: (formData.first_name as string) || "",
+      last_name: (formData.last_name as string) || "",
+      email: (formData.email as string) || "",
+    });
+
+    const errors: Record<string, string> = { ...(base || {}) };
+
+    // Role-specific validations
+    if (user?.role === 'student') {
+      const pf = (formData.profile as StudentProfileUpdate) || {};
+      if (!pf.student_id_external || String(pf.student_id_external).trim() === '') {
+        errors['profile.student_id_external'] = 'Student ID is required';
+      }
+      if (!pf.year || Number(pf.year) <= 0) {
+        errors['profile.year'] = 'Year is required';
+      }
+    }
+
+    if (user?.role === 'organizer') {
+      const op = (formData.organizer_profile as OrganizerProfile) || {};
+      if (!op.organization_name || String(op.organization_name).trim() === '') {
+        errors['organizer_profile.organization_name'] = 'Organization name is required';
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      // scroll to first error (optional)
+      const firstKey = Object.keys(errors)[0];
+      // try to focus corresponding input by name attribute if present
+      const el = document.querySelector(`[name="${firstKey}"]`) as HTMLElement | null;
+      if (el) el.focus();
+      return;
+    }
+
+    setSaveLoading(true);
+    // Cast formData to Partial<User> for the API call
+    // Backend UserSerializer expects student profile fields (year, faculty, major)
+    // and organizer fields (organization_type, organization_name) as top-level
+    // write-only fields. Flatten nested objects accordingly before sending.
+    type UpdatePayload = Partial<User> & {
+      year?: number;
+      faculty?: string;
+      major?: string;
+      organization_type?: string;
+      organization_name?: string;
+      profile?: unknown;
+      organizer_profile?: unknown;
+    };
+
+    const payload: UpdatePayload = { ...(formData as Partial<User>) };
+
+    if (formData.profile) {
+      const pf = formData.profile as StudentProfileUpdate;
+      if (pf.year !== undefined) payload.year = pf.year;
+      if (pf.faculty !== undefined) payload.faculty = pf.faculty;
+      if (pf.major !== undefined) payload.major = pf.major;
+      // student_id_external is intentionally read-only on update in the backend serializer,
+      // so we don't attempt to send it here (and the field is non-editable in the UI).
+      delete payload.profile;
+    }
+
+    if (formData.organizer_profile) {
+      const op = formData.organizer_profile as OrganizerProfile;
+      if (op.organization_type !== undefined) payload.organization_type = op.organization_type;
+      if (op.organization_name !== undefined) payload.organization_name = op.organization_name;
+      delete payload.organizer_profile;
+    }
+
+    const res = await apiService.updateUser(user.id, payload as Partial<User>);
+    setSaveLoading(false);
+
+    if (res.success && res.data) {
+      setUser(res.data);
+      setIsEditing(false);
+      setFormErrors({});
+    } else {
+      alert(res.error);
+    }
+  };
+
+  const handleCancel = () => {
+    if (user) {
+      setFormData({
+        title: user.title,
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        profile: user.profile ? {
+          student_id_external: user.profile.student_id_external,
+          year: user.profile.year,
+          faculty: user.profile.faculty,
+          major: user.profile.major,
+        } : undefined,
+        organizer_profile: user.organizer_profile ? {
+          organization_name: user.organizer_profile.organization_name,
+          organization_type: user.organizer_profile.organization_type,
+        } : undefined,
+      });
+    }
+    setIsEditing(false);
+  };
+
+  const displayName = `${formData.first_name || ""} ${formData.last_name || ""}`.trim() || "User";
 
   return (
-    <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[20vh]"></div>
+    <div className="relative min-h-screen">
+      <HeroImage containerHeight="160px" mountainHeight="150px" />
+      <Navbar />
+      <div className="h-[160px]" aria-hidden="true" />
 
-      {/* Mountain background */}
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={1920}
-        height={510}
-        className="w-full h-[50vh] absolute inset-0 -top-26 object-cover"
-      />
-
-      {/* content */}
-      <div className="relative p-6">
-
-      {/* Back button */}
+      {/* Back Button */}
+      <div className="relative pt-6 px-4 -mt-25">
         <button
-          onClick={() => {
-            router.push('/');
-          }}
-          className="absolute left-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2
-          hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md"
+          onClick={() => router.back()}
+          className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
         >
-          <ChevronLeftIcon className="w-5 h-5" />
-          Back
+          <ChevronLeft className="w-5 h-5" />
+          <span>Back</span>
         </button>
+      </div>
 
-      {/* Update Profile */}
-        <Link href="/profile/edit" className="absolute right-6 top-6 flex items-center gap-1 font-extrabold text-white bg-[#215701] rounded px-4 py-2 hover:bg-[#00361C] transition-all duration-200 hover:cursor-pointer hover:shadow-md">
-            Edit
-        </Link>
+      {/* Profile Info */}
+      <div className="relative px-4">
         
-        {/* profile card */}
-        <div className="flex flex-col sm:flex-row items-center sm:items-start p-8 mt-12
-            space-y-4 sm:space-y-0 sm:space-x-8 
-            ml-0 sm:ml-4 md:ml-8 lg:ml-16 
-            transition-all duration-300">
-  
-        {/* profile image */}
-        <div className="flex-shrink-0">
-          <div className="w-[120px] h-[120px] rounded-full p-[4px] bg-gradient-to-t from-[#ACE9A9] to-[#CCDDCA]">
-            <Image
-              src={imageError ? '/avatar.jpg' : apiService.getProfileImageUrl(user?.profile_image)}
-              alt="profile"
-              width={120}
-              height={120}
-              className="w-full h-full rounded-full object-cover"
-              unoptimized
-              onError={() => {
-                console.error('Failed to load profile image');
-                setImageError(true);
-              }}
-            />
-          </div>
-        </div>
-        
-        {/* name, Info container*/}
-        <div className="flex flex-col w-full items-center sm:items-start">
-          <div className="mb-6 text-center sm:text-left">
-            <h2 className="font-extrabold text-2xl bg-white rounded-lg px-6 py-1 ring-[2px] ring-[#B4DDB6] inline-block">
-              {displayName}
-            </h2>
-          </div>
-          
-          {/* user info*/}
-          <div className="w-full max-w-2xl p-4 sm:p-6 bg-white rounded-3xl ring-[2px] ring-[#B4DDB6]">
-            {user?.role === 'student' && user.profile && (
-              <div className="font-extrabold grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-                {/* Row 1 - Student ID */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Student ID</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
-                    {user.profile.student_id_external || 'N/A'}
-                  </b>
-                </div>
-                
-                {/* Row 2 - Year */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Year</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
-                    {user.profile.year || 'N/A'}
-                  </b>
-                </div>
-                
-                {/* Row 3 - Faculty */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Faculty</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
-                    {user.profile.faculty || 'N/A'}
-                  </b>
-                </div>
-                
-                {/* Row 4 - Major */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Major</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left truncate">
-                    {user.profile.major || 'N/A'}
-                  </b>
-                </div>
-              </div>
-            )}
+        <div className="flex w-full items-center justify-between mb-8">
+          <div className="flex items-center gap-6">
+            {/* Profile Image */}
+            <div
+              className="relative group cursor-pointer"
+              onClick={handleImageClick}
+            >
+              <Image
+                src={
+                  imagePreview || 
+                  (imageError ? "/avatar.jpg" : apiService.getProfileImageUrl(user?.profile_image))
+                }
+                alt="profile"
+                width={80}
+                height={80}
+                className="w-[80px] h-[80px] rounded-full object-cover border-4 border-white shadow"
+                unoptimized
+                onError={() => setImageError(true)}
+              />
 
-            {user?.role === 'organizer' && user.organizer_profile && (
-              <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
-                {/* Row 1 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[140px]">Organization Type</span>
-                  <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                    {user.organizer_profile.organization_type === 'internal' ? 'Kasetsart University' : 
-                    user.organizer_profile.organization_type === 'external' ? 'External Organization' : 'N/A'}
-                  </b>
+              {/* Hover camera icon when editing */}
+              {isEditing && (
+                <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <Camera className="w-6 h-6 text-white" />
                 </div>
-                {/* Row 2 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[140px]">Organization Name</span>
-                  <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                    {user.organizer_profile.organization_name || 'N/A'}
-                  </b>
-                </div>
-              </div>
-            )}
+              )}
 
-            {user?.role === 'admin' && (
-              <div className="font-extrabold grid grid-cols-1 gap-4 text-sm">
-                {/* Row 1 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Email</span>
-                  <b className="w-full bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                    {user.email}
-                  </b>
-                </div>
-                {/* Row 2 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Role</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left">
-                    Admin
-                  </b>
-                </div>
-                {/* Row 3 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">First Name</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                    {user.first_name || 'N/A'}
-                  </b>
-                </div>
-                {/* Row 4 */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-4">
-                  <span className="min-w-[100px]">Last Name</span>
-                  <b className="w-full sm:w-48 bg-white px-4 py-1 ring-1 ring-[#B4DDB6] rounded-xl text-center sm:text-left break-words">
-                    {user.last_name || 'N/A'}
-                  </b>
-                </div>
-              </div>
-            )}
+              {/* Hidden file input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+              />
+            </div>
+
+            <div>
+              <h2 className="font-bold text-2xl text-gray-900">{user?.title} {displayName}</h2>
+              <p className="text-gray-500 text-base">{user?.email}</p>
+            </div>
           </div>
+
+          {/* Edit / Save / Cancel Buttons */}
+          {!isEditing ? (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C] transition-all duration-200"
+            >
+              Edit
+            </button>
+          ) : (
+            <div className="flex gap-2">
+              <button
+                onClick={handleCancel}
+                disabled={saveLoading}
+                className="btn bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400 transition-all duration-200 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={saveLoading}
+                className="btn bg-[#215701] text-white px-4 py-2 rounded hover:bg-[#00361C] transition-all duration-200 disabled:opacity-50"
+              >
+                {saveLoading ? "Saving..." : "Save"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-        {/* My Event */}
-        <section className="mb-6 px-6">
-          <h3 className="font-extrabold text-2xl mb-4">My Event</h3>
-          <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {events.length > 0 ? (
-                events.map((activity, i) => (
-                  <EventCard key={i} {...transformActivityToEvent(activity)} />
-                ))
-              ) : (
-                <p className="text-gray-600">No events found</p>
-              )}
-            </div>
-            {events.length > 4 && (
-              <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300 flex-shrink-0">
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
-            )}
-          </div>
-        </section>
+      {/* Profile Details */}
+      <div className="rounded-lg p-1 px-5 -mt-4">
+        {/* Gradient border wrapper - only show gradient border when NOT editing */}
+        <div className={`rounded-md p-6 px-1 py-1 ${!isEditing ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen p-[2px]' : ''}`}>
+        {/* Inner panel filled with requested gradient */}
+        <div className={`rounded-md p-6 px-3 ${
+          isEditing 
+            ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen' 
+            : 'bg-white'
+          }`}>
+      <div className="relative px-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+          {/* title and email that only show in edit mode */}
+          {isEditing && (
+            <>
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">
+                  Title
+                </label>
+                <select
+                  name="title"
+                  value={String(formData.title || "")}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                  className="w-full p-2 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700"
+                >
+                  <option value="">Select title</option>
+                  {TITLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {formErrors['title'] && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors['title']}</p>
+                )}
+              </div>
 
-        {/* Favorite Event */}
-        <section className="px-6">
-          <h3 className="font-extrabold text-2xl mb-4">
-            Favorite Event <span>⭐</span>
-          </h3>
-          <div className="flex items-center">
-            <div className="flex gap-4 overflow-x-auto pb-2">
-              {favoriteEvents.length > 0 ? (
-                favoriteEvents.map((activity, i) => (
-                  <EventCard key={i} {...transformActivityToEvent(activity)} />
-                ))
-              ) : (
-                <p className="text-gray-600">No favorite events found</p>
-              )}
-            </div>
-            {favoriteEvents.length > 4 && (
-              <button className="ml-2 p-2 rounded-full bg-gray-200 hover:bg-gray-300 flex-shrink-0">
-                <ChevronRightIcon className="w-5 h-5" />
-              </button>
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  placeholder="Email"
+                  className="w-full p-2 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700"
+                />
+                {formErrors['email'] && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors['email']}</p>
+                )}
+              </div>
+            </>
+          )}
+
+          {profileFields
+            .filter(field => {
+              if (field.key === 'title' || field.key === 'email') return false;
+              return field.roles.includes(user?.role || '');
+            })
+            .map((field) => {
+              const disabled = !isEditing || field.editable === false;
+              return (
+                <div key={field.key}>
+                  <label className="block text-sm font-semibold text-gray-600 mb-1">
+                    {field.label}
+                  </label>
+
+                  {/* Render dropdown for year and organization type, or default input. Honor field.editable */}
+                  {field.key === 'profile.year' ? (
+                    <select
+                      name={field.key}
+                      value={String(getNestedValue(formData, field.key) ?? "")}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={disabled}
+                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700 ${disabled
+                        ? 'bg-gray-100'
+                        : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
+                      }`}>
+                      <option value="">Select year</option>
+                      {YEAR_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : field.key === 'organizer_profile.organization_type' ? (
+                    <select
+                      name={field.key}
+                      value={String(getNestedValue(formData, field.key) ?? "")}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={disabled}
+                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700 
+                        ${disabled
+                        ? 'bg-gray-100'
+                        : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
+                      }`}>
+                      <option value="">Select organization type</option>
+                      {ORGANIZATION_TYPE_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                      ))}
+                    </select>
+                  ) : (
+                    <input
+                      name={field.key}
+                      type={field.type}
+                      value={getNestedValue(formData, field.key) || ""}
+                      onChange={(e) => handleChange(field.key, e.target.value)}
+                      disabled={disabled}
+                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700
+                        ${disabled
+                        ? 'bg-gray-100'
+                        : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
+                      }`}/>
+                  )}
+
+                  {formErrors[field.key] && (
+                    <p className="text-sm text-red-600 mt-1">{formErrors[field.key]}</p>
+                  )}
+                </div>
+              );
+            })}
+        </div>
+      </div>
+      </div>
+      </div>
+
+      {/* My Events Section */}
+      {auth.isAuthenticated() && (
+        <div className="relative px-4 mt-8">
+          <h3 className="text-xl font-bold text-gray-900 mb-6">My Event</h3>
+
+            {eventsLoading ? (
+              <div className="flex items-center justify-center h-32">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600" />
+              </div>
+            ) : (
+              <div className="flex gap-4 overflow-x-auto pb-4">
+                {myEvents.length ? (
+                  myEvents.map((e) => (
+                    <EventCardSquare key={e.id} event={e} />
+                  ))
+                ) : (
+                  <p className="text-gray-600">You have no events yet.</p>
+                )}
+              </div>
             )}
           </div>
-        </section>
-      </div>
+        )}
     </div>
+  </div>
   );
 }

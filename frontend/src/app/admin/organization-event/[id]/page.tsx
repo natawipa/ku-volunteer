@@ -1,5 +1,5 @@
 "use client";
-import { PlusIcon, UserCircleIcon, ArrowLeftIcon } from "@heroicons/react/24/solid";
+import { ArrowLeftIcon } from "@heroicons/react/24/solid";
 import { CalendarIcon, MapPinIcon, UsersIcon } from "@heroicons/react/24/outline";
 import Link from "next/link";
 import Image from "next/image";
@@ -7,6 +7,9 @@ import React, { useEffect, useState } from "react";
 import { activitiesApi } from "@/lib/activities";
 import type { Activity } from "@/lib/types";
 import { ENV } from "@/lib/constants";
+import Header from "@/app/components/Header";
+import HeroImage from "@/app/components/HeroImage";
+import Navbar from "@/app/components/Navbar";
 
 export default function OrganizerEventsPage({ params }: { params: Promise<{ id: string }> }) {
   const [events, setEvents] = useState<Activity[]>([]);
@@ -130,42 +133,14 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
 
   return (
     <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
-
-      {/* Mountain background */}
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={920}
-        height={410}
-        className="w-full h-[200px] absolute inset-0 top-0 object-cover"
-      />
-
-      {/* Foreground content */}
-      <div className="relative p-6"> 
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image
-            src="/logo-kasetsart.svg"
-            alt="Small Logo"
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">All Event</Link>
-            <Link href="/new" className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
-              <div className="flex items-center">
-                <PlusIcon className="w-4 h-4 mr-2" />
-                <span className="mr-1">New</span>
-              </div>
-            </Link>
-            <Link href="/profile">
-              <UserCircleIcon className="w-10 h-10 text-[#215701] hover:text-[#00361C] transition-all duration-200" />
-            </Link>
-          </nav>
-        </header>
+      {/* Background */}
+      <HeroImage />
+      <div className="relative p-6">
+      {/* Header */}
+      <Navbar />
+      <div className="relative">
+        <Header showBigLogo={true} showSearch={true} />
+      </div>
 
         {/* ---------------------- */}
         <Link 
@@ -283,7 +258,12 @@ export default function OrganizerEventsPage({ params }: { params: Promise<{ id: 
                     <div className="space-y-2 text-sm text-gray-600 mb-4">
                       <div className="flex items-center">
                         <CalendarIcon className="w-4 h-4 mr-2 flex-shrink-0" />
-                        <span>{formatDate(event.start_at)} - {formatDate(event.end_at)}</span>
+                        {/* For one-day activities */}
+                        {event.start_at === event.end_at ? (
+                          <span>{formatDate(event.start_at)}</span>
+                        ) : (
+                          <span>{formatDate(event.start_at)} - {formatDate(event.end_at)}</span>
+                        )}
                       </div>
                       <div className="flex items-center">
                         <MapPinIcon className="w-4 h-4 mr-2 flex-shrink-0" />

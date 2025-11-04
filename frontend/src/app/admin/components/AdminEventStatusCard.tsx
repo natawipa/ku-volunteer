@@ -60,7 +60,16 @@ export default function AdminEventStatusCard({
                 </span>
               )}
             </div>
-            <p className="text-gray-500 text-xs">{formatDate(a.start_at)} - {formatDate(a.end_at)}</p>
+            {/* For one-day activities */}
+            <p className="text-gray-500 text-xs">
+              {a.start_at === a.end_at ? (
+                formatDate(a.start_at)
+              ) : (
+                <>
+                  {formatDate(a.start_at)} - {formatDate(a.end_at)}
+                </>
+              )}
+            </p>
             {a.rejection_reason && a.status === 'rejected' && (
               <p className="text-red-600 text-xs truncate" title={a.rejection_reason}>{a.rejection_reason}</p>
             )}

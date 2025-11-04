@@ -21,6 +21,95 @@ def activity_poster_image_path(instance, filename):
 
 
 class Activity(models.Model):
+    @classmethod
+    def update_all_statuses(cls):
+        """
+        Bulk update statuses for all activities based on current time.
+        This is more efficient than calling auto_update_status() on each activity individually.
+        """
+        from config.constants import ActivityStatus
+        from django.utils import timezone
+        
+        now = timezone.now()
+        
+        # Update activities to COMPLETE if they've ended
+        cls.objects.filter(
+            status__in=[ActivityStatus.OPEN, ActivityStatus.UPCOMING, ActivityStatus.DURING],
+            end_at__lt=now
+        ).update(status=ActivityStatus.COMPLETE)
+        
+        # Update activities to DURING if they're currently running
+        cls.objects.filter(
+            status__in=[ActivityStatus.OPEN, ActivityStatus.UPCOMING],
+            start_at__lte=now,
+            end_at__gt=now
+        ).update(status=ActivityStatus.DURING)
+        
+        # Update activities to UPCOMING if they start within a week
+        one_week_from_now = now + timezone.timedelta(days=7)
+        cls.objects.filter(
+            status=ActivityStatus.OPEN,
+            start_at__gt=now,
+            start_at__lt=one_week_from_now
+        ).update(status=ActivityStatus.UPCOMING)
+        
+        # Update activities back to OPEN if they start more than a week away
+        cls.objects.filter(
+            status=ActivityStatus.UPCOMING,
+            start_at__gte=one_week_from_now
+        ).update(status=ActivityStatus.OPEN)
+        
+        # Update activities to FULL if they've reached capacity
+        # This requires individual checks since it involves comparing fields
+        for activity in cls.objects.filter(
+            status__in=[ActivityStatus.OPEN, ActivityStatus.UPCOMING, ActivityStatus.DURING],
+            max_participants__isnull=False
+        ):
+            if activity.current_participants >= activity.max_participants:
+                if activity.status != ActivityStatus.FULL:
+                    activity.status = ActivityStatus.FULL
+                    activity.save(update_fields=['status'])
+
+    def auto_update_status(self):
+        """
+        Automatically update status based on current time and activity dates.
+        - upcoming: before start_at, within 1 week
+        - during: between start_at and end_at
+        - complete: after end_at
+        Only updates if status is open or upcoming/during/complete.
+        """
+        from config.constants import ActivityStatus
+        now = timezone.now()
+        if self.status in [ActivityStatus.OPEN, ActivityStatus.UPCOMING, ActivityStatus.DURING]:
+            # Complete: after end
+            if now > self.end_at:
+                if self.status != ActivityStatus.COMPLETE:
+                    self.status = ActivityStatus.COMPLETE
+                    self.save(update_fields=['status'])
+                    
+            # Full: when max_participants reached
+            if self.capacity_reached:
+                if self.status != ActivityStatus.FULL:
+                    self.status = ActivityStatus.FULL
+                    self.save(update_fields=['status'])
+
+            # Upcoming: before start, within 1 week
+            if self.start_at > now:
+                delta = self.start_at - now
+                if delta.days < 7:
+                    if self.status != ActivityStatus.UPCOMING:
+                        self.status = ActivityStatus.UPCOMING
+                        self.save(update_fields=['status'])
+                else:
+                    if self.status != ActivityStatus.OPEN:
+                        self.status = ActivityStatus.OPEN
+                        self.save(update_fields=['status'])
+            # During: between start and end
+            elif self.start_at <= now <= self.end_at:
+                if self.status != ActivityStatus.DURING:
+                    self.status = ActivityStatus.DURING
+                    self.save(update_fields=['status'])
+
     """Model representing a volunteer activity."""
 
     organizer_profile = models.ForeignKey(
@@ -72,7 +161,8 @@ class Activity(models.Model):
         verbose_name_plural = "Activities"
 
     def __str__(self) -> str:
-        return f"{self.title} ({self.get_status_display()})"
+            self.auto_update_status()
+            return f"{self.title} ({self.get_status_display()})"
 
     def clean(self) -> None:
         """Validate the activity model."""
@@ -123,11 +213,13 @@ class Activity(models.Model):
     @property
     def is_active(self) -> bool:
         """Return True if activity is currently active."""
+        self.auto_update_status()
         return self.status == ActivityStatus.OPEN
 
     @property
     def is_past(self) -> bool:
         """Return True if activity has ended."""
+        self.auto_update_status()
         return self.end_at < timezone.now()
 
 

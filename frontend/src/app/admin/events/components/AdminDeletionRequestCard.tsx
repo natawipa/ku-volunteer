@@ -51,7 +51,12 @@ export default function AdminDeletionRequestCard({ event }: Props) {
             </div>
             <div className="flex items-center text-sm text-gray-700 gap-2">
               <CalendarIcon className="w-4 h-4" />
-              <span>{formatDate(event.datestart)} - {formatDate(event.dateend)}</span>
+              {/* For one-day activities */}
+              {event.datestart === event.dateend ? (
+                <span>{formatDate(event.datestart)}</span>
+              ) : (
+                <span>{formatDate(event.datestart)} - {formatDate(event.dateend)}</span>
+              )}
             </div>
             <div className="flex items-center text-sm text-gray-700 gap-2">
               <MapPinIcon className="w-4 h-4" />

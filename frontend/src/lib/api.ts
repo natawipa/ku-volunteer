@@ -54,7 +54,7 @@ export interface UserUpdate {
 }
 
 class ApiService {
-  //Fetch all users (admin only). Returns ApiResponse<User[]> or paginated results.
+  // Fetch all users (admin only). Returns ApiResponse<User[]> or paginated results.
   public async getUserList(): Promise<ApiResponse<User[]>> {
     try {
       const response = await fetch(`${API_BASE_URL}/users/list/`, {

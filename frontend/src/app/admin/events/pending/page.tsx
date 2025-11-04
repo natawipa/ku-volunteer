@@ -11,11 +11,11 @@ export default function PendingEventsPage() {
   const [pending, setPending] = useState<Activity[]>([]);
   const [search] = useState('');
   const [category] = useState('All Categories');
-  const [searchStartDate, setSearchStartDate] = useState('');
-  const [searchEndDate, setSearchEndDate] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
+  const [searchStartDate, ] = useState('');
+  const [searchEndDate, ] = useState('');
+  const [endAfterChecked, ] = useState(false);
+  const [searchQuery, ] = useState('');
+  const [searchSelectedCategory, ] = useState('All Categories');
 
   // ...existing code...
 
@@ -32,12 +32,6 @@ export default function PendingEventsPage() {
     };
     load();
   }, []);
-
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    pending.forEach(a => a.categories.forEach(c => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
-  }, [pending]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -81,16 +75,6 @@ export default function PendingEventsPage() {
     <AdminLayout
       hideTitle
       title="Pending Events"
-      searchVariant="compact"
-      searchPlaceholder="Search pending events..."
-      onSearchChange={setSearchQuery}
-      onSearchCategoryChange={setSearchSelectedCategory}
-      onSearchStartDateChange={setSearchStartDate}
-      onSearchEndDateChange={setSearchEndDate}
-      onEndAfterCheckedChange={setEndAfterChecked}
-      initialSearchValue={searchQuery}
-      searchCategoryOptions={categories}
-      searchSelectedCategory={searchSelectedCategory}
     >
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-bold text-2xl mb-1">Pending Events</h1>

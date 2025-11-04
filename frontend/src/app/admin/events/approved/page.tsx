@@ -9,8 +9,8 @@ export default function ApprovedEventsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [approved, setApproved] = useState<Activity[]>([]);
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All Categories');
+  const [search, ] = useState('');
+  const [category, ] = useState('All Categories');
 
   useEffect(() => {
     const load = async () => {
@@ -25,12 +25,6 @@ export default function ApprovedEventsPage() {
     };
     load();
   }, []);
-
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    approved.forEach((a: Activity) => a.categories.forEach((c: string) => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
-  }, [approved]);
 
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
@@ -51,13 +45,6 @@ export default function ApprovedEventsPage() {
     <AdminLayout
       hideTitle
       title="Approved Events"
-      searchVariant="compact"
-      searchPlaceholder="Search approved events..."
-      onSearchChange={setSearch}
-      initialSearchValue={search}
-      searchCategoryOptions={categories}
-      searchSelectedCategory={category}
-      onSearchCategoryChange={setCategory}
     >
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <h1 className="font-bold text-2xl">Approved Events</h1>

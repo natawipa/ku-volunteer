@@ -1,5 +1,4 @@
 "use client";
-import { PlusIcon } from "@heroicons/react/24/solid";
 import Link from "next/link";
 import Image from "next/image";
 import React, { useEffect, useState, useCallback } from "react";
@@ -9,7 +8,9 @@ import type { Activity, ActivityApplication, CreateApplicationRequest } from "..
 import { auth } from "../../../lib/utils";
 import { USER_ROLES, ACTIVITY_STATUS, APPLICATION_STATUS } from "../../../lib/constants";
 import { useRouter } from "next/navigation";
-import ProfileCard from '../../components/ProfileCard';
+import Header from "../../components/Header";
+import Navbar from "@/app/components/Navbar";
+import HeroImage from "@/app/components/HeroImage";
 
 interface PageProps { params: Promise<{ id: string }> }
 
@@ -66,7 +67,7 @@ export default function EventPage({ params }: PageProps) {
   // Check if user has already applied to this activity - FIXED: useCallback
   const checkUserApplication = useCallback(async () => {
     if (eventId == null || Number.isNaN(eventId)) {
-      console.log('❌ Cannot check application: eventId is null or NaN');
+      console.log('Cannot check application status: invalid eventId', eventId);
       return;
     }
     try {
@@ -82,21 +83,21 @@ export default function EventPage({ params }: PageProps) {
         );
         
         if (userApp) {
-          console.log('✅ Found existing application:', userApp);
+          console.log('Found existing application:', userApp);
           setUserApplication(userApp);
           setApplicationStatus(userApp.status);
         } else {
-          console.log('ℹ️ No application found for this activity');
+          console.log('No application found for this activity');
           setUserApplication(null);
           setApplicationStatus(null);
         }
       } else {
-        console.log('❌ Failed to get applications:', applicationsResponse.error);
+        console.log('Failed to get applications:', applicationsResponse.error);
         setUserApplication(null);
         setApplicationStatus(null);
       }
     } catch (error) {
-      console.error('❌ Error checking user application:', error);
+      console.error('Error checking user application:', error);
       setUserApplication(null);
       setApplicationStatus(null);
     }
@@ -118,10 +119,10 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [eventId, checkUserApplication, fetchEventForOrganizer]); // add checkUserApplication to dependencies
 
-  // Also check application status when the component mounts (every time user visits the page)
+  // Check application status every time user visits the page
   useEffect(() => {
     if (isAuthenticated && userRole === USER_ROLES.STUDENT && eventId) {
-      console.log('🔄 Triggering application check - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'eventId:', eventId);
+      console.log('Triggering application check - isAuthenticated:', isAuthenticated, 'userRole:', userRole, 'eventId:', eventId);
       checkUserApplication();
     }
   }, [isAuthenticated, userRole, eventId, checkUserApplication]);
@@ -129,7 +130,7 @@ export default function EventPage({ params }: PageProps) {
   // Force check when eventId becomes available
   useEffect(() => {
     if (eventId && isAuthenticated && userRole === USER_ROLES.STUDENT) {
-      console.log('🔄 EventId available, checking application status...');
+      console.log('EventId available, checking application status...');
       checkUserApplication();
     }
   }, [eventId, isAuthenticated, userRole, checkUserApplication]);
@@ -433,7 +434,7 @@ export default function EventPage({ params }: PageProps) {
     }
 
     // No application - show apply button
-    const canApply = !event?.capacity_reached && event?.status === ACTIVITY_STATUS.OPEN;
+    const canApply = !event?.capacity_reached && (event?.status === ACTIVITY_STATUS.OPEN || event?.status === ACTIVITY_STATUS.UPCOMING);
     return (
       <button
         onClick={handleApply}
@@ -454,7 +455,7 @@ export default function EventPage({ params }: PageProps) {
     if (userRole !== USER_ROLES.ORGANIZER) return null;
   
     return (
-      <div className="flex justify-center mb-6 border-b">
+      <div className="flex justify-center mb-6">
         <div className="flex space-x-8">
           <button
             onClick={() => setActiveSection('details')}
@@ -511,7 +512,7 @@ export default function EventPage({ params }: PageProps) {
           <p className="text-gray-500 text-center">No pending applications</p>
         ) : (
           pendingApplications.map((application) => (
-            <div key={application.id} className="flex justify-between items-center border-b pb-4">
+            <div key={application.id} className="flex justify-between items-center border-b border-gray-100 pb-4">
               <div className="flex-1">
                 <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
                 <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
@@ -563,7 +564,7 @@ export default function EventPage({ params }: PageProps) {
           <p className="text-gray-500 text-center">No approved participants yet</p>
         ) : (
           approvedApplications.map((application) => (
-            <div key={application.id} className="flex justify-between items-center border-b pb-4">
+            <div key={application.id} className="flex justify-between items-center border-b border-gray-100 pb-4">
               <div className="flex-1">
                 <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
                 <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
@@ -589,6 +590,8 @@ export default function EventPage({ params }: PageProps) {
       post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
       datestart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),
       dateend: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
+      timestart: new Date(activity.start_at || new Date()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit',timeZone: 'UTC' }),
+      timeend: new Date(activity.end_at || new Date()).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit',timeZone: 'UTC' }),
       location: activity.location || 'Unknown Location',
       category: activity.categories || [],
       capacity: activity.max_participants || 0,
@@ -681,48 +684,14 @@ export default function EventPage({ params }: PageProps) {
   const transformedEvent = transformActivityData(event);
 
   return (
-    <div className="relative">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
-
-      {/* Mountain background */}
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={920}
-        height={410}
-        className="w-full h-[200px] absolute inset-0 top-0 object-cover"
-      />
-
-      {/* Foreground content */}
-      <div className="relative p-6"> 
-        <header className="flex justify-between items-center sticky top-0 z-10 mb-6 bg-[#DAE9DC]/10">
-          <Image
-            src={isAuthenticated && userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg"}
-            alt="Small Logo"
-            width={64}
-            height={64}
-            className="object-cover"
-          />
-          <nav className="flex items-center space-x-8">
-            <Link href="/document" className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">Document</Link>
-            <Link href="/all-events" 
-              className="relative border-b-1 border-transparent hover:border-black transition-all duration-200">
-              {userRole === USER_ROLES.ORGANIZER || userRole === USER_ROLES.STUDENT ? "My Event" : "All Event"}
-            </Link>     
-                    {isAuthenticated && userRole === USER_ROLES.ORGANIZER && (
-              <Link href="/new-event" className="btn bg-[#215701] text-white px-2 py-2 rounded 
-                    hover:bg-[#00361C]
-                    transition-all duration-200">
-                <div className="flex items-center">
-                  <PlusIcon className="w-4 h-4 mr-2" />
-                  <span className="mr-1">New</span>
-                </div>
-              </Link>
-            )}
-            <ProfileCard/>
-          </nav>
-        </header>
+    <div className="relative pt-6 px-4">
+      {/* Background */}
+        {/* Header */}
+        <HeroImage />
+        <Navbar />
+        <div className="relative">
+          <Header showBigLogo={true} />
+        </div>
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
@@ -769,7 +738,12 @@ export default function EventPage({ params }: PageProps) {
                   <p><strong>Post at:</strong> {transformedEvent.post}</p>
                 </div>
                 <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
-                  <p><strong>Date:</strong> {transformedEvent.datestart} - {transformedEvent.dateend}</p>
+                  {/* For one-day activities */}
+                  {transformedEvent.datestart === transformedEvent.dateend ? (
+                    <p><strong>Date:</strong> {transformedEvent.datestart} at {transformedEvent.timestart} - {transformedEvent.timeend}</p>
+                  ) : (
+                    <p><strong>Date:</strong> {transformedEvent.datestart} {transformedEvent.timestart} - {transformedEvent.dateend} {transformedEvent.timeend}</p>
+                  )}
                   <p><strong>Location:</strong> {transformedEvent.location}</p>
                   <p><strong>Type:</strong> {transformedEvent.category.join(", ")}</p>
                   <p><strong>Capacity:</strong> {transformedEvent.currentParticipants} / {transformedEvent.capacity} people</p>
@@ -881,7 +855,6 @@ export default function EventPage({ params }: PageProps) {
                 </p>
               </div>
             )}
-          </div>
         </div>
       </div>
 

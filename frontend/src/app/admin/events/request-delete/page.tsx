@@ -15,11 +15,11 @@ export default function DeletionRequestListPage() {
   const [events, setEvents] = useState<MergedDeletionRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
-  const [searchStartDate, setSearchStartDate] = useState('');
-  const [searchEndDate, setSearchEndDate] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(false);
+  const [searchQuery, ] = useState('');
+  const [searchSelectedCategory, ] = useState('All Categories');
+  const [searchStartDate, ] = useState('');
+  const [searchEndDate, ] = useState('');
+  const [endAfterChecked, ] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -61,14 +61,6 @@ export default function DeletionRequestListPage() {
     fetchRequests();
     return () => { mounted = false; };
   }, []);
-
-  const categories = useMemo(() => {
-    if (!Array.isArray(events)) return ['All Categories'];
-    const set = new Set<string>();
-    events.forEach(ev => ev.category.forEach((c: string) => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
-  }, [events]);
-
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -113,16 +105,6 @@ export default function DeletionRequestListPage() {
     <AdminLayout
       hideTitle
       title="Deletion Requests"
-      searchVariant="compact"
-      searchPlaceholder="Search events name, description"
-      onSearchChange={setSearchQuery}
-      onSearchCategoryChange={setSearchSelectedCategory}
-      onSearchStartDateChange={setSearchStartDate}
-      onSearchEndDateChange={setSearchEndDate}
-      onEndAfterCheckedChange={setEndAfterChecked}
-      initialSearchValue={searchQuery}
-      searchCategoryOptions={categories}
-      searchSelectedCategory={searchSelectedCategory}
       
     >
       {/* Header + quick stats */}

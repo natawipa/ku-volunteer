@@ -10,11 +10,11 @@ export default function RejectedEventsPage() {
   const [error, setError] = useState<string | null>(null);
   const [rejected, setRejected] = useState<Activity[]>([]);
   const [search] = useState('');
-  const [searchStartDate, setSearchStartDate] = useState('');
-  const [searchEndDate, setSearchEndDate] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
+  const [searchStartDate, ] = useState('');
+  const [searchEndDate, ] = useState('');
+  const [endAfterChecked, ] = useState(false);
+  const [searchQuery, ] = useState('');
+  const [searchSelectedCategory, ] = useState('All Categories');
 
   useEffect(() => {
     const load = async () => {
@@ -29,12 +29,6 @@ export default function RejectedEventsPage() {
     };
     load();
   }, []);
-
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    rejected.forEach(a => a.categories.forEach(c => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
-  }, [rejected]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
@@ -78,16 +72,6 @@ export default function RejectedEventsPage() {
     <AdminLayout
       hideTitle
       title="Rejected Events"
-      searchVariant="compact"
-      searchPlaceholder="Search events name, description"
-      onSearchChange={setSearchQuery}
-      onSearchCategoryChange={setSearchSelectedCategory}
-      onSearchStartDateChange={setSearchStartDate}
-      onSearchEndDateChange={setSearchEndDate}
-      onEndAfterCheckedChange={setEndAfterChecked}
-      initialSearchValue={searchQuery}
-      searchCategoryOptions={categories}
-      searchSelectedCategory={searchSelectedCategory}
     >
       <div className="mb-8 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>

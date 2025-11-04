@@ -140,8 +140,15 @@ class ApplicationCreateSerializer(serializers.ModelSerializer):
     def validate_activity(self, value):
         """Validate that the activity is open for applications."""
         from config.constants import ActivityStatus
-        
-        if value.status != ActivityStatus.OPEN:
+        # Ensure the activity's status is up-to-date before validation
+        try:
+            value.auto_update_status()
+        except Exception:
+            # If auto update fails for any reason, continue with current status
+            pass
+
+        # Allow students to apply when activity is OPEN or UPCOMING
+        if value.status not in (ActivityStatus.OPEN, ActivityStatus.UPCOMING):
             raise serializers.ValidationError("This activity is not open for applications.")
         
         # Check if activity is full

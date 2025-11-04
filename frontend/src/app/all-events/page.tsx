@@ -1,35 +1,28 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
-import EventLayout from '../components/AllEventLayout';
-import PublicEventHorizontalCard, { PublicEventCardData } from '../components/PublicEventHorizontalCard';
+import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { activitiesApi } from "../../lib/activities";
-import type { Activity } from "../../lib/types";
-
-interface Event {
-  id: string;
-  title: string;
-  description: string;
-  category: string;
-  dateStart: string; // ISO date string
-  dateEnd: string; // ISO date string
-  location: string;
-  organizer: string;
-  image_url?: string;
-  participants_count: number;
-  max_participants: number;
-  status: string;
-}
+import type { Activity } from '../../lib/types';
+import { auth } from "@/lib/utils";
+import Header from '../components/Header';
+import Navbar from '../components/Navbar';
+import HeroImage from '../components/HeroImage';
+import EventCardHorizontal from '../components/EventCard/EventCardHorizontal';
+import { EventCardData, transformActivityToEvent } from '../components/EventCard/utils';
 
 const AllEventsPage: React.FC = () => {
-  const [events, setEvents] = useState<Event[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]); 
+  const [events, setEvents] = useState<EventCardData[]>([]);
+  const [IsAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateStart, setDateStart] = useState('');
-  const [dateEnd, setDateEnd] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(true);
-  const [selectedStatus, setSelectedStatus] = useState<string[]>([]);
+  const [filter, ] = useState<string>('');
+  const [searchTerm, ] = useState('');
+  const [dateStart, ] = useState('');
+  const [dateEnd, ] = useState('');
+  const [endAfterChecked, ] = useState(true);
+  const [selectedStatus, ] = useState<string[]>([]);
+  const [, setIsSearchActive] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement | null>(null)
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -38,22 +31,11 @@ const AllEventsPage: React.FC = () => {
         const result = await activitiesApi.getActivities();
         if (result.success && result.data) {
           // Map Activity to Event type
-          const mappedEvents: Event[] = result.data.map((activity: Activity) => ({
-            id: activity.id.toString(),
-            title: activity.title,
-            description: activity.description,
-            category: activity.categories?.[0] || '',
-            dateStart: (activity.start_at || '').split('T')[0],
-            dateEnd: (activity.end_at || '').split('T')[0],
-            location: activity.location,
-            organizer: activity.organizer_name || activity.organizer_email || '',
-            imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/default-event.jpg",
-            participants_count: activity.current_participants,
-            max_participants: activity.max_participants || 0,
-            status: activity.status || 'unknown',
-          }));
+          setActivities(result.data);
+          const mappedEvents = result.data.map(transformActivityToEvent);
           setEvents(mappedEvents);
         } else {
+          setActivities([]);
           setEvents([]);
         }
       } catch (error) {
@@ -64,6 +46,10 @@ const AllEventsPage: React.FC = () => {
       }
     };
     fetchEvents();
+  }, []);
+
+  useEffect(() => {
+    setIsAuthenticated(auth.isAuthenticated());
   }, []);
 
   const filteredEvents = useMemo(() => {
@@ -110,35 +96,23 @@ const AllEventsPage: React.FC = () => {
 
       const matchesStatus = selectedStatus.length === 0 || 
                      selectedStatus.some(status => 
-                       status.toLowerCase() === event.status.toLowerCase()
+                       status.toLowerCase() === (event.status || "unknown").toLowerCase()
                      );
 
       return matchesCategory && matchesSearch && matchesDate && matchesStatus;
     });
 }, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
 
+  const pageTitle = IsAuthenticated ? "My Events" : "All Events";
+
   return (
-    <EventLayout
-      title="All Events"
-      hideTitle={false}
-      searchVariant="compact"
-      searchPlaceholder="Search events..."
-      searchSelectedCategories={[filter || '']}
-      initialSearchValue={searchTerm}
-      searchShowDate={true}
-      onDateStartChange={setDateStart}
-      onDateEndChange={setDateEnd}
-      endAfterChecked={endAfterChecked}
-      setEndAfterChecked={setEndAfterChecked}
-      onSearchApply={({ searchValue, selectedCategories, selectedStatus, dateStart: ds, dateEnd: de }) => {
-        setSearchTerm(searchValue);
-        const val = selectedCategories?.[0];
-        setFilter(val === 'All Categories' ? '' : (val || ''));
-        setSelectedStatus(selectedStatus || []);
-        setDateStart(ds || '');
-        setDateEnd(de || '');
-      }}
-    >
+    <div className="relative pt-6 px-4">
+      <HeroImage />
+      <Navbar />
+      <div className="relative">
+        <Header showBigLogo={true} showSearch={true} activities={activities} setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
+      </div>
+      <h1 className="text-3xl font-bold align-center mt-7">{pageTitle}</h1>
       {/* Events Section */}
       {loading ? (
         <div className="text-center py-12">
@@ -151,13 +125,14 @@ const AllEventsPage: React.FC = () => {
           <p className="text-gray-600">Try adjusting your search criteria or filter settings.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-5 mb-10">
+        <div className="flex flex-col gap-5 mb-10 mt-7 px-5">
           {filteredEvents.map(ev => (
-            <PublicEventHorizontalCard key={ev.id} event={ev as PublicEventCardData} />
+            <EventCardHorizontal key={ev.id} event={ev} showShadow={true}
+              showBadge={true} hoverScale={false} cardPadding="p-4" gradientBgClass="bg-white"/>
           ))}
         </div>
       )}
-    </EventLayout>
+    </div>
   );
 };
 

@@ -6,8 +6,11 @@ import Image from "next/image";
 
 import { activitiesApi } from "../../../lib/activities";
 import type { Activity } from "../../../lib/types";
-import type { EventCardData } from "../../components/EventCard/utils";
+import { EventCardData, transformActivityToEvent } from "../../components/EventCard/utils";
 import EventCardHorizontal from "../../components/EventCard/EventCardHorizontal";
+import Header from "../../components/Header";
+import Navbar from "../../components/Navbar";
+import HeroImage from "../../components/HeroImage";
 
 // Map of event type params to their display titles, gradient colors, and brain images
 const EVENT_TYPE_MAP: Record<
@@ -45,24 +48,6 @@ const EVENT_TYPE_MATCHERS: Record<string, (cat: string) => boolean> = {
     cat.includes("Social Engagement Activities"),
 };
 
-// Transform Activity from backend to EventCardData
-const transformActivityToEvent = (activity: Activity): EventCardData => ({
-  id: activity.id ?? 0,
-  title: activity.title ?? "Untitled Activity",
-  description: activity.description ?? "No description",
-  organizer: activity.organizer_name ?? "Unknown Organizer",
-  participants_count: activity.current_participants ?? 0,
-  max_participants: activity.max_participants ?? 0,
-  dateStart: activity.start_at ?? new Date().toISOString(),
-  dateEnd: activity.end_at ?? new Date().toISOString(),
-  location: activity.location ?? "Unknown Location",
-  category: activity.categories ?? [],
-  imgSrc:
-    activity.cover_image_url || activity.cover_image || "/default-event.jpg",
-  status: activity.status === "open" ? "upcoming" : activity.status ?? "unknown",
-  posted_at: activity.created_at ?? new Date().toISOString(),
-});
-
 // Main Component
 export default function EventTypePage() {
   const params = useParams();
@@ -73,6 +58,32 @@ export default function EventTypePage() {
       ? params["type"][0]
       : "";
 
+  const getBorderEventCardColors = () => {
+  if (eventTypeParam === "university-activities") {
+    return {
+    middleColorBorder: "#D7E4FF",
+    endColorBorder: "#C5D8FF",
+    };
+  }
+  if (eventTypeParam === "enhance-competencies") {
+    return {
+      middleColorBorder: "#FFF9CF",
+      endColorBorder: "#FFF7BC",
+    };
+  }
+  if (eventTypeParam === "social-engagement-activities") {
+    return {
+    middleColorBorder: "#FFDEE0",
+    endColorBorder: "#FFCCCF",
+    };
+  }
+  return {
+      middleColorBorder: "#DAE9DC",
+      endColorBorder: "#CEF7CE",
+    };
+  };
+
+  const borderColors = getBorderEventCardColors();
   const eventTypeConfig = EVENT_TYPE_MAP[eventTypeParam];
   const eventTypeTitle = eventTypeConfig?.title || "Unknown";
 
@@ -122,8 +133,15 @@ export default function EventTypePage() {
   }
 
   return (
+    <div className="relative pt-6 px-4">
+      {/* Header */}
+      <HeroImage />
+      <Navbar />
+      <Header showBigLogo={true} />
+      
     <div className="w-full max-w-3xl mx-auto py-8 px-2 sm:px-0">
       {/* Gradient Header */}
+      <div className="relative mt-10">
       <div
         className={`relative rounded-lg shadow mb-8 flex items-center min-h-[110px] px-4 sm:px-8 py-4 w-full ${eventTypeConfig.color}`}
       >
@@ -184,7 +202,10 @@ export default function EventTypePage() {
             key={event.id}
             event={event}
             gradientBgClass="bg-white"
+            middleColorBorder={borderColors.middleColorBorder}
+            endColorBorder={borderColors.endColorBorder}
             showShadow
+            hoverScale={false}
           />
         ))}
       </div>
@@ -211,6 +232,8 @@ export default function EventTypePage() {
           </button>
         </div>
       )}
+    </div>
+    </div>
     </div>
   );
 }
