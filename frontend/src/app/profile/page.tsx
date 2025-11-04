@@ -12,10 +12,13 @@ import { getMyEvents } from "../components/EventCard/utils";
 import type { EventCardData, EventFilterConfig } from "../components/EventCard/utils";
 import type { Activity, ActivityApplication } from "../../lib/types";
 import { auth } from "../../lib/utils";
-import { validateImageFile, validateProfileForm, YEAR_OPTIONS, ORGANIZATION_TYPE_OPTIONS } from "./validation";
+import { validateImageFile, validateProfileForm, YEAR_OPTIONS, ORGANIZATION_TYPE_OPTIONS, TITLE_OPTIONS } from "./validation";
+import Navbar from "../components/Navbar";
 
 // Profile field configuration
 const profileFields = [
+  {key : 'email', label: 'Email', type: 'email', roles: ['student', 'organizer'] },
+  {key : 'title', label: 'Title', type: 'text', roles: ['student', 'organizer'] },
   { key: 'first_name', label: 'First Name', type: 'text', roles: ['student', 'organizer'] },
   { key: 'last_name', label: 'Last Name', type: 'text', roles: ['student', 'organizer'] },
   { key: 'profile.student_id_external', label: 'Student ID', type: 'text', roles: ['student'], editable: false },
@@ -177,7 +180,7 @@ export default function Profile() {
       return copy;
     });
 
-    if (field === 'first_name' || field === 'last_name' || field === 'email') {
+    if (field === 'title' || field === 'first_name' || field === 'last_name' || field === 'email') {
       setFormData((prev) => ({ ...prev, [field]: value }));
     } else if (field === 'profile.student_id_external') {
       setFormData((prev) => ({
@@ -329,6 +332,7 @@ export default function Profile() {
   const handleCancel = () => {
     if (user) {
       setFormData({
+        title: user.title,
         first_name: user.first_name,
         last_name: user.last_name,
         email: user.email,
@@ -351,11 +355,12 @@ export default function Profile() {
 
   return (
     <div className="relative min-h-screen">
-      <HeroImage containerHeight="160px" mountainHeight="130px" />
+      <HeroImage containerHeight="160px" mountainHeight="150px" />
+      <Navbar />
       <div className="h-[160px]" aria-hidden="true" />
 
       {/* Back Button */}
-      <div className="relative pt-6 px-4">
+      <div className="relative pt-6 px-4 -mt-25">
         <button
           onClick={() => router.back()}
           className="flex items-center gap-2 text-gray-600 hover:text-gray-800 mb-4"
@@ -367,6 +372,7 @@ export default function Profile() {
 
       {/* Profile Info */}
       <div className="relative px-4">
+        
         <div className="flex w-full items-center justify-between mb-8">
           <div className="flex items-center gap-6">
             {/* Profile Image */}
@@ -405,7 +411,7 @@ export default function Profile() {
             </div>
 
             <div>
-              <h2 className="font-bold text-2xl text-gray-900">{displayName}</h2>
+              <h2 className="font-bold text-2xl text-gray-900">{user?.title} {displayName}</h2>
               <p className="text-gray-500 text-base">{user?.email}</p>
             </div>
           </div>
@@ -440,10 +446,66 @@ export default function Profile() {
       </div>
 
       {/* Profile Details */}
+      <div className="rounded-lg p-1 px-5 -mt-4">
+        {/* Gradient border wrapper - only show gradient border when NOT editing */}
+        <div className={`rounded-md p-6 px-1 py-1 ${!isEditing ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen p-[2px]' : ''}`}>
+        {/* Inner panel filled with requested gradient */}
+        <div className={`rounded-md p-6 px-3 ${
+          isEditing 
+            ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen' 
+            : 'bg-white'
+          }`}>
       <div className="relative px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
+          {/* title and email that only show in edit mode */}
+          {isEditing && (
+            <>
+              {/* Title */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">
+                  Title
+                </label>
+                <select
+                  name="title"
+                  value={String(formData.title || "")}
+                  onChange={(e) => handleChange("title", e.target.value)}
+                  className="w-full p-2 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700"
+                >
+                  <option value="">Select title</option>
+                  {TITLE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+                {formErrors['title'] && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors['title']}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-semibold text-gray-600 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email || ""}
+                  onChange={(e) => handleChange("email", e.target.value)}
+                  placeholder="Email"
+                  className="w-full p-2 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700"
+                />
+                {formErrors['email'] && (
+                  <p className="text-sm text-red-600 mt-1">{formErrors['email']}</p>
+                )}
+              </div>
+            </>
+          )}
+
           {profileFields
-            .filter(field => field.roles.includes(user?.role || ''))
+            .filter(field => {
+              if (field.key === 'title' || field.key === 'email') return false;
+              return field.roles.includes(user?.role || '');
+            })
             .map((field) => {
               const disabled = !isEditing || field.editable === false;
               return (
@@ -459,8 +521,10 @@ export default function Profile() {
                       value={String(getNestedValue(formData, field.key) ?? "")}
                       onChange={(e) => handleChange(field.key, e.target.value)}
                       disabled={disabled}
-                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
-                    >
+                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700 ${disabled
+                        ? 'bg-gray-100'
+                        : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
+                      }`}>
                       <option value="">Select year</option>
                       {YEAR_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -472,8 +536,11 @@ export default function Profile() {
                       value={String(getNestedValue(formData, field.key) ?? "")}
                       onChange={(e) => handleChange(field.key, e.target.value)}
                       disabled={disabled}
-                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
-                    >
+                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700 
+                        ${disabled
+                        ? 'bg-gray-100'
+                        : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
+                      }`}>
                       <option value="">Select organization type</option>
                       {ORGANIZATION_TYPE_OPTIONS.map((opt) => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -486,8 +553,11 @@ export default function Profile() {
                       value={getNestedValue(formData, field.key) || ""}
                       onChange={(e) => handleChange(field.key, e.target.value)}
                       disabled={disabled}
-                      className="w-full p-3 border rounded-lg disabled:bg-gray-100 text-gray-700"
-                    />
+                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700
+                        ${disabled
+                        ? 'bg-gray-100'
+                        : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
+                      }`}/>
                   )}
 
                   {formErrors[field.key] && (
@@ -497,6 +567,8 @@ export default function Profile() {
               );
             })}
         </div>
+      </div>
+      </div>
       </div>
 
       {/* My Events Section */}
@@ -522,5 +594,6 @@ export default function Profile() {
           </div>
         )}
     </div>
+  </div>
   );
 }

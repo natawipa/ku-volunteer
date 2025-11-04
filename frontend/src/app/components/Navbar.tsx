@@ -34,26 +34,13 @@ const NavLink = ({
 const CreateButton = () => (
   <Link
     href="/new-event"
-    className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C] transition-all duration-200"
-  >
+    className="btn bg-[#215701] text-white px-2 py-2 rounded hover:bg-[#00361C] transition-all duration-200">
     <div className="flex items-center">
       <Plus className="w-4 h-4 mr-1" />
       <span>New</span>
     </div>
   </Link>
 );
-
-const getLogoSrc = (isAuthenticated: boolean, userRole: string | null) => {
-  if (!isAuthenticated) return "/logo-kasetsart.svg";
-  switch (userRole) {
-    case USER_ROLES.ORGANIZER:
-      return "/logo-organizer.svg";
-    case USER_ROLES.STUDENT:
-      return "/logo-student.svg";
-    default:
-      return "/logo-kasetsart.svg";
-  }
-};
 
 export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole: propUserRole }: NavbarProps) {
   const [localIsAuthenticated, setLocalIsAuthenticated] = useState(false);
@@ -133,12 +120,14 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
 
     <div className="relative flex justify-between items-center w-full z-10 px-6 py-2">
       {/* Small Logo on the left */}
-      <Image 
-        src={getLogoSrc(isAuthenticated, userRole)} 
-        alt="Small Logo" 
-        width={64}
-        height={64} 
-      />
+      <Link href="/" className="flex items-center">
+        <Image 
+          src="/logo_plain.svg"
+          alt="Small Logo" 
+          width={64}
+          height={64} 
+        />
+      </Link>
        <div className="flex items-center space-x-8">
         {getNavigation()}
       </div>

@@ -455,7 +455,7 @@ export default function EventPage({ params }: PageProps) {
     if (userRole !== USER_ROLES.ORGANIZER) return null;
   
     return (
-      <div className="flex justify-center mb-6 border-b">
+      <div className="flex justify-center mb-6">
         <div className="flex space-x-8">
           <button
             onClick={() => setActiveSection('details')}
@@ -512,7 +512,7 @@ export default function EventPage({ params }: PageProps) {
           <p className="text-gray-500 text-center">No pending applications</p>
         ) : (
           pendingApplications.map((application) => (
-            <div key={application.id} className="flex justify-between items-center border-b pb-4">
+            <div key={application.id} className="flex justify-between items-center border-b border-gray-100 pb-4">
               <div className="flex-1">
                 <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
                 <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
@@ -564,7 +564,7 @@ export default function EventPage({ params }: PageProps) {
           <p className="text-gray-500 text-center">No approved participants yet</p>
         ) : (
           approvedApplications.map((application) => (
-            <div key={application.id} className="flex justify-between items-center border-b pb-4">
+            <div key={application.id} className="flex justify-between items-center border-b border-gray-100 pb-4">
               <div className="flex-1">
                 <p className="font-medium">{application.student_name ? application.student_name: `Student ${application.studentid}`}</p>
                 <p className="text-sm text-gray-600"> Student ID: {application.studentid} </p>
