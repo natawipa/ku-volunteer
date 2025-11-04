@@ -13,7 +13,6 @@ import { EventCardData, transformActivityToEvent } from '../components/EventCard
 const AllEventsPage: React.FC = () => {
   const [activities, setActivities] = useState<Activity[]>([]); 
   const [events, setEvents] = useState<EventCardData[]>([]);
-  const [UserRole, setUserRole] = useState<string | null>(null);
   const [IsAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [filter, ] = useState<string>('');

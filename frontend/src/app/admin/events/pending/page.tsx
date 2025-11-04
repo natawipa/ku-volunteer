@@ -11,11 +11,11 @@ export default function PendingEventsPage() {
   const [pending, setPending] = useState<Activity[]>([]);
   const [search] = useState('');
   const [category] = useState('All Categories');
-  const [searchStartDate, setSearchStartDate] = useState('');
-  const [searchEndDate, setSearchEndDate] = useState('');
-  const [endAfterChecked, setEndAfterChecked] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [searchSelectedCategory, setSearchSelectedCategory] = useState('All Categories');
+  const [searchStartDate, ] = useState('');
+  const [searchEndDate, ] = useState('');
+  const [endAfterChecked, ] = useState(false);
+  const [searchQuery, ] = useState('');
+  const [searchSelectedCategory, ] = useState('All Categories');
 
   // ...existing code...
 
@@ -32,12 +32,6 @@ export default function PendingEventsPage() {
     };
     load();
   }, []);
-
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    pending.forEach(a => a.categories.forEach(c => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
-  }, [pending]);
 
   const filtered = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();

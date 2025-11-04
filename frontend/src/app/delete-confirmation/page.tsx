@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
-import Image from "next/image";
 import Header from "../components/Header";
 import { useSearchParams, useRouter } from "next/navigation";
 import HeroImage from "../components/HeroImage";

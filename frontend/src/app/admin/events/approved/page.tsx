@@ -26,12 +26,6 @@ export default function ApprovedEventsPage() {
     load();
   }, []);
 
-  const categories = useMemo(() => {
-    const set = new Set<string>();
-    approved.forEach((a: Activity) => a.categories.forEach((c: string) => set.add(c)));
-    return ['All Categories', ...Array.from(set.values())];
-  }, [approved]);
-
   const filtered = useMemo(() => {
     const term = search.toLowerCase();
     return approved.filter((a: Activity) => {
