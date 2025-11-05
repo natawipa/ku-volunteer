@@ -225,7 +225,7 @@ export default function Page({ params }: PageProps) {
                 </div>
               </div>
             </div>
-            <h2 className="text-lg font-semibold mb-2">Event Description</h2>
+            <h2 className="text-lg font-semibold mb-2">Description</h2>
             <div className="bg-white rounded-lg shadow p-4">
               <p className="text-gray-700">{legacyEvent.description}</p>
             </div>
