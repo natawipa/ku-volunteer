@@ -278,52 +278,84 @@ export const activitiesApi = {
   if (p.title) form.append('title', String(p.title));
   if (p.description) form.append('description', String(p.description));
   if (p.location) form.append('location', String(p.location));
-  if ((p as unknown as { start_at?: string }).start_at) form.append('start_at', String((p as unknown as { start_at?: string }).start_at));
-  if ((p as unknown as { end_at?: string }).end_at) form.append('end_at', String((p as unknown as { end_at?: string }).end_at));
-  if (p.max_participants !== undefined && p.max_participants !== null) form.append('max_participants', String(p.max_participants));
-  if (p.hours_awarded !== undefined && p.hours_awarded !== null) form.append('hours_awarded', String(p.hours_awarded));
-  if (p.categories) form.append('categories', JSON.stringify(p.categories));
-    if (cover) form.append('cover_image', cover);
+  
+  // Handle date fields - ensure they're in correct format
+  if (p.start_at) {
+    const startDate = new Date(p.start_at);
+    form.append('start_at', startDate.toISOString());
+  }
+  if (p.end_at) {
+    const endDate = new Date(p.end_at);
+    form.append('end_at', endDate.toISOString());
+  }
+  if (p.max_participants !== undefined && p.max_participants !== null) 
+    form.append('max_participants', String(p.max_participants));
+  if (p.hours_awarded !== undefined && p.hours_awarded !== null) 
+    form.append('hours_awarded', String(p.hours_awarded));
+  if (p.categories) 
+    form.append('categories', JSON.stringify(p.categories));
+  if (cover) form.append('cover_image', cover);
 
+  try {
+    const token = localStorage.getItem('access_token');
+    console.log('Updating activity with FormData:', {
+      title: p.title,
+      start_at: p.start_at,
+      end_at: p.end_at,
+      hasCover: !!cover,
+      hasPictures: !!(pictures && pictures.length > 0)
+    });
+
+    const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.UPDATE(id)}`, {
+      method: 'PUT', // or 'PATCH' if your backend supports it
+      headers: {
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        // Don't set Content-Type - let browser set it with boundary for FormData
+      },
+      body: form,
+    });
+
+    const text = await res.text();
+    console.log('Update response status:', res.status, res.statusText);
+    
+    let dataRes = null;
     try {
-  const token = localStorage.getItem('access_token');
-  const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.UPDATE(id)}`, {
-        method: 'PUT',
-        headers: {
-          ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        },
-        body: form,
-      });
+      dataRes = text ? JSON.parse(text) : null;
+    } catch (parseError) {
+      console.error('Failed to parse update response:', parseError);
+      return { 
+        success: false, 
+        error: `Server returned invalid JSON: ${text.substring(0, 200)}` 
+      };
+    }
 
-      const text = await res.text();
-      const dataRes = text ? JSON.parse(text) : null;
-      if (!res.ok) {
-        return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
-      }
+    if (!res.ok) {
+      console.error('Update failed:', dataRes);
+      return { 
+        success: false, 
+        error: dataRes?.detail || dataRes?.message || `Server error ${res.status}` 
+      };
+    }
 
       console.log('Activity updated successfully');
 
-      // Upload poster images if provided
-      if (pictures && pictures.length > 0 && dataRes && dataRes.id) {
-        console.log(`Uploading ${pictures.length} poster image(s) for activity ${dataRes.id}...`);
-        const uploadResult = await this.uploadPosterImages(dataRes.id, pictures);
-        
-        if (!uploadResult.success) {
-          console.error('Poster upload failed:', uploadResult.error);
-          // Return partial success - activity updated but posters failed
-          return {
-            success: true,
-            data: dataRes,
-            error: `Activity updated, but poster upload failed: ${uploadResult.error}`
-          };
-        }
-      } else {
-        console.log('No new posters to upload');
+    // Upload poster images if provided
+    if (pictures && pictures.length > 0) {
+      console.log(`Uploading ${pictures.length} poster image(s)...`);
+      const uploadResult = await this.uploadPosterImages(id, pictures);
+      
+      if (!uploadResult.success) {
+        return {
+          success: true,
+          data: dataRes,
+          error: `Activity updated, but poster upload failed: ${uploadResult.error}`
+        };
       }
+    }
 
       return { success: true, data: dataRes };
     } catch (error) {
-      console.error('updateActivity (multipart) error:', error);
+      console.error('updateActivity error:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Network error' };
     }
   },
