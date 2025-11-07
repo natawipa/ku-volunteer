@@ -2,27 +2,64 @@
 
 import React, { useRef, useState, useEffect, useMemo } from 'react';
 import { activitiesApi } from "../../lib/activities";
-import type { Activity } from '../../lib/types';
+import type { Activity, ActivityApplication } from '../../lib/types';
 import { auth } from "@/lib/utils";
+import { USER_ROLES } from '@/lib/constants';
 import Header from '../components/Header';
 import Navbar from '../components/Navbar';
 import HeroImage from '../components/HeroImage';
 import EventCardHorizontal from '../components/EventCard/EventCardHorizontal';
-import { EventCardData, transformActivityToEvent } from '../components/EventCard/utils';
+import { getMyEvents, getAllEvents, type EventFilterConfig } from '../components/EventCard/utils';
+import { apiService } from '@/lib/api';
 
 const AllEventsPage: React.FC = () => {
   const [activities, setActivities] = useState<Activity[]>([]); 
-  const [events, setEvents] = useState<EventCardData[]>([]);
-  const [IsAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [filter, ] = useState<string>('');
-  const [searchTerm, ] = useState('');
-  const [dateStart, ] = useState('');
-  const [dateEnd, ] = useState('');
-  const [endAfterChecked, ] = useState(true);
-  const [selectedStatus, ] = useState<string[]>([]);
+  const [filter] = useState<string>('');
+  const [searchTerm] = useState('');
+  const [dateStart] = useState('');
+  const [dateEnd] = useState('');
+  const [endAfterChecked] = useState(true);
+  const [selectedStatus] = useState<string[]>([]);
   const [, setIsSearchActive] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement | null>(null)
+  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  const [userApplications, setUserApplications] = useState<ActivityApplication[]>([]);
+  const [organizerProfileId, setOrganizerProfileId] = useState<number | null>(null);
+
+  useEffect(() => {
+    const checkAuthAndFetchData = async () => {
+      const authenticated = auth.isAuthenticated();
+      const role = auth.getUserRole();
+      setIsAuthenticated(authenticated);
+      setUserRole(role);
+
+      if (authenticated) {
+        try {
+          const userResult = await apiService.getCurrentUser();
+          if (userResult.success && userResult.data) {
+            const userData = userResult.data;
+            
+            if (role === USER_ROLES.ORGANIZER && userData.organizer_profile?.id) {
+              setOrganizerProfileId(userData.organizer_profile.id);
+            }
+            
+            if (role === USER_ROLES.STUDENT) {
+              const applicationsResponse = await activitiesApi.getUserApplications();
+              if (applicationsResponse.success && applicationsResponse.data) {
+                setUserApplications(applicationsResponse.data);
+              }
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      }
+    };
+
+    checkAuthAndFetchData();
+  }, []);
 
   useEffect(() => {
     const fetchEvents = async () => {
@@ -30,17 +67,13 @@ const AllEventsPage: React.FC = () => {
       try {
         const result = await activitiesApi.getActivities();
         if (result.success && result.data) {
-          // Map Activity to Event type
           setActivities(result.data);
-          const mappedEvents = result.data.map(transformActivityToEvent);
-          setEvents(mappedEvents);
         } else {
           setActivities([]);
-          setEvents([]);
         }
       } catch (error) {
         console.error('Error fetching activities:', error);
-        setEvents([]);
+        setActivities([]);
       } finally {
         setLoading(false);
       }
@@ -48,9 +81,23 @@ const AllEventsPage: React.FC = () => {
     fetchEvents();
   }, []);
 
-  useEffect(() => {
-    setIsAuthenticated(auth.isAuthenticated());
-  }, []);
+  // Create filter configuration
+  const filterConfig: EventFilterConfig = {
+    activities,
+    userRole,
+    isAuthenticated,
+    userApplications,
+    organizerProfileId
+  };
+
+  // Use getMyEvents for authenticated users, getAllEvents for unauthenticated
+  const events = useMemo(() => {
+    if (isAuthenticated) {
+      return getMyEvents(filterConfig);
+    } else {
+      return getAllEvents(filterConfig);
+    }
+  }, [isAuthenticated, filterConfig]);
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
@@ -101,14 +148,14 @@ const AllEventsPage: React.FC = () => {
 
       return matchesCategory && matchesSearch && matchesDate && matchesStatus;
     });
-}, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
+  }, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
 
-  const pageTitle = IsAuthenticated ? "My Events" : "All Events";
+  const pageTitle = isAuthenticated ? "My Events" : "All Events";
 
   return (
     <div className="relative pt-6 px-4">
       <HeroImage />
-      <Navbar />
+      <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
       <div className="relative">
         <Header showBigLogo={true} showSearch={true} activities={activities} setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
       </div>

@@ -273,13 +273,13 @@ export const activitiesApi = {
     }
 
     const form = new FormData();
-  // Explicitly append expected fields (typed to Partial<Activity>)
+  // Explicitly append expected fields
   const p = payload as Partial<Activity>;
   if (p.title) form.append('title', String(p.title));
   if (p.description) form.append('description', String(p.description));
   if (p.location) form.append('location', String(p.location));
   
-  // Handle date fields - ensure they're in correct format
+  // Handle date fields 
   if (p.start_at) {
     const startDate = new Date(p.start_at);
     form.append('start_at', startDate.toISOString());
@@ -307,10 +307,9 @@ export const activitiesApi = {
     });
 
     const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.UPDATE(id)}`, {
-      method: 'PUT', // or 'PATCH' if your backend supports it
+      method: 'PUT',
       headers: {
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
-        // Don't set Content-Type - let browser set it with boundary for FormData
       },
       body: form,
     });
@@ -367,10 +366,10 @@ export const activitiesApi = {
     try {
       const token = localStorage.getItem('access_token');
       
-      // First, get existing posters to determine which order numbers are available
+      // get existing posters to determine which order numbers are available
       console.log('Fetching existing posters to find available order slots...');
       
-      // Add a delay to ensure database has been updated after any deletions
+      // Add a delay to ensure database has been updated
       await new Promise(resolve => setTimeout(resolve, 500));
       
       const existingPostersResp = await this.getPosterImages(activityId);
@@ -425,7 +424,7 @@ export const activitiesApi = {
         return { success: false, error };
       }
       
-      // Post each image individually because the backend serializer expects a single image per POST
+      // Post each image individually
       for (let idx = 0; idx < pictures.length; idx++) {
         const pic = pictures[idx];
         const orderToUse = availableOrders[idx];
@@ -466,7 +465,7 @@ export const activitiesApi = {
           console.error(`Failed to upload poster ${idx + 1} (order ${orderToUse}):`, dataRes);
           const errorMsg = dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) || `Server error ${res.status}`;
           
-          // If it's a duplicate key error, provide helpful context
+          // provide helpful context if its duplicate order error
           if (errorMsg.includes('unique') || errorMsg.includes('duplicate') || errorMsg.includes('already exists')) {
             console.error('Duplicate order conflict detected!');
             console.error('Tried to use order:', orderToUse);
