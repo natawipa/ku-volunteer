@@ -1,0 +1,26 @@
+// Document metadata (used by the UI).
+
+import { Contact } from "lucide-react";
+
+const documents = [
+  {
+    id: 1,
+    title: "Approval Letter for Activity Hours",
+    description: "This document is an official approval letter used to request recognition of activity hours from the university.",
+    instructions: "Students must submit this letter to the Student Affairs Division after participating in an approved activity, with a signature from the activity organizer or supervising officer.",
+    deadline: "Submit within 1 month after attending the activity.",
+    location: "Student Affairs Division, Rapee Sagarik Building, 5th Floor",
+    fileUrl: "/docs/ใบคำร้อง-เข้าร่วมกิจกรรมกับหน่วยงานภายนอ.pdf",
+  },
+  {
+    id: 2,
+    title: "Volunteer Activity Report Form for The Student Loan Fund",
+    description: "This form is used to record and report volunteer activities required for the Student Loan Fund (กยศ). Students must fill in details about their volunteer work, including the type of activity, date, location, and total hours completed. The report will be submitted to the responsible staff for verification as part of the Student Loan Fund’s annual requirements.",
+    instructions: "Complete all sections of the form accurately and attach any supporting documents such as photos or attendance confirmations. Submit the completed form to the student affairs office or the assigned staff in charge of the Student Loan Fund activities.",
+    deadline: "Submit within 30 days after completing the volunteer activity or before the end of the academic semester, whichever comes first.",
+    location: "Student Affairs Division, Rapee Sagarik Building, 5th Floor",
+    fileUrl: "/docs/ใบกิจกรรม กยศ.pdf",
+  },
+];
+
+export default documents;

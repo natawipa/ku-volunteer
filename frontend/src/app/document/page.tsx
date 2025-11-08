@@ -1,29 +1,40 @@
 "use client";
 
-import { useState, useMemo, useRef } from "react";
 import Navbar from "../components/Navbar";
 import Header from "../components/Header";
 import HeroImage from "../components/HeroImage";
+import documents from "./data"
 
 import { Download } from "lucide-react";
+import { FileTerminal } from "lucide-react";
 
 interface Document {
   id: number;
   title: string;
-  description: string;
+  description?: string;
+  instructions?: string;
+  deadline?: string;
   fileUrl?: string;
 }
 
 export default function DocumentPage() {
-  // 🗂 Example static data
-  const documents: Document[] = [
-    { id: 1, title: "Volunteer Guidelines", description: "Rules and requirements for all KU volunteer activities.", fileUrl: "/docs/volunteer-guidelines.pdf" },
-    { id: 2, title: "Application Form", description: "Form for students to apply for volunteer events.", fileUrl: "/docs/application-form.pdf" },
-    { id: 3, title: "Project Report Template", description: "Standard report format for volunteer projects.", fileUrl: "/docs/project-report-template.docx" },
-    { id: 4, title: "Event Schedule", description: "Upcoming volunteer events and timelines.", fileUrl: "/docs/event-schedule.pdf" },
-  ];
-
-  const searchInputRef = useRef<HTMLInputElement | null>(null);
+  
+  const renderDownload = (fileUrl?: string) =>
+  fileUrl ? (
+    <a
+      href={fileUrl}
+      download
+      className="p-2 flex items-center text-green-700 text-md hover:text-green-900 cursor-pointer font-medium transition"
+    >
+      <Download className="inline mr-2 mb-1 w-4 h-4" />
+      Download
+    </a>
+  ) : (
+      <button disabled className="p-2 flex items-center text-gray-400 text-sm font-medium">
+        <Download className="inline mr-2 mb-1 w-4 h-4" />
+        Download
+      </button>
+    );
 
   return (
     <div className="relative pt-6 px-4">
@@ -35,38 +46,46 @@ export default function DocumentPage() {
         />
       </div>
 
-      <h1 className="text-3xl font-bold mt-13">Documents</h1>
+      <h1 className="text-3xl font-bold mt-12">Documents for External Activities</h1>
 
       {/* Filtered document list */}
       <div className="mt-8">
         {documents.length > 0 ? (
           documents.map((doc) => (
             <div
-            key={doc.id}
-            className="mb-6 p-4 py-6 border border-green-800 shadow-md rounded-xl hover:shadow-lg transition"
+              key={doc.id}
+              className="mb-6 p-4 py-6 border border-green-800 shadow-md rounded-xl hover:shadow-lg transition group"
             >
-                <div className="flex justify-between items-start ml-4">
-                    <div>
-                        <h2 className="text-lg font-semibold">{doc.title}</h2>
-                        <p className="text-gray-600 text-sm mt-1">{doc.description}</p>
-                    </div>
+              <div className="flex justify-between items-start p-4">
+                <div className="flex-1">
+                  {/* Title: clicking opens preview */}
+                    <h2 className="text-lg text-green-700 font-semibold flex items-center">
+                      <FileTerminal className="inline mr-4 mb-1 w-10 h-10 text-gray-300" />
+                      {doc.title}
+                    </h2>
 
-                    {doc.fileUrl ? (
-                      <a
-                        href={doc.fileUrl}
-                        download
-                        className="mt-4 mr-8 flex items-center text-green-700 text-sm hover:text-green-900 cursor-pointer font-medium transition"
-                      >
-                        <Download className="inline mr-2 mb-1 w-4 h-4" />
-                        Download
-                      </a>
-                    ) : (
-                      <button disabled className="mt-4 mr-8 flex items-center text-gray-400 text-sm font-medium">
-                        <Download className="inline mr-2 mb-1 w-4 h-4" />
-                        Download
-                      </button>
-                    )}
+                  {/* details container: hidden initially, revealed on hover with smooth transition */}
+                  <div className="overflow-hidden max-h-0 w-300 opacity-0 transform translate-y-2 transition-all duration-500 group-hover:max-h-96 group-hover:opacity-100 group-hover:translate-y-0">
+                    <div className="grid grid-cols-[120px_1fr] gap-y-2 ml-3 text-sm">
+                      <span className="font-medium text-gray-700">Description:</span>
+                      <span className="text-gray-600">{doc.description || "-"}</span>
+
+                      <span className="font-medium text-gray-700">Instruction:</span>
+                      <span className="text-gray-700">{doc.instructions || "-"}</span>
+
+                      <span className="font-medium text-gray-700">Location:</span>
+                      <span className="text-gray-600">{doc.location || "-"}</span>
+
+                      <span className="font-medium text-gray-700">Deadline:</span>
+                      <span className="text-red-600">{doc.deadline || "-"}</span>
+                    </div>
+                  </div>
                 </div>
+
+                <div className="flex-shrink-0 ml-4">
+                  {renderDownload(doc.fileUrl)}
+                </div>
+              </div>
             </div>
           ))
         ) : (
