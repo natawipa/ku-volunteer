@@ -414,7 +414,7 @@ function ActivityFormContent() {
         const localDate = new Date(`${dateStr}T${timeStr}:00`);
         const offset = localDate.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
         const utcDate = new Date(localDate.getTime() - offset);
-        return utcDate.toISOString(); // Returns ISO string with proper UTC conversion
+        return utcDate.toISOString(); // Returns ISO string with UTC conversion
       };
       const startDateTime = formatLocalDateTime(dateStart, timeStart);
       const endDateTime = formatLocalDateTime(dateEnd, timeEnd);

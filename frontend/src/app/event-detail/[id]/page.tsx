@@ -12,7 +12,7 @@ import Header from "../../components/Header";
 import Navbar from "@/app/components/Navbar";
 import HeroImage from "@/app/components/HeroImage";
 import EventStatusBadge from "../components/StatusBadge";
-import EventActionButton from "../components/ActionButton";
+import ActionButton from "../components/ActionButton";
 import OrganizerSection from "../components/OrganizerSection";
 import { ApplicantsList, ApprovedList, EventDetails } from "../EventManagement";
 import RejectionModal from "../components/OrganizerRejectionModal";
@@ -239,18 +239,21 @@ export default function EventPage({ params }: PageProps) {
 
           {isAuthenticated ? (
             userRole === USER_ROLES.STUDENT ? (
-              <EventActionButton
+              <ActionButton
                 applicationStatus={applicationStatus}
                 applying={applying}
                 event={event}
                 onApply={handleApply}
                 onCancel={handleCancelApplication}
+                role={userRole}
               />
             ) : isOrganizer ? (
-              <Link href={{ pathname: '/new-event', query: { edit: eventId?.toString(), activityData: encodeURIComponent(JSON.stringify(event)) }}}
-                className="bg-green-500 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all text-center">
-                Edit Event
-              </Link>
+              <ActionButton
+                applying={applying}
+                eventID={eventId}
+                event={event}
+                role={userRole}
+              />
             ) : (
               <button className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed" disabled>Not Available</button>
             )
