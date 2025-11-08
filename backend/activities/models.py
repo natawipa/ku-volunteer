@@ -771,7 +771,11 @@ class StudentCheckIn(models.Model):
         Raises:
             ValidationError: If code is invalid or not valid today
         """
-        today_code = DailyCheckInCode.get_or_create_today_code(activity)
+        today = timezone.now().date()
+        today_code = DailyCheckInCode.objects.get(
+            activity=activity,
+            valid_date=today
+        )
         
         if not today_code.is_valid_today():
             raise ValidationError("The check-in code is not valid today.")

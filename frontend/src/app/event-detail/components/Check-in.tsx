@@ -2,6 +2,7 @@
 import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
 import Image from 'next/image';
 import { USER_ROLES } from '../../../lib/constants';
+import { activitiesApi } from '../../../lib/activities';
 
 interface CheckInProps {
   isOpen: boolean;
@@ -10,30 +11,65 @@ interface CheckInProps {
   isLoading?: boolean;
   role: string | null;
   description?: string;
-  organizerCode?: string;
+  activityId?: number | null;
 }
 
-export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, role, description, organizerCode }: CheckInProps) {
+export default function CheckIn({ 
+  isOpen, 
+  onClose, 
+  onSubmit, 
+  isLoading = false, 
+  role, 
+  description, 
+  activityId
+}: CheckInProps) {
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
+  const [fetchedCode, setFetchedCode] = useState<string>('');
+  const [loadingCode, setLoadingCode] = useState(false);
 
-  // auto-focus first input when modal opens
+  // Fetch check-in code when modal opens for ORGANIZER
+  useEffect(() => {
+    console.log('🔍 CHECK-IN EFFECT:', { isOpen, activityId, role, fetchedCode });
+    
+    // Only fetch code for organizers
+    if (isOpen && activityId && role === USER_ROLES.ORGANIZER) {
+      console.log('📡 Fetching check-in code for organizer, activity:', activityId);
+      setLoadingCode(true);
+      activitiesApi.getCheckInCode(activityId).then(result => {
+        console.log('API Response:', result);
+        
+        if (result.success && result.data) {
+          console.log('Code fetched successfully:', result.data.code);
+          setFetchedCode(result.data.code);
+        } else {
+          console.error('API Error:', result.error);
+          setValidationError(result.error || 'Failed to fetch check-in code');
+        }
+        setLoadingCode(false);
+      }).catch(err => {
+        console.error('Fetch Exception:', err);
+        setValidationError('Failed to fetch check-in code');
+        setLoadingCode(false);
+      });
+    }
+  }, [isOpen, activityId, role]); 
+
   useEffect(() => {
     if (isOpen) {
       setIsMounted(true);
       setValidationError('');
       if (role === USER_ROLES.STUDENT) {
         setTimeout(() => {
-          const firstEmptyIndex = code.findIndex(char => char === '');
-          const indexToFocus = firstEmptyIndex === -1 ? 0 : firstEmptyIndex;
-          inputRefs.current[indexToFocus]?.focus();
+          inputRefs.current[0]?.focus();
         }, 100);
       }
     } else {
       setCode(['', '', '', '', '', '']);
       setValidationError('');
+      setFetchedCode('');
     }
   }, [isOpen, role]);
 
@@ -44,25 +80,16 @@ export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, 
     }
   };
 
-  // Validate input
-  const validateInput = (index: number, value: string): boolean => {
-    if (value === '') return true; // Allow empty
-    
-    // (index 0,1) must be alphabets
-    if (index < 2) {
-      return /^[A-Za-z]$/.test(value);
-    }
-    // (index 2,3,4,5) must be numbers
-    else {
-      return /^[0-9]$/.test(value);
-    }
+  // random char validation
+  const validateInput = (value: string): boolean => {
+    if (value === '') return true;
+    return /^[A-Za-z0-9]$/.test(value);
   };
 
   const handleChange = (index: number, value: string) => {
     const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
     
-    // if invalid dont update
-    if (sanitizedValue && !validateInput(index, sanitizedValue)) {
+    if (sanitizedValue && !validateInput(sanitizedValue)) {
       return; 
     }
     
@@ -73,7 +100,7 @@ export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, 
       // Validate each character in the pasted content
       for (let i = 0; i < chars.length; i++) {
         const charIndex = index + i;
-        if (charIndex < 6 && validateInput(charIndex, chars[i])) {
+        if (charIndex < 6 && validateInput(chars[i])) {
           newCode[charIndex] = chars[i];
         }
       }
@@ -142,37 +169,38 @@ export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, 
       const chars = sanitizedValue.split('');
       const newCode = [...code];
       
-      // Validate each character in the pasted content
-      let hasInvalidChar = false;
       for (let i = 0; i < chars.length; i++) {
-        if (i < 6) {
-          if (validateInput(i, chars[i])) {
-            newCode[i] = chars[i];
-          } else {
-            hasInvalidChar = true;
-            break;
-          }
+        if (i < 6 && validateInput(chars[i])) {
+          newCode[i] = chars[i];
         }
       }
       
-      if (!hasInvalidChar) {
-        setCode(newCode);
-        setValidationError('');
-        
-        // Focus on the last filled input
-        const lastFilledIndex = Math.min(chars.length - 1, 5);
-        inputRefs.current[lastFilledIndex]?.focus();
-      } else {
-        setValidationError('Invalid format: First 2 must be letters, last 4 must be numbers');
-      }
+      setCode(newCode);
+      setValidationError('');
+      
+      const lastFilledIndex = Math.min(chars.length - 1, 5);
+      inputRefs.current[lastFilledIndex]?.focus();
     }
   };
 
   const handleSubmit = () => {
     const fullCode = code.join('');
     
+    console.log('🔍 SUBMIT DEBUG:', {
+      role,
+      fullCode,
+      isStudent: role === USER_ROLES.STUDENT,
+    });
+    
     setValidationError('');
-    onSubmit(fullCode);
+    
+    if (!fullCode) {
+      setValidationError('Please enter a code');
+      return;
+    }
+
+    console.log('✅ Submitting code:', fullCode);
+    onSubmit(fullCode); // Send to backend for validation
   };
 
   const isCodeComplete = code.every(char => char !== '');
@@ -188,13 +216,6 @@ export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, 
     } else {
       return "Please enter the check-in code provided at the event.";
     }
-  };
-
-  const getDisplayCode = () => {
-    if (role === USER_ROLES.ORGANIZER && organizerCode) {
-      return organizerCode;
-    }
-    return code.join('');
   };
 
   if (!isOpen) return null;
@@ -239,26 +260,20 @@ export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, 
                 {/* Input Boxes */}
                 <div className="flex justify-center gap-2">
                   {code.map((char, index) => (
-                    <React.Fragment key={index}>
-                      <input
-                        ref={(el) => { inputRefs.current[index] = el; }}
-                        type="text"
-                        maxLength={1}
-                        value={char}
-                        onChange={(e) => handleChange(index, e.target.value)}
-                        onKeyDown={(e) => handleKeyDown(index, e)}
-                        onPaste={handlePaste}
-                        disabled={isLoading}
-                        className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f9b1d2] focus:border-[#f9b1d2] transition-all uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-                        placeholder={index < 2 ? "A" : "0"}
-                        title={index < 2 ? "Enter a letter (A-Z)" : "Enter a number (0-9)"}
-                      />
-                      {index === 1 && (
-                        <div className="flex items-center justify-center w-4">
-                          <span className="text-2xl font-bold text-gray-400">-</span>
-                        </div>
-                      )}
-                    </React.Fragment>
+                    <input
+                      key={index}
+                      ref={(el) => { inputRefs.current[index] = el; }}
+                      type="text"
+                      maxLength={1}
+                      value={char}
+                      onChange={(e) => handleChange(index, e.target.value)}
+                      onKeyDown={(e) => handleKeyDown(index, e)}
+                      onPaste={handlePaste}
+                      disabled={isLoading}
+                      className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f9b1d2] focus:border-[#f9b1d2] transition-all uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                      placeholder="0"
+                      title="Enter a letter or number (A-Z, 0-9)"
+                    />
                   ))}
                 </div>
               </div>
@@ -268,7 +283,7 @@ export default function CheckIn({ isOpen, onClose, onSubmit, isLoading = false, 
               <div className="flex justify-center mb-6">
                 <div className="text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl transition-all uppercase">
                   <div className="px-6 py-3 select-all tracking-widest">
-                    {getDisplayCode() || "No code available"}
+                    {loadingCode ? '⏳ Loading...' : (fetchedCode || "No code available")}
                   </div>
                 </div>
               </div>

@@ -40,6 +40,11 @@ export const API_ENDPOINTS = {
     POSTERS: (activity_id: string | number) => `/api/activities/${activity_id}/posters/`,
     DELETION_REQUESTS: '/api/activities/deletion-requests/',
     DELETION_REQUEST_REVIEW: (id: string | number) => `/api/activities/deletion-requests/${id}/review/`,
+    
+    CHECK_IN_CODE: (id: number | string) => `/api/activities/${id}/checkin-code/`,
+    CHECK_IN: (id: number | string) => `/api/activities/${id}/checkin/`,
+    CHECK_IN_LIST: (id: number | string) => `/api/activities/${id}/checkin-list/`,
+    CHECK_IN_STATUS: (id: number | string) => `/api/activities/${id}/checkin-status/`,
   },
   TOKEN: {
     OBTAIN: '/api/token/',

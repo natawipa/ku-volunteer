@@ -409,13 +409,13 @@ function ActivityFormContent() {
     setIsSubmitting(true);
   
     try {
+      // combine date and time
       const formatLocalDateTime = (dateStr: string, timeStr: string) => {
-        // Create a local date and time, then convert to UTC by subtracting timezone offset
-        const localDate = new Date(`${dateStr}T${timeStr}:00`);
-        const offset = localDate.getTimezoneOffset() * 60000; // Convert minutes to milliseconds
-        const utcDate = new Date(localDate.getTime() - offset);
-        return utcDate.toISOString(); // Returns ISO string with UTC conversion
+        // combine the date and time strings into ISO format
+        // Let backend interpret it as Thai time
+        return `${dateStr}T${timeStr}:00`;
       };
+
       const startDateTime = formatLocalDateTime(dateStart, timeStart);
       const endDateTime = formatLocalDateTime(dateEnd, timeEnd);
       const activityData = {

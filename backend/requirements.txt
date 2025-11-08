@@ -9,3 +9,4 @@ python-dotenv==1.1.1
 sqlparse==0.5.3
 social-auth-app-django==5.4.0
 Pillow==10.4.0
+pytz==2024.1

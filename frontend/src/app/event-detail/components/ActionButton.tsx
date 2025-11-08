@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { APPLICATION_STATUS, ACTIVITY_STATUS, USER_ROLES } from '../../../lib/constants';
 import type { Activity } from '../../../lib/types';
+import { activitiesApi } from '../../../lib/activities';
 import Link from 'next/link';
 import CheckIn from './Check-in';
 
@@ -14,8 +15,6 @@ interface EventActionButtonProps {
   eventID?: number | null;
 }
 
-const mockCode = "AB1234";
-
 export default function EventActionButton({
   applicationStatus,
   applying,
@@ -27,20 +26,31 @@ export default function EventActionButton({
 }: EventActionButtonProps) {
   const greenActionButton = "bg-[#96C693] text-white px-8 py-3 rounded-lg hover:bg-[#72A070] cursor-pointer transition-all text-center";
   
+  const activityId = eventID || event?.id;
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
 
-  // Parse dates - remove UTC interpretation since backend already stores Thai time
   const parseActivityDate = (dateString: string | undefined) => {
     if (!dateString) return null;
-    
-    // parse as local Thai time (not UTC)
-    const dateWithoutZ = dateString.replace('Z', '');
-    const date = new Date(dateWithoutZ);
-    
-    console.log('Parsing date:', dateString, '→', date.toLocaleString('th-TH'));
-    
-    return date;
+    // Backend stores UTC internally but with Bangkok timezone setting
+    // Just parse it directly - no manipulation needed
+    return new Date(dateString);
+  };
+
+  // For student: check if current time is within event time range
+  const isStudentCanCheckIn = () => {
+    if (!activityStartDate || !activityEndDate) return false;
+
+    const now = new Date();
+    const isInRange = now >= activityStartDate && now <= activityEndDate;
+
+    console.log('STUDENT Time Check:');
+    console.log('Now (local):', now.toLocaleString('th-TH'));
+    console.log('Event Start:', activityStartDate.toLocaleString('th-TH'));
+    console.log('Event End:', activityEndDate.toLocaleString('th-TH'));
+    console.log('Can Check-in:', isInRange);
+
+    return isInRange;
   };
 
   const activityStartDate = event.start_at ? parseActivityDate(event.start_at) : null;
@@ -67,25 +77,6 @@ export default function EventActionButton({
     return isInRange;
   };
 
-    // STUDENT: Check if current time is within the event time range
-  const isStudentCanCheckIn = () => {
-    if (!activityStartDate || !activityEndDate) return false;
-
-    // Get current time in Thailand (no conversion needed)
-    const nowLocal = new Date();
-    
-    // Backend times are already correct Thai times, use them as-is
-    const isInRange = nowLocal >= activityStartDate && nowLocal <= activityEndDate;
-
-    console.log('STUDENT Check:');
-    console.log('Now:', nowLocal.toLocaleString('th-TH'));
-    console.log('Event Start:', activityStartDate.toLocaleString('th-TH'));
-    console.log('Event End:', activityEndDate.toLocaleString('th-TH'));
-    console.log('Can Check-in:', isInRange);
-
-    return isInRange;
-  };
-
   // Format UTC time for display
   const formatUTCTimeForDisplay = (date: Date | null) => {
     if (!date) return '--:--';
@@ -96,14 +87,37 @@ export default function EventActionButton({
 
   const handleCheckInSubmit = async (code: string) => {
     setIsCheckingIn(true);
-    console.log('Submitting check-in code:', code);
+    console.log('📡 Submitting check-in code:', code);
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log('Check-in successful for code:', code);
-      alert(`Check-in successful! Code: ${code}`);
-      setShowCheckInModal(false);
+      const result = await activitiesApi.submitCheckIn(activityId || 0, code);
+      
+      console.log('✅ Check-in API result:', result);
+      
+      if (result.success) {
+        console.log('✅ Check-in successful!', result.data);
+        alert('✅ Check-in successful! Your attendance has been recorded.');
+        setShowCheckInModal(false);
+        window.location.reload();
+      } else {
+        const errorMsg = result.error || 'Unknown error';
+        console.error('❌ Check-in failed:', errorMsg);
+        
+        // ✅ FIXED: Add null check with optional chaining and toLowerCase
+        if (errorMsg.toLowerCase().includes('code')) {
+          alert(`❌ Invalid Code\n\n${errorMsg}\n\nPlease ask the organizer for the correct code.`);
+        } else if (errorMsg.toLowerCase().includes('not started')) {
+          alert(`⏰ Activity Not Started\n\n${errorMsg}`);
+        } else if (errorMsg.toLowerCase().includes('ended')) {
+          alert(`⏹️ Activity Ended\n\n${errorMsg}`);
+        } else if (errorMsg.toLowerCase().includes('already')) {
+          alert(`✅ Already Checked In\n\nYou have already checked in to this activity.`);
+        } else {
+          alert(`Check-in failed:\n${errorMsg}`);
+        }
+      }
     } catch (error) {
-      console.error('Check-in failed:', error);
+      console.error('Check-in exception:', error);
       alert('Check-in failed. Please try again.');
     } finally {
       setIsCheckingIn(false);
@@ -142,7 +156,7 @@ export default function EventActionButton({
             onSubmit={handleCheckInSubmit}
             isLoading={isCheckingIn}
             role={role}
-            organizerCode={mockCode}
+            activityId={activityId} 
           />
         </>
       );
@@ -199,6 +213,7 @@ export default function EventActionButton({
             onSubmit={handleCheckInSubmit}
             isLoading={isCheckingIn}
             role={role}
+            activityId={activityId}
           />
         </>
       );

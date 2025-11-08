@@ -201,8 +201,10 @@ export function EventDetails({ event }: EventDetailsProps) {
 }
 
 // Default export
-export default {
+const EventManagementExports = {
   ApplicantsList,
   ApprovedList,
   EventDetails,
 };
+
+export default EventManagementExports;
