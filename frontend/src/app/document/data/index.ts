@@ -13,10 +13,10 @@ const documents = [
   {
     id: 2,
     title: "Volunteer Activity Report Form for The Student Loan Fund",
-    description: "This form is used to record and report volunteer activities required for the Student Loan Fund (กยศ). Students must fill in details about their volunteer work, including the type of activity, date, location, and total hours completed. The report will be submitted to the responsible staff for verification as part of the Student Loan Fund’s annual requirements.",
+    description: "This form is used to record and report volunteer activities required for the Student Loan Fund (กยศ).",
     instructions: "Complete all sections of the form accurately and attach any supporting documents such as photos or attendance confirmations. Submit the completed form to the student affairs office or the assigned staff in charge of the Student Loan Fund activities.",
-    deadline: "Submit within 30 days after completing the volunteer activity or before the end of the academic semester, whichever comes first.",
-    location: "Student Affairs Division, Rapee Sagarik Building, 5th Floor",
+    deadline: "Before the end of the current academic year.",
+    location: "Submit online at https://sw.sa.ku.ac.th/Fha/index.php or at the Student Affairs Division, Rapee Sagarik Building, 5th Floor",
     fileUrl: "/docs/ใบกิจกรรม กยศ.pdf",
   },
 ];

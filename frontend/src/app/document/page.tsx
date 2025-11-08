@@ -56,8 +56,8 @@ export default function DocumentPage() {
                     </h2>
 
                   {/* details container: hidden initially, revealed on hover with smooth transition */}
-                  <div className="overflow-hidden max-h-0 w-300 opacity-0 transform translate-y-2 transition-all duration-500 group-hover:max-h-96 group-hover:opacity-100 group-hover:translate-y-0">
-                    <div className="grid grid-cols-[120px_1fr] gap-y-2 ml-3 text-sm">
+                  <div className="overflow-hidden max-h-0 w-300 opacity-0 transform translate-y-2 transition-all duration-500 group-hover:max-h-100 group-hover:opacity-100 group-hover:translate-y-0">
+                    <div className="grid grid-cols-[120px_1fr] gap-y-2 ml-3 text-sm mt-4">
                       <span className="font-medium text-gray-700">Description:</span>
                       <span className="text-gray-600">{doc.description || "-"}</span>
 
