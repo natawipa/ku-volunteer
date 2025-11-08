@@ -1,7 +1,5 @@
 // Document metadata (used by the UI).
 
-import { Contact } from "lucide-react";
-
 const documents = [
   {
     id: 1,

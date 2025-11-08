@@ -8,15 +8,6 @@ import documents from "./data"
 import { Download } from "lucide-react";
 import { FileTerminal } from "lucide-react";
 
-interface Document {
-  id: number;
-  title: string;
-  description?: string;
-  instructions?: string;
-  deadline?: string;
-  fileUrl?: string;
-}
-
 export default function DocumentPage() {
   
   const renderDownload = (fileUrl?: string) =>
