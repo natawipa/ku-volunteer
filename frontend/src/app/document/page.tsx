@@ -33,19 +33,23 @@ export default function DocumentPage() {
     fileUrl ? (
       <div className="flex flex-col sm:flex-col items-end gap-2">
         <a
-          href={fileUrl}
-          download
-          className="px-3 py-2 rounded-md bg-green-700 text-white hover:bg-green-800 text-sm font-medium transition"
-        >
-          Download
-        </a>
+        href={fileUrl}
+        download
+        className="p-2 flex items-center text-green-700 text-md hover:text-green-900 cursor-pointer font-medium transition"
+      >
+        <Download className="inline mr-2 mb-1 w-4 h-4" />
+        Download
+      </a>
+
       </div>
     ) : (
-      <div className="flex flex-col items-end gap-2">
-        <button disabled className="px-3 py-2 rounded-md bg-gray-50 text-gray-400 text-sm font-medium">
-          Download
-        </button>
-      </div>
+      <button
+        disabled
+        className="p-2 flex items-center text-gray-400 text-sm font-medium"
+      >
+        <Download className="inline mr-2 mb-1 w-4 h-4" />
+        Download
+      </button>
     );
 
   return (
