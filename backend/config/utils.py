@@ -126,3 +126,24 @@ def get_student_application_status(student, activity):
         return application.status
     except Application.DoesNotExist:
         return None
+
+
+def validate_activity_is_happening(activity):
+    """
+    Validate that an activity is currently happening (between start_at and end_at).
+    
+    Args:
+        activity: Activity object to validate
+        
+    Raises:
+        ValidationError: If activity hasn't started or has ended
+    """
+    from django.utils import timezone
+    
+    now = timezone.now()
+    
+    if now < activity.start_at:
+        raise ValidationError("This activity has not started yet.")
+    
+    if now > activity.end_at:
+        raise ValidationError("This activity has already ended.")

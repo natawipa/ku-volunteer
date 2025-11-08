@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 
 from config.constants import ActivityStatus, ApplicationStatus, StatusMessages, UserRoles
 from config.permissions import IsAdmin, IsStudent
-from config.utils import get_activity_category_groups, get_student_approved_activities, is_admin_user
-from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
+from config.utils import get_activity_category_groups, get_student_approved_activities, is_admin_user, validate_activity_is_happening
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage, DailyCheckInCode, StudentCheckIn
 from .serializers import (
     ActivityDeletionRequestSerializer,
     ActivitySerializer,
@@ -17,6 +17,9 @@ from .serializers import (
     ApplicationCreateSerializer,
     ApplicationReviewSerializer,
     ActivityPosterImageSerializer,
+    DailyCheckInCodeSerializer,
+    StudentCheckInSerializer,
+    CheckInRequestSerializer,
 )
 
 
@@ -762,4 +765,152 @@ class ActivityPosterImageDetailView(generics.RetrieveUpdateDestroyAPIView):
             self.permission_denied(
                 self.request,
                 message=StatusMessages.PERMISSION_DENIED
+            )
+
+
+class ActivityCheckInCodeView(APIView):
+    """API view for organizers to get today's check-in code for their activity."""
+    
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request: Request, activity_id: int) -> Response:
+        """Get or generate today's check-in code for an activity."""
+        activity = get_object_or_404(Activity, pk=activity_id)
+        user = request.user
+        user_role = getattr(user, 'role', None)
+
+        # Check permissions - organizer must be from same organization or admin
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    return Response(
+                        {'detail': StatusMessages.PERMISSION_DENIED},
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            except AttributeError:
+                return Response(
+                    {'detail': StatusMessages.PERMISSION_DENIED},
+                    status=status.HTTP_403_FORBIDDEN
+                )
+        elif not is_admin_user(user):
+            return Response(
+                {'detail': StatusMessages.PERMISSION_DENIED},
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Validate that activity is currently happening
+        try:
+            validate_activity_is_happening(activity)
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get or create today's code
+        daily_code = DailyCheckInCode.get_or_create_today_code(activity)
+        
+        return Response(
+            DailyCheckInCodeSerializer(daily_code).data,
+            status=status.HTTP_200_OK
+        )
+
+
+class StudentCheckInView(APIView):
+    """API view for students to check in to an activity."""
+    
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def post(self, request: Request, activity_id: int) -> Response:
+        """Check in to an activity using the daily code."""
+        activity = get_object_or_404(Activity, pk=activity_id)
+        
+        # Validate request data
+        serializer = CheckInRequestSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        
+        code = serializer.validated_data['code']
+        
+        try:
+            # Perform check-in
+            check_in = StudentCheckIn.check_in_student(activity, request.user, code)
+            
+            return Response(
+                {
+                    'detail': 'Successfully checked in!',
+                    'check_in': StudentCheckInSerializer(check_in).data
+                },
+                status=status.HTTP_200_OK
+            )
+        except Exception as e:
+            return Response(
+                {'detail': str(e)},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class ActivityCheckInListView(generics.ListAPIView):
+    """API view for organizers to see all check-ins for their activity."""
+    
+    serializer_class = StudentCheckInSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Get check-in records for the specified activity."""
+        activity_id = self.kwargs.get('activity_id')
+        user = self.request.user
+        user_role = getattr(user, 'role', None)
+
+        # Get the activity first
+        try:
+            activity = Activity.objects.get(pk=activity_id)
+        except Activity.DoesNotExist:
+            return StudentCheckIn.objects.none()
+
+        # Check permissions
+        if user_role == UserRoles.ORGANIZER:
+            try:
+                user_org_name = user.organizer_profile.organization_name
+                activity_org_name = activity.organizer_profile.organization_name
+                if user_org_name != activity_org_name:
+                    return StudentCheckIn.objects.none()
+            except AttributeError:
+                return StudentCheckIn.objects.none()
+        elif not is_admin_user(user):
+            # Only organizers and admins can view check-ins by activity
+            return StudentCheckIn.objects.none()
+
+        return StudentCheckIn.objects.filter(activity_id=activity_id).select_related(
+            'activity', 'student'
+        )
+
+
+class StudentCheckInStatusView(APIView):
+    """API view for students to check their check-in status for an activity."""
+    
+    permission_classes = [permissions.IsAuthenticated, IsStudent]
+
+    def get(self, request: Request, activity_id: int) -> Response:
+        """Get student's check-in status for an activity."""
+        activity = get_object_or_404(Activity, pk=activity_id)
+        
+        try:
+            check_in = StudentCheckIn.objects.get(
+                activity=activity,
+                student=request.user
+            )
+            return Response(
+                StudentCheckInSerializer(check_in).data,
+                status=status.HTTP_200_OK
+            )
+        except StudentCheckIn.DoesNotExist:
+            return Response(
+                {
+                    'detail': 'No check-in record found',
+                    'has_checked_in': False
+                },
+                status=status.HTTP_200_OK
             )
