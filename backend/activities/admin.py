@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django import forms
 from django.conf import settings
-from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage, DailyCheckInCode, StudentCheckIn
 from users.models import OrganizerProfile
 
 
@@ -206,3 +206,64 @@ class ActivityPosterImageAdmin(admin.ModelAdmin):
         return obj.activity.title if obj.activity else '-'
     get_activity_title.short_description = 'Activity'
     get_activity_title.admin_order_field = 'activity__title'
+
+
+@admin.register(DailyCheckInCode)
+class DailyCheckInCodeAdmin(admin.ModelAdmin):
+    list_display = ('id', 'get_activity_title', 'code', 'valid_date', 'created_at')
+    list_filter = ('valid_date', 'created_at')
+    search_fields = ('activity__title', 'code')
+    readonly_fields = ('created_at',)
+    
+    fieldsets = (
+        ('Check-in Code Info', {
+            'fields': ('activity', 'code', 'valid_date')
+        }),
+        ('Metadata', {
+            'classes': ('collapse',),
+            'fields': ('created_at',)
+        }),
+    )
+    
+    def get_activity_title(self, obj: DailyCheckInCode):
+        return obj.activity.title if obj.activity else '-'
+    get_activity_title.short_description = 'Activity'
+    get_activity_title.admin_order_field = 'activity__title'
+
+
+@admin.register(StudentCheckIn)
+class StudentCheckInAdmin(admin.ModelAdmin):
+    list_display = (
+        'id', 'get_activity_title', 'get_student_email', 'get_student_name',
+        'attendance_status', 'checked_in_at', 'marked_absent_at'
+    )
+    list_filter = ('attendance_status', 'checked_in_at', 'marked_absent_at')
+    search_fields = (
+        'activity__title', 'student__email', 'student__first_name', 'student__last_name'
+    )
+    readonly_fields = ('checked_in_at', 'marked_absent_at')
+    
+    fieldsets = (
+        ('Check-in Info', {
+            'fields': ('activity', 'student', 'attendance_status')
+        }),
+        ('Timestamps', {
+            'fields': ('checked_in_at', 'marked_absent_at')
+        }),
+    )
+    
+    def get_activity_title(self, obj: StudentCheckIn):
+        return obj.activity.title if obj.activity else '-'
+    get_activity_title.short_description = 'Activity'
+    get_activity_title.admin_order_field = 'activity__title'
+    
+    def get_student_email(self, obj: StudentCheckIn):
+        return obj.student.email if obj.student else '-'
+    get_student_email.short_description = 'Student Email'
+    get_student_email.admin_order_field = 'student__email'
+    
+    def get_student_name(self, obj: StudentCheckIn):
+        if obj.student and obj.student.first_name and obj.student.last_name:
+            return f"{obj.student.first_name} {obj.student.last_name}"
+        return '-'
+    get_student_name.short_description = 'Student Name'

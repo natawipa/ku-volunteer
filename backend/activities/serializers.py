@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage
+from .models import Activity, ActivityDeletionRequest, Application, ActivityPosterImage, DailyCheckInCode, StudentCheckIn
 
 
 class ActivityPosterImageSerializer(serializers.ModelSerializer):
@@ -197,3 +197,59 @@ class ApplicationReviewSerializer(serializers.Serializer):
         
         return data
 
+
+class DailyCheckInCodeSerializer(serializers.ModelSerializer):
+    """Serializer for daily check-in codes (organizer view)."""
+    
+    class Meta:
+        model = DailyCheckInCode
+        fields = ['id', 'code', 'valid_date', 'created_at']
+        read_only_fields = ['id', 'code', 'created_at']
+
+
+class StudentCheckInSerializer(serializers.ModelSerializer):
+    """Serializer for student check-in records."""
+    
+    student_email = serializers.EmailField(source='student.email', read_only=True)
+    student_name = serializers.SerializerMethodField()
+    activity_title = serializers.CharField(source='activity.title', read_only=True)
+    
+    class Meta:
+        model = StudentCheckIn
+        fields = [
+            'id', 'activity', 'activity_title', 'student', 'student_email', 
+            'student_name', 'attendance_status', 'checked_in_at', 'marked_absent_at'
+        ]
+        read_only_fields = [
+            'id', 'activity_title', 'student_email', 'student_name',
+            'attendance_status', 'checked_in_at', 'marked_absent_at'
+        ]
+    
+    def get_student_name(self, obj):
+        """Get student's full name or email."""
+        student = obj.student
+        if student.first_name and student.last_name:
+            return f"{student.first_name} {student.last_name}"
+        return student.email
+
+
+class CheckInRequestSerializer(serializers.Serializer):
+    """Serializer for student check-in request."""
+    
+    code = serializers.CharField(
+        max_length=6,
+        min_length=6,
+        required=True,
+        help_text="6-character check-in code"
+    )
+    
+    def validate_code(self, value):
+        """Validate code format."""
+        # Remove whitespace and convert to uppercase
+        code = value.strip().upper()
+        
+        # Validate length
+        if len(code) != 6:
+            raise serializers.ValidationError("Check-in code must be exactly 6 characters.")
+        
+        return code
