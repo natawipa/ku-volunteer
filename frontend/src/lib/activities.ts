@@ -829,4 +829,8 @@ export const activitiesApi = {
     return httpClient.get<CheckInRecord>(API_ENDPOINTS.ACTIVITIES.CHECK_IN_STATUS(activityId));
   },
   
+  async getActivityCheckInRecords(activityId: string | number): Promise<ApiResponse<CheckInRecord[]>> {
+    return httpClient.get<CheckInRecord[]>(API_ENDPOINTS.ACTIVITIES.CHECK_IN_LIST(activityId));
+  },
+
 };

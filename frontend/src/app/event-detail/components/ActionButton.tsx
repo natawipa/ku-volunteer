@@ -224,7 +224,7 @@ export default function EventActionButton({
     return (
       <div className="text-center">
         <div className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium">
-          ✅ You&apos;re Approved!
+          You&apos;re Approved!
         </div>
         {activityStartDate && (
           <p className="text-sm text-gray-600 mt-2">

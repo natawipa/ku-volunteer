@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, KeyboardEvent, useEffect } from 'react';
+import React, { useState, useRef, KeyboardEvent, useEffect, useCallback } from 'react';
 import Image from 'next/image';
 import { USER_ROLES } from '../../../lib/constants';
 import { activitiesApi } from '../../../lib/activities';
@@ -13,7 +13,6 @@ interface CheckInProps {
   description?: string;
   activityId?: number | null;
   isMultiDay?: boolean;
-  hasCheckedInToday?: boolean;
 }
 
 export default function CheckIn({ 
@@ -24,8 +23,7 @@ export default function CheckIn({
   role, 
   description, 
   activityId,
-  isMultiDay = false,
-  hasCheckedInToday = false
+  isMultiDay = false
 }: CheckInProps) {
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -35,10 +33,37 @@ export default function CheckIn({
   const [loadingCode, setLoadingCode] = useState(false);
   const [alreadyCheckedInToday, setAlreadyCheckedInToday] = useState(false);
 
-  // Check if current student already checked in today
-  const checkStudentCheckInStatus = async () => {
+  const cleanErrorMessage = (error: string): string => {
+    if (error.includes('already ended')) {
+      return 'This activity has already ended.';
+    }
+    if (error.includes('not started yet') || error.includes('not started')) {
+      return 'This activity has not started yet.';
+    }
+    // Remove brackets 
+    if (error.startsWith('[') && error.endsWith(']')) {
+      try {
+        const parsed = JSON.parse(error);
+        return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : error;
+      } catch {
+        const match = error.match(/\['([^']+)'\]/);
+        return match?.[1] || error;
+      }
+    }
+    return error;
+  };
+
+  const isActivityStatusError = (error: string): boolean => {
+    return error.includes('already ended') || 
+           error.includes('not started yet') ||
+           error.includes('activity has already ended') ||
+           error.includes('activity has not started');
+  };
+
+   // Check if current student already checked in
+  const checkStudentCheckInStatus = useCallback(async () => {
     if (role !== USER_ROLES.STUDENT || !activityId) {
-      console.log('⏭️ Skipping check-in status - not a student or no activity');
+      console.log('Skipping check-in status - not a student or no activity');
       return;
     }
 
@@ -49,33 +74,18 @@ export default function CheckIn({
       console.log('Check-in status response:', result);
       
       if (result.success && result.data) {
-        // if got data back, student has checked in
         const checkInRecord = result.data;
         const isPresent = checkInRecord.attendance_status === 'present';
         
-        // if checked in today (in case of multi-day activities)
-        if (isPresent && checkInRecord.checked_in_at) {
-          const today = new Date();
-          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
-          const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
-          
-          const checkedInTime = new Date(checkInRecord.checked_in_at);
-          const isCheckInToday = checkedInTime >= todayStart && checkedInTime <= todayEnd;
-          
-          console.log('Check-in record details:', {
-            student: checkInRecord.student_name,
-            status: checkInRecord.attendance_status,
-            checkedInAt: checkInRecord.checked_in_at,
-            checkedInTime: checkedInTime.toLocaleString('th-TH'),
-            isCheckInToday
-          });
-          
-          setAlreadyCheckedInToday(isCheckInToday);
-        } else {
-          setAlreadyCheckedInToday(false);
-        }
+        console.log('Check-in record:', { 
+          status: checkInRecord.attendance_status, 
+          checked_in_at: checkInRecord.checked_in_at
+        });
+        setAlreadyCheckedInToday(isPresent);
+      } else if (result.error && result.error.includes('already checked in')) {
+        console.log('already checked in');
+        setAlreadyCheckedInToday(true);
       } else {
-        // No check-in record found
         console.log('No check-in record found - student can check in');
         setAlreadyCheckedInToday(false);
       }
@@ -83,7 +93,7 @@ export default function CheckIn({
       console.error('Error checking student check-in status:', error);
       setAlreadyCheckedInToday(false);
     }
-  };
+  }, [role, activityId]);
 
   // Fetch check-in code when modal opens for ORGANIZER
   useEffect(() => {
@@ -93,7 +103,7 @@ export default function CheckIn({
 
     // For ORGANIZER: fetch check-in code
     if (role === USER_ROLES.ORGANIZER) {
-      console.log('📡 Fetching check-in code for organizer, activity:', activityId);
+      console.log('Fetching check-in code for organizer, activity:', activityId);
       setLoadingCode(true);
       activitiesApi.getCheckInCode(activityId || 0).then(result => {
         console.log('API Response:', result);
@@ -117,7 +127,7 @@ export default function CheckIn({
     if (role === USER_ROLES.STUDENT) {
       checkStudentCheckInStatus();
     }
-  }, [isOpen, activityId, role]); 
+  }, [isOpen, activityId, role, checkStudentCheckInStatus]); 
 
   useEffect(() => {
     if (isOpen) {
@@ -315,24 +325,29 @@ export default function CheckIn({
                 />
               </div>
             </div>
+
+            {isActivityStatusError(validationError) && (
+              <div className="flex justify-center mb-6">
+                <div className="text-center w-full">
+                  <div className={`text-xl font-bold rounded-xl py-4 px-6 border-2 'bg-gray-100 border-b-2 border-[#FFBADA] text-black' ${
+                    validationError.includes('already ended') }`}>
+                    {cleanErrorMessage(validationError)}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* student check-in Status Display */}
-            {role === USER_ROLES.STUDENT && (
+            {role === USER_ROLES.STUDENT && !isActivityStatusError(validationError) && (
               <div className="flex justify-center mb-6">
                 {alreadyCheckedInToday ? (
                   <div className="text-center w-full">
                     <div className="text-2xl font-bold bg-gray-100 border-2 border-[#FFBADA] rounded-xl py-4 px-6">
-                      <span className="text-black">Already Checked In Today</span>
+                      <span className="text-black">Already Checked In</span>
                     </div>
-                    {isMultiDay && (
-                      <p className="text-sm text-gray-600 mt-3">
-                        Come back tomorrow to check in again.
-                      </p>
-                    )}
-                    {!isMultiDay && (
-                      <p className="text-sm text-gray-600 mt-3">
-                        You have already checked in to this activity.
-                      </p>
-                    )}
+                    <p className="text-sm text-gray-600 mt-3">
+                      You have already checked in to this activity.
+                    </p>
                   </div>
                 ) : (
                   <div className="w-full">
@@ -356,7 +371,7 @@ export default function CheckIn({
                       ))}
                     </div>
 
-                    {/* ✅ Description - ONLY SHOWS WHEN NOT CHECKED IN */}
+                    {/* Description, show while checking in */}
                     <div className="text-center mb-6">
                       <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
                       <p className="text-gray-600 text-sm">
@@ -369,12 +384,12 @@ export default function CheckIn({
             )}
 
             {/* ORGANIZER: Display Check-in Code */}
-            {role === USER_ROLES.ORGANIZER && (
+            {role === USER_ROLES.ORGANIZER && !isActivityStatusError(validationError) && (
               <>
                 <div className="flex justify-center mb-6">
                   <div className="text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl transition-all uppercase w-full">
                     <div className="px-6 py-3 select-all tracking-widest">
-                      {loadingCode ? '⏳ Loading...' : (fetchedCode || "No code available")}
+                      {loadingCode ? 'Loading...' : (fetchedCode || "No code available")}
                     </div>
                   </div>
                 </div>
@@ -389,18 +404,18 @@ export default function CheckIn({
               </>
             )}
 
-            {/* Validation Error */}
+            {/* Validation Error
             {validationError && (
               <div className="text-center mb-4">
                 <p className="text-red-500 text-sm font-medium bg-red-50 py-2 px-3 rounded-lg border border-red-200">
                   {validationError}
                 </p>
               </div>
-            )}
+            )} */}
           </section>
 
-          {/* submit button for student, only show if not already checked in */}
-          {role === USER_ROLES.STUDENT && !alreadyCheckedInToday && (
+          {/* submit button for student, only show if not already checked in and not activity status error */}
+          {role === USER_ROLES.STUDENT && !alreadyCheckedInToday && !isActivityStatusError(validationError) && (
             <button
               onClick={handleSubmit}
               disabled={!isCodeComplete || isLoading}
@@ -419,11 +434,11 @@ export default function CheckIn({
             </button>
           )}
 
-          {/* Close button when already checked in */}
-          {role === USER_ROLES.STUDENT && alreadyCheckedInToday && (
+          {/* Close button when already checked in or activity status error */}
+          {role === USER_ROLES.STUDENT && (alreadyCheckedInToday || isActivityStatusError(validationError)) && (
             <button
               onClick={onClose}
-              className="w-full -mt-10 bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-md hover:bg-gray-400"
+              className="w-full -mt-5 bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-md hover:bg-gray-400"
             >
               Close
             </button>
@@ -435,9 +450,7 @@ export default function CheckIn({
           {role === USER_ROLES.ORGANIZER 
             ? "Share this code with students for check-in" 
             : alreadyCheckedInToday
-            ? isMultiDay
-              ? "You can check in again tomorrow"
-              : "Thank you for checking in!"
+            ? "Thank you for checking in!"
             : "Enter the 6-character code shown at the event venue"
           }
         </p>

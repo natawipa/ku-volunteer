@@ -97,6 +97,7 @@ export interface ActivityApplication {
   activity_title?: string;
   activity_id_stored?: number; // Stored activity ID (persists after deletion)
 
+  student?: number;
   studentid: number;
   student_email?: string;
   student_name?: string;
@@ -229,10 +230,12 @@ export interface CheckInRecord {
   student: number;
   student_name: string;
   student_email: string;
-  attendance_status: 'present' | 'absent' | 'pending';
-  checked_in_at: string; // ISO datetime string
+  attendance_status: 'absent' | 'pending' | 'present';
+  checked_in_at: string;
   check_in_code: string;
   activity: number;
+  activity_title: string;
+  marked_absent_at?: string;
 }
 
 

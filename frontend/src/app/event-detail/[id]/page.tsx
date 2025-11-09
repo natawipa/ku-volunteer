@@ -224,7 +224,7 @@ export default function EventPage({ params }: PageProps) {
               />
             )}
             {activeSection === 'approved' && (
-              <ApprovedList applications={applications} loading={loadingApplications} />
+              <ApprovedList applications={applications} loading={loadingApplications} eventEndDate={transformedEvent.dateend} />
             )}
           </div>
         ) : (
