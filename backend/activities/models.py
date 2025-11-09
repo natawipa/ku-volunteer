@@ -592,16 +592,17 @@ class DailyCheckInCode(models.Model):
     
     @staticmethod
     def generate_code() -> str:
-        """Generate a random 6-character alphanumeric code.
+        """Generate a random 6-character code.
         
-        Format: Uppercase letters (A-Z) and digits (0-9)
-        Example: "AN6813", "X2Y9Z1"
+        Format: 2 uppercase letters followed by 4 digits (XX0000)
+        Example: "AB1234", "XY5678"
         
         Returns:
-            6-character string
+            6-character string in format XX0000
         """
-        characters = string.ascii_uppercase + string.digits
-        return ''.join(random.choices(characters, k=6))
+        letters = ''.join(random.choices(string.ascii_uppercase, k=2))
+        numbers = ''.join(random.choices(string.digits, k=4))
+        return letters + numbers
     
     @classmethod
     def get_or_create_today_code(cls, activity: Activity) -> 'DailyCheckInCode':
