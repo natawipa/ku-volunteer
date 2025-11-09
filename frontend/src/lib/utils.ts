@@ -409,13 +409,11 @@ export function transformActivityData(activity: Activity): TransformedEvent {
     dateend: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
     timestart: new Date(activity.start_at || new Date()).toLocaleTimeString('en-GB', { 
       hour: '2-digit', 
-      minute: '2-digit',
-      timeZone: 'UTC' 
+      minute: '2-digit'
     }),
     timeend: new Date(activity.end_at || new Date()).toLocaleTimeString('en-GB', { 
       hour: '2-digit', 
-      minute: '2-digit',
-      timeZone: 'UTC' 
+      minute: '2-digit'
     }),
     location: activity.location || 'Unknown Location',
     category: activity.categories || [],

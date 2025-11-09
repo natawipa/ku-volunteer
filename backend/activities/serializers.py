@@ -63,25 +63,6 @@ class ActivityWriteSerializer(serializers.ModelSerializer):
         user = getattr(request, 'user', None)
         organizer_profile = getattr(user, 'organizer_profile', None)
         return Activity.objects.create(organizer_profile=organizer_profile, **validated_data)
-    
-    def validate(self, data):
-        """Convert incoming times from Bangkok timezone to UTC for storage"""
-        # Get Bangkok timezone
-        import pytz
-        bangkok_tz = pytz.timezone('Asia/Bangkok')
-        
-        # If start_at and end_at are naive (no timezone), assume they're Bangkok time
-        if data.get('start_at') and data.get('start_at').tzinfo is None:
-            # Localize as Bangkok time, then convert to UTC
-            bangkok_time = bangkok_tz.localize(data['start_at'])
-            data['start_at'] = bangkok_time.astimezone(pytz.UTC).replace(tzinfo=None)
-        
-        if data.get('end_at') and data.get('end_at').tzinfo is None:
-            bangkok_time = bangkok_tz.localize(data['end_at'])
-            data['end_at'] = bangkok_time.astimezone(pytz.UTC).replace(tzinfo=None)
-        
-        return data
-
 
 class ActivityDeletionRequestSerializer(serializers.ModelSerializer):
     activity_title = serializers.SerializerMethodField()
@@ -112,19 +93,20 @@ class ApplicationSerializer(serializers.ModelSerializer):
     activity_id_stored = serializers.IntegerField(read_only=True)
     student_email = serializers.EmailField(source='student.email', read_only=True)
     student_name = serializers.SerializerMethodField()
+    student_id_external = serializers.SerializerMethodField()
     decision_by_email = serializers.EmailField(source='decision_by.email', read_only=True, allow_null=True)
 
     class Meta:
         model = Application
         fields = [
             'id', 'activity', 'activity_id', 'activity_title', 'activity_id_stored',
-            'student', 'student_email', 'student_name',
+            'student', 'student_email', 'student_name', 'student_id_external',
             'status', 'submitted_at', 'decision_at',
             'decision_by', 'decision_by_email', 'notes'
         ]
         read_only_fields = [
             'id', 'activity_id', 'activity_title', 'activity_id_stored',
-            'student_email', 'student_name',
+            'student_email', 'student_name', 'student_id_external',
             'status', 'submitted_at', 'decision_at', 'decision_by', 'decision_by_email', 'notes'
         ]
 
@@ -146,6 +128,13 @@ class ApplicationSerializer(serializers.ModelSerializer):
         if student.first_name and student.last_name:
             return f"{student.first_name} {student.last_name}"
         return student.email
+
+    def get_student_id_external(self, obj):
+        """Get student's external ID from their profile."""
+        try:
+            return obj.student.profile.student_id_external
+        except (AttributeError, ValueError):
+            return None
 
 
 class ApplicationCreateSerializer(serializers.ModelSerializer):

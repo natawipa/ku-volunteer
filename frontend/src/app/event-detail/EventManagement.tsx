@@ -62,9 +62,9 @@ export function ApplicantsList({
           <div key={application.id} className="flex justify-between items-center border-b border-gray-200 pb-4">
             <div className="flex-1">
               <p className="font-medium">
-                {application.student_name || `Student ${application.studentid}`}
+                {application.student_name || `Student ${application.student_id_external || application.studentid}`}
               </p>
-              <p className="text-sm text-gray-600">Student ID: {application.studentid}</p>
+              <p className="text-sm text-gray-600">Student ID: {application.student_id_external || 'Not available'}</p>
             </div>
             <div className="flex gap-4 items-center">
               <button 
@@ -115,9 +115,9 @@ export function ApprovedList({ applications, loading }: ApprovedListProps) {
           <div key={application.id} className="flex justify-between items-center border-b border-gray-200 pb-4">
             <div className="flex-1">
               <p className="font-medium">
-                {application.student_name || `Student ${application.studentid}`}
+                {application.student_name || `Student ${application.student_id_external || application.studentid}`}
               </p>
-              <p className="text-sm text-gray-600">Student ID: {application.studentid}</p>
+              <p className="text-sm text-gray-600">Student ID: {application.student_id_external || 'Not available'}</p>
               <p className="text-xs text-gray-500">
                 Approved on: {new Date(application.decision_at || '').toLocaleDateString('en-GB')}
               </p>

@@ -272,8 +272,11 @@ class Activity(models.Model):
             The 6-character code if it exists, None otherwise
         """
         try:
+            # Use Django's configured timezone (Asia/Bangkok) for determining "today"
+            today = timezone.localtime().date()
+            
             code_obj = self.daily_codes.filter(
-                valid_date=timezone.now().date()
+                valid_date=today
             ).first()
             return code_obj.code if code_obj else None
         except Exception:
@@ -617,7 +620,8 @@ class DailyCheckInCode(models.Model):
         Returns:
             DailyCheckInCode instance for today
         """
-        today = timezone.now().date()
+        # Use Django's configured timezone (Asia/Bangkok) for determining "today"
+        today = timezone.localtime().date()
         
         code_obj, created = cls.objects.get_or_create(
             activity=activity,
@@ -631,9 +635,11 @@ class DailyCheckInCode(models.Model):
         """Check if this code is valid for today.
         
         Returns:
-            True if valid_date matches today's date (UTC)
+            True if valid_date matches today's date in configured timezone
         """
-        return self.valid_date == timezone.now().date()
+        # Use Django's configured timezone (Asia/Bangkok) for determining "today"
+        today = timezone.localtime().date()
+        return self.valid_date == today
 
 
 class StudentCheckIn(models.Model):
@@ -772,11 +778,7 @@ class StudentCheckIn(models.Model):
         Raises:
             ValidationError: If code is invalid or not valid today
         """
-        today = timezone.now().date()
-        today_code = DailyCheckInCode.objects.get(
-            activity=activity,
-            valid_date=today
-        )
+        today_code = DailyCheckInCode.get_or_create_today_code(activity)
         
         if not today_code.is_valid_today():
             raise ValidationError("The check-in code is not valid today.")

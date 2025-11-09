@@ -100,6 +100,7 @@ export interface ActivityApplication {
   studentid: number;
   student_email?: string;
   student_name?: string;
+  student_id_external?: string;
 
   status: ApplicationStatus;
   submitted_at: string;

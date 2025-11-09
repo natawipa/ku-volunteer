@@ -182,12 +182,20 @@ function ActivityFormContent() {
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
               setDateStart(startDate.toISOString().split('T')[0]);
-              setTimeStart(startDate.toTimeString().slice(0, 5));
+              setTimeStart(startDate.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              }));
             }
             if (activityData.end_at) {
               const endDate = new Date(activityData.end_at);
               setDateEnd(endDate.toISOString().split('T')[0]);
-              setTimeEnd(endDate.toTimeString().slice(0, 5));
+              setTimeEnd(endDate.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              }));
             }
             // set coverUrl from backend image field (normalize relative urls)
             if (activityData.cover_image || activityData.cover_image_url) {
@@ -411,9 +419,10 @@ function ActivityFormContent() {
     try {
       // combine date and time
       const formatLocalDateTime = (dateStr: string, timeStr: string) => {
-        // combine the date and time strings into ISO format
-        // Let backend interpret it as Thai time
-        return `${dateStr}T${timeStr}:00`;
+        // If either part is missing, return an empty string.
+        if (!dateStr || !timeStr) return '';
+        const local = new Date(`${dateStr}T${timeStr}`);
+        return local.toISOString();
       };
 
       const startDateTime = formatLocalDateTime(dateStart, timeStart);
