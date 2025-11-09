@@ -92,6 +92,12 @@ class UserRegisterSerializer(serializers.ModelSerializer):
                  "student_id_external", "year", "faculty", "major",
                  "organization", "organization_name"]
 
+    def validate_password(self, value):
+        """Validate password is not empty."""
+        if not value or not value.strip():
+            raise serializers.ValidationError("Password is required and cannot be empty.")
+        return value
+
     def validate(self, attrs):
         role = attrs.get("role")
         student_id_external = attrs.get("student_id_external")

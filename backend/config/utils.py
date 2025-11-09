@@ -67,6 +67,66 @@ def validate_activity_categories(categories: Optional[List[str]]) -> None:
         )
 
 
+def validate_student_id(student_id: str) -> None:
+    """
+    Validate student ID format.
+    
+    Student ID must be exactly 10 digits.
+    
+    Args:
+        student_id: Student ID string to validate
+        
+    Raises:
+        ValidationError: If student ID format is invalid
+    """
+    if not student_id:
+        return  # Allow empty/null values (handled by blank=True, null=True)
+    
+    if not student_id.isdigit():
+        raise ValidationError('Student ID must contain only digits.')
+    
+    if len(student_id) != 10:
+        raise ValidationError('Student ID must be exactly 10 digits.')
+
+
+def validate_password(password: str) -> None:
+    """
+    Validate password format.
+    
+    Password must not be empty.
+    
+    Args:
+        password: Password string to validate
+        
+    Raises:
+        ValidationError: If password is invalid
+    """
+    if not password or not password.strip():
+        raise ValidationError('Password is required and cannot be empty.')
+
+
+def validate_student_year(year: int) -> None:
+    """
+    Validate student year.
+    
+    Year must be between 1 and 6.
+    
+    Args:
+        year: Student year to validate
+        
+    Raises:
+        ValidationError: If year is invalid
+    """
+    if year is None:
+        return  # Allow None values (handled by blank=True, null=True)
+    
+    if year <= 0:
+        raise ValidationError('Year must be greater than 0.')
+    
+    if year > 6:
+        raise ValidationError('Year must be between 1 and 6.')
+
+
 def get_client_url() -> str:
     """Get client URL from environment variables."""
     return os.getenv('CLIENT_URL_DEV', 'http://localhost:3000')
