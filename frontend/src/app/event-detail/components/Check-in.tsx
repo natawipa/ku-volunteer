@@ -12,6 +12,8 @@ interface CheckInProps {
   role: string | null;
   description?: string;
   activityId?: number | null;
+  isMultiDay?: boolean;
+  hasCheckedInToday?: boolean;
 }
 
 export default function CheckIn({ 
@@ -21,7 +23,9 @@ export default function CheckIn({
   isLoading = false, 
   role, 
   description, 
-  activityId
+  activityId,
+  isMultiDay = false,
+  hasCheckedInToday = false
 }: CheckInProps) {
   const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
@@ -29,16 +33,69 @@ export default function CheckIn({
   const [validationError, setValidationError] = useState<string>('');
   const [fetchedCode, setFetchedCode] = useState<string>('');
   const [loadingCode, setLoadingCode] = useState(false);
+  const [alreadyCheckedInToday, setAlreadyCheckedInToday] = useState(false);
+
+  // Check if current student already checked in today
+  const checkStudentCheckInStatus = async () => {
+    if (role !== USER_ROLES.STUDENT || !activityId) {
+      console.log('⏭️ Skipping check-in status - not a student or no activity');
+      return;
+    }
+
+    try {
+      console.log('Fetch current student check-in status for activity:', activityId);
+      const result = await activitiesApi.getCheckInStatus(activityId);
+      
+      console.log('Check-in status response:', result);
+      
+      if (result.success && result.data) {
+        // if got data back, student has checked in
+        const checkInRecord = result.data;
+        const isPresent = checkInRecord.attendance_status === 'present';
+        
+        // if checked in today (in case of multi-day activities)
+        if (isPresent && checkInRecord.checked_in_at) {
+          const today = new Date();
+          const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 0, 0, 0, 0);
+          const todayEnd = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 23, 59, 59, 999);
+          
+          const checkedInTime = new Date(checkInRecord.checked_in_at);
+          const isCheckInToday = checkedInTime >= todayStart && checkedInTime <= todayEnd;
+          
+          console.log('Check-in record details:', {
+            student: checkInRecord.student_name,
+            status: checkInRecord.attendance_status,
+            checkedInAt: checkInRecord.checked_in_at,
+            checkedInTime: checkedInTime.toLocaleString('th-TH'),
+            isCheckInToday
+          });
+          
+          setAlreadyCheckedInToday(isCheckInToday);
+        } else {
+          setAlreadyCheckedInToday(false);
+        }
+      } else {
+        // No check-in record found
+        console.log('No check-in record found - student can check in');
+        setAlreadyCheckedInToday(false);
+      }
+    } catch (error) {
+      console.error('Error checking student check-in status:', error);
+      setAlreadyCheckedInToday(false);
+    }
+  };
 
   // Fetch check-in code when modal opens for ORGANIZER
   useEffect(() => {
-    console.log('🔍 CHECK-IN EFFECT:', { isOpen, activityId, role, fetchedCode });
+    console.log('CHECK-IN EFFECT:', { isOpen, activityId, role });
     
-    // Only fetch code for organizers
-    if (isOpen && activityId && role === USER_ROLES.ORGANIZER) {
+    if (!isOpen) return;
+
+    // For ORGANIZER: fetch check-in code
+    if (role === USER_ROLES.ORGANIZER) {
       console.log('📡 Fetching check-in code for organizer, activity:', activityId);
       setLoadingCode(true);
-      activitiesApi.getCheckInCode(activityId).then(result => {
+      activitiesApi.getCheckInCode(activityId || 0).then(result => {
         console.log('API Response:', result);
         
         if (result.success && result.data) {
@@ -55,13 +112,18 @@ export default function CheckIn({
         setLoadingCode(false);
       });
     }
+
+    // For STUDENT: check if already checked in today
+    if (role === USER_ROLES.STUDENT) {
+      checkStudentCheckInStatus();
+    }
   }, [isOpen, activityId, role]); 
 
   useEffect(() => {
     if (isOpen) {
       setIsMounted(true);
       setValidationError('');
-      if (role === USER_ROLES.STUDENT) {
+      if (role === USER_ROLES.STUDENT && !alreadyCheckedInToday) {
         setTimeout(() => {
           inputRefs.current[0]?.focus();
         }, 100);
@@ -71,7 +133,7 @@ export default function CheckIn({
       setValidationError('');
       setFetchedCode('');
     }
-  }, [isOpen, role]);
+  }, [isOpen, role, alreadyCheckedInToday]);
 
   // Handle backdrop click
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -186,7 +248,7 @@ export default function CheckIn({
   const handleSubmit = () => {
     const fullCode = code.join('');
     
-    console.log('🔍 SUBMIT DEBUG:', {
+    console.log('SUBMIT DEBUG:', {
       role,
       fullCode,
       isStudent: role === USER_ROLES.STUDENT,
@@ -199,7 +261,7 @@ export default function CheckIn({
       return;
     }
 
-    console.log('✅ Submitting code:', fullCode);
+    console.log('Submitting code:', fullCode);
     onSubmit(fullCode); // Send to backend for validation
   };
 
@@ -253,40 +315,78 @@ export default function CheckIn({
                 />
               </div>
             </div>
-
-            {/* Code Input Section */}
+            {/* student check-in Status Display */}
             {role === USER_ROLES.STUDENT && (
-              <div className="flex justify-center mb-2">
-                {/* Input Boxes */}
-                <div className="flex justify-center gap-2">
-                  {code.map((char, index) => (
-                    <input
-                      key={index}
-                      ref={(el) => { inputRefs.current[index] = el; }}
-                      type="text"
-                      maxLength={1}
-                      value={char}
-                      onChange={(e) => handleChange(index, e.target.value)}
-                      onKeyDown={(e) => handleKeyDown(index, e)}
-                      onPaste={handlePaste}
-                      disabled={isLoading}
-                      className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f9b1d2] focus:border-[#f9b1d2] transition-all uppercase disabled:opacity-50 disabled:cursor-not-allowed"
-                      placeholder="0"
-                      title="Enter a letter or number (A-Z, 0-9)"
-                    />
-                  ))}
-                </div>
+              <div className="flex justify-center mb-6">
+                {alreadyCheckedInToday ? (
+                  <div className="text-center w-full">
+                    <div className="text-2xl font-bold bg-gray-100 border-2 border-[#FFBADA] rounded-xl py-4 px-6">
+                      <span className="text-black">Already Checked In Today</span>
+                    </div>
+                    {isMultiDay && (
+                      <p className="text-sm text-gray-600 mt-3">
+                        Come back tomorrow to check in again.
+                      </p>
+                    )}
+                    {!isMultiDay && (
+                      <p className="text-sm text-gray-600 mt-3">
+                        You have already checked in to this activity.
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full">
+                    {/* Input Boxes */}
+                    <div className="flex justify-center gap-2 w-full mb-6">
+                      {code.map((char, index) => (
+                        <input
+                          key={index}
+                          ref={(el) => { inputRefs.current[index] = el; }}
+                          type="text"
+                          maxLength={1}
+                          value={char}
+                          onChange={(e) => handleChange(index, e.target.value)}
+                          onKeyDown={(e) => handleKeyDown(index, e)}
+                          onPaste={handlePaste}
+                          disabled={isLoading}
+                          className="w-12 h-14 sm:w-14 sm:h-16 text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#f9b1d2] focus:border-[#f9b1d2] transition-all uppercase disabled:opacity-50 disabled:cursor-not-allowed"
+                          placeholder="0"
+                          title="Enter a letter or number (A-Z, 0-9)"
+                        />
+                      ))}
+                    </div>
+
+                    {/* ✅ Description - ONLY SHOWS WHEN NOT CHECKED IN */}
+                    <div className="text-center mb-6">
+                      <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
+                      <p className="text-gray-600 text-sm">
+                        {getDescription()}
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
+            {/* ORGANIZER: Display Check-in Code */}
             {role === USER_ROLES.ORGANIZER && (
-              <div className="flex justify-center mb-6">
-                <div className="text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl transition-all uppercase">
-                  <div className="px-6 py-3 select-all tracking-widest">
-                    {loadingCode ? '⏳ Loading...' : (fetchedCode || "No code available")}
+              <>
+                <div className="flex justify-center mb-6">
+                  <div className="text-center text-2xl font-bold bg-gray-100 border-2 border-gray-300 rounded-xl transition-all uppercase w-full">
+                    <div className="px-6 py-3 select-all tracking-widest">
+                      {loadingCode ? '⏳ Loading...' : (fetchedCode || "No code available")}
+                    </div>
                   </div>
                 </div>
-              </div>
+
+                {/* check in description for ORGANIZER */}
+                <div className="text-center mb-6">
+                  <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
+                  <p className="text-gray-600 text-sm">
+                    {getDescription()}
+                  </p>
+                </div>
+              </>
             )}
 
             {/* Validation Error */}
@@ -297,18 +397,10 @@ export default function CheckIn({
                 </p>
               </div>
             )}
-
-            {/* check in description*/}
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
-              <p className="text-gray-600 text-sm">
-                {getDescription()}
-              </p>
-            </div>
           </section>
 
-          {/* submit button for student*/}
-          {role === USER_ROLES.STUDENT && (
+          {/* submit button for student, only show if not already checked in */}
+          {role === USER_ROLES.STUDENT && !alreadyCheckedInToday && (
             <button
               onClick={handleSubmit}
               disabled={!isCodeComplete || isLoading}
@@ -326,12 +418,26 @@ export default function CheckIn({
               ) : 'Submit'}
             </button>
           )}
+
+          {/* Close button when already checked in */}
+          {role === USER_ROLES.STUDENT && alreadyCheckedInToday && (
+            <button
+              onClick={onClose}
+              className="w-full -mt-10 bg-gray-300 text-gray-700 font-semibold py-3 px-6 rounded-xl transition-all duration-200 shadow-md hover:bg-gray-400"
+            >
+              Close
+            </button>
+          )}
         </div>
 
-        {/* he;per message */}
+        {/* helper message */}
         <p className="text-center text-gray-500 text-sm mt-4">
           {role === USER_ROLES.ORGANIZER 
             ? "Share this code with students for check-in" 
+            : alreadyCheckedInToday
+            ? isMultiDay
+              ? "You can check in again tomorrow"
+              : "Thank you for checking in!"
             : "Enter the 6-character code shown at the event venue"
           }
         </p>

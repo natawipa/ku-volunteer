@@ -7,7 +7,8 @@ import type {
   ApiResponse, 
   CreateApplicationRequest,
   ReviewApplicationRequest,
-  ActivityApplication} from './types';
+  ActivityApplication,
+  CheckInRecord } from './types';
 
 // Create activity data type that matches your backend serializer
 export interface CreateActivityData {
@@ -686,7 +687,7 @@ export const activitiesApi = {
         data = JSON.parse(text);
       } catch (parseError) {
         console.error('Failed to parse JSON:', text);
-        return { success: false, error: `Invalid JSON response: ${text.substring(0, 100)}` };
+        return { success: false, error: `Invalid JSON response: ${text.substring(0, 100)} ${parseError}` };
       }
 
       console.log('Parsed data:', data);
@@ -736,7 +737,7 @@ export const activitiesApi = {
         data = JSON.parse(text);
       } catch (parseError) {
         console.error('Failed to parse JSON:', text);
-        return { success: false, error: `Invalid JSON: ${text.substring(0, 100)}` };
+        return { success: false, error: `Invalid JSON: ${text.substring(0, 100)} ${parseError}` };
       }
 
       console.log('Parsed check-in response:', data);
@@ -758,4 +759,74 @@ export const activitiesApi = {
       return { success: false, error: error instanceof Error ? error.message : 'Network error' };
     }
   },
+
+    async getCheckInList(activityId: string | number): Promise<ApiResponse<CheckInRecord[]>> {
+    try {
+      const token = localStorage.getItem('access_token');
+      const endpoint = `/api/activities/${activityId}/checkin-list/`;
+      const fullUrl = `${ENV.API_BASE_URL}${endpoint}`;
+      
+      console.log('getCheckInList DEBUG:', { 
+        activityId, 
+        endpoint, 
+        fullUrl,
+        hasToken: !!token,
+      });
+      
+      const res = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      console.log('Response status:', res.status);
+      console.log('Response headers:', {
+        contentType: res.headers.get('content-type'),
+        contentLength: res.headers.get('content-length'),
+      });
+
+      const text = await res.text();
+      console.log('Response text:', text.substring(0, 500));
+     if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+        console.error('Backend returned HTML (404 or 500):', text.substring(0, 200));
+        return { success: false, error: `Endpoint not found (${res.status}). Check your backend URL.`, data: [] };
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', text);
+        return { success: false, error: `Invalid JSON response: ${text.substring(0, 100)} ${parseError}`, data: [] };
+      }
+
+      console.log('Parsed data:', data);
+
+      if (!res.ok) {
+        console.error('API error response:', data);
+        return { success: false, error: data?.detail || data?.error || `HTTP ${res.status}`, data: [] };
+      }
+
+      // Handle both paginated and direct array responses
+      let checkInList: CheckInRecord[] = [];
+      
+      if (Array.isArray(data)) {
+        checkInList = data;
+      } else if (data?.results && Array.isArray(data.results)) {
+        checkInList = data.results;
+      }
+      console.log('Check-in list fetched successfully:', checkInList);
+      return { success: true, data: checkInList };
+    } catch (error) {
+      console.error('getCheckInList exception:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error', data: [] };
+    }
+  },
+
+  async getCheckInStatus(activityId: string | number): Promise<ApiResponse<CheckInRecord>> {
+    return httpClient.get<CheckInRecord>(API_ENDPOINTS.ACTIVITIES.CHECK_IN_STATUS(activityId));
+  },
+  
 };

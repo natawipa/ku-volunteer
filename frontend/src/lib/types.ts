@@ -224,6 +224,18 @@ export interface FormState<T> {
   isValid: boolean;
 }
 
+export interface CheckInRecord {
+  id: number;
+  student: number;
+  student_name: string;
+  student_email: string;
+  attendance_status: 'present' | 'absent' | 'pending';
+  checked_in_at: string; // ISO datetime string
+  check_in_code: string;
+  activity: number;
+}
+
+
 /** ===============================
  *  DOM EVENT TYPES
  *  =============================== */

@@ -92,12 +92,20 @@ const AllEventsPage: React.FC = () => {
 
   // Use getMyEvents for authenticated users, getAllEvents for unauthenticated
   const events = useMemo(() => {
+    const filterConfig: EventFilterConfig = {
+      activities,
+      userRole,
+      isAuthenticated,
+      userApplications,
+      organizerProfileId
+    };
+
     if (isAuthenticated) {
       return getMyEvents(filterConfig);
     } else {
       return getAllEvents(filterConfig);
     }
-  }, [isAuthenticated, filterConfig]);
+  }, [activities, userRole, userApplications, organizerProfileId, isAuthenticated, filterConfig]);
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {

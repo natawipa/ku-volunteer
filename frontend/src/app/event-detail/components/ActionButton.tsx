@@ -37,20 +37,22 @@ export default function EventActionButton({
     return new Date(dateString);
   };
 
-  // For student: check if current time is within event time range
+  const isMultiDayActivity = () => {
+    if (!activityStartDate || !activityEndDate) return false;
+    
+    const startDay = new Date(activityStartDate);
+    startDay.setHours(0, 0, 0, 0);
+    
+    const endDay = new Date(activityEndDate);
+    endDay.setHours(0, 0, 0, 0);
+    
+    return startDay.getTime() !== endDay.getTime();
+  };
+
   const isStudentCanCheckIn = () => {
     if (!activityStartDate || !activityEndDate) return false;
-
     const now = new Date();
-    const isInRange = now >= activityStartDate && now <= activityEndDate;
-
-    console.log('STUDENT Time Check:');
-    console.log('Now (local):', now.toLocaleString('th-TH'));
-    console.log('Event Start:', activityStartDate.toLocaleString('th-TH'));
-    console.log('Event End:', activityEndDate.toLocaleString('th-TH'));
-    console.log('Can Check-in:', isInRange);
-
-    return isInRange;
+    return now >= activityStartDate && now <= activityEndDate;
   };
 
   const activityStartDate = event.start_at ? parseActivityDate(event.start_at) : null;
@@ -61,26 +63,11 @@ export default function EventActionButton({
     if (!activityStartDate || !activityEndDate) return false;
     
     const nowUTC = new Date();
-    
-    // Get UTC dates (ignore time)
     const todayUTC = new Date(Date.UTC(nowUTC.getUTCFullYear(), nowUTC.getUTCMonth(), nowUTC.getUTCDate()));
     const eventStartUTC = new Date(Date.UTC(activityStartDate.getUTCFullYear(), activityStartDate.getUTCMonth(), activityStartDate.getUTCDate()));
     const eventEndUTC = new Date(Date.UTC(activityEndDate.getUTCFullYear(), activityEndDate.getUTCMonth(), activityEndDate.getUTCDate()));
     
-    const isInRange = todayUTC >= eventStartUTC && todayUTC <= eventEndUTC;
-    
-    console.log('ORGANIZER UTC Date Check:');
-    console.log('Today UTC:', todayUTC.toISOString());
-    console.log('Event UTC:', eventStartUTC.toISOString(), 'to', eventEndUTC.toISOString());
-    console.log('Can Check-in:', isInRange);
-    
-    return isInRange;
-  };
-
-  // Format UTC time for display
-  const formatUTCTimeForDisplay = (date: Date | null) => {
-    if (!date) return '--:--';
-    return `${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}`;
+    return todayUTC >= eventStartUTC && todayUTC <= eventEndUTC;
   };
 
   const isActivityOver = activityEndDate ? (new Date() > activityEndDate) : false;
@@ -92,26 +79,34 @@ export default function EventActionButton({
     try {
       const result = await activitiesApi.submitCheckIn(activityId || 0, code);
       
-      console.log('✅ Check-in API result:', result);
+      console.log('Check-in API result:', result);
       
       if (result.success) {
-        console.log('✅ Check-in successful!', result.data);
-        alert('✅ Check-in successful! Your attendance has been recorded.');
-        setShowCheckInModal(false);
-        window.location.reload();
+        console.log('Check-in successful!', result.data);
+        alert('Check-in successful! Your attendance has been recorded.');
+        
+        // Close modal if not multi-day activity
+        if (!isMultiDayActivity()) {
+          setShowCheckInModal(false);
+        }
+        // Check-in.tsx handle state update
       } else {
         const errorMsg = result.error || 'Unknown error';
-        console.error('❌ Check-in failed:', errorMsg);
+        console.error('Check-in failed:', errorMsg);
         
-        // ✅ FIXED: Add null check with optional chaining and toLowerCase
-        if (errorMsg.toLowerCase().includes('code')) {
-          alert(`❌ Invalid Code\n\n${errorMsg}\n\nPlease ask the organizer for the correct code.`);
+        if (errorMsg.toLowerCase().includes('already')) {
+          if (isMultiDayActivity()) {
+            alert(`Already Checked In Today\n\nCome back tomorrow to check in again!`);
+          } else {
+            alert(`Already Checked In\n\nYou have already checked in to this activity.`);
+            setShowCheckInModal(false);
+          }
+        } else if (errorMsg.toLowerCase().includes('code')) {
+          alert(`Invalid Code\n\n${errorMsg}\n\nPlease ask the organizer for the correct code.`);
         } else if (errorMsg.toLowerCase().includes('not started')) {
-          alert(`⏰ Activity Not Started\n\n${errorMsg}`);
+          alert(`Activity Not Started\n\n${errorMsg}`);
         } else if (errorMsg.toLowerCase().includes('ended')) {
-          alert(`⏹️ Activity Ended\n\n${errorMsg}`);
-        } else if (errorMsg.toLowerCase().includes('already')) {
-          alert(`✅ Already Checked In\n\nYou have already checked in to this activity.`);
+          alert(`Activity Ended\n\n${errorMsg}`);
         } else {
           alert(`Check-in failed:\n${errorMsg}`);
         }
@@ -128,18 +123,13 @@ export default function EventActionButton({
     setShowCheckInModal(true);
   };
 
-  // DEBUG LOGS
-  console.log('=== ACTIONBUTTON DEBUG ===');
-  console.log('Role:', role);
-  console.log('Application Status:', applicationStatus);
-  console.log('Event UTC Times:', formatUTCTimeForDisplay(activityStartDate), 'to', formatUTCTimeForDisplay(activityEndDate));
-  console.log('Current UTC Time:', new Date().toISOString());
-  console.log('=== END DEBUG ===');
+  const handleModalClose = () => {
+    setShowCheckInModal(false);
+  };
 
   // ORGANIZER LOGIC
   if (role === USER_ROLES.ORGANIZER) {
     if (isOrganizerCanCheckIn()) {
-      console.log('ORGANIZER: Within event date range = check in');
       return (
         <>
           <button
@@ -152,16 +142,18 @@ export default function EventActionButton({
           
           <CheckIn
             isOpen={showCheckInModal}
-            onClose={() => setShowCheckInModal(false)}
+            onClose={handleModalClose}
             onSubmit={handleCheckInSubmit}
             isLoading={isCheckingIn}
             role={role}
             activityId={activityId} 
+            isMultiDay={isMultiDayActivity()}
           />
         </>
       );
-    } if (isActivityOver) {
-      console.log('ORGANIZER: Event is over = event ended');
+    }
+    
+    if (isActivityOver) {
       return (
         <button
           disabled
@@ -170,15 +162,14 @@ export default function EventActionButton({
           Event Ended
         </button>
       );
-    } else {
-      console.log('ORGANIZER: NOT within event date range = edit');
-      return (
-        <Link href={{ pathname: '/new-event', query: { edit: eventID?.toString(), activityData: encodeURIComponent(JSON.stringify(event)) }}}
-          className={greenActionButton}>
-          Edit Event
-        </Link>
-      );
     }
+    
+    return (
+      <Link href={{ pathname: '/new-event', query: { edit: eventID?.toString(), activityData: encodeURIComponent(JSON.stringify(event)) }}}
+        className={greenActionButton}>
+        Edit Event
+      </Link>
+    );
   }
 
   // STUDENT LOGIC
@@ -196,7 +187,6 @@ export default function EventActionButton({
 
   if (applicationStatus === APPLICATION_STATUS.APPROVED) {
     if (isStudentCanCheckIn()) {
-      console.log('STUDENT: Approved + During UTC date/time range = can check in');
       return (
         <>
           <button
@@ -209,16 +199,18 @@ export default function EventActionButton({
 
           <CheckIn
             isOpen={showCheckInModal}
-            onClose={() => setShowCheckInModal(false)}
+            onClose={handleModalClose}
             onSubmit={handleCheckInSubmit}
             isLoading={isCheckingIn}
             role={role}
             activityId={activityId}
+            isMultiDay={isMultiDayActivity()}
           />
         </>
       );
-    } if (isActivityOver) {
-      console.log('ORGANIZER: Event is over = event ended');
+    }
+
+    if (isActivityOver) {
       return (
         <button
           disabled
@@ -227,23 +219,20 @@ export default function EventActionButton({
           Event Ended
         </button>
       );
-    } else {
-      console.log('STUDENT: Approved but not during  date/time = approved message');
-
-      return (
-        <div className="text-center">
-          <div className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium">
-            You&apos;re Approved!
-          </div>
-          {/* <p className="text-sm text-gray-600 mt-2">
-            {activityStartDate && activityEndDate
-              ? `Check-in available from ${formatUTCTimeForDisplay(activityStartDate)} to ${formatUTCTimeForDisplay(activityEndDate)} UTC`
-              : 'Check "My Events" for details'
-            }
-          </p> */}
-        </div>
-      );
     }
+
+    return (
+      <div className="text-center">
+        <div className="bg-green-600 text-white px-8 py-3 rounded-lg font-medium">
+          ✅ You&apos;re Approved!
+        </div>
+        {activityStartDate && (
+          <p className="text-sm text-gray-600 mt-2">
+            Check-in available from {activityStartDate.toLocaleString('th-TH')}
+          </p>
+        )}
+      </div>
+    );
   }  
   
   if (applicationStatus === APPLICATION_STATUS.REJECTED) {
