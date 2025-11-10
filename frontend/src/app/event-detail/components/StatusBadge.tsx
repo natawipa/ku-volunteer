@@ -33,7 +33,7 @@ const STATUS_CONFIG = {
   },
   [APPLICATION_STATUS.PLEASE_CHECKIN]: {
     text: 'Please Check In',
-    color: 'bg-[#FFF3CD] text-[#856404] border-[#FFE8B1]'
+    color: 'bg-[#FFE8B1] text-[#856404]'
   },
   [APPLICATION_STATUS.ABSENT]: {
     text: 'Absent',

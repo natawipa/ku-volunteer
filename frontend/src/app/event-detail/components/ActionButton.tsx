@@ -4,7 +4,7 @@ import type { Activity } from '../../../lib/types';
 import { activitiesApi } from '../../../lib/activities';
 import Link from 'next/link';
 import CheckIn from './Check-in';
-import { isActivityEnded, isActivityOngoing, isWithinActivityDateRange, parseActivityDate } from '../lib/utils';
+import { isActivityEnded, isActivityOngoing, isWithinActivityDateRange, parseActivityDate } from '../helpers/utils';
 
 interface EventActionButtonProps {
   applicationStatus?: string | null;

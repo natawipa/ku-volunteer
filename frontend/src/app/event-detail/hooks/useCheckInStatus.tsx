@@ -3,7 +3,7 @@ import { APPLICATION_STATUS } from '../../../lib/constants';
 
 import { useCallback, useEffect, useState } from 'react';
 import { activitiesApi } from '../../../lib/activities';
-import { isActivityOngoing, isActivityEnded } from '../lib/utils';
+import { isActivityOngoing, isActivityEnded } from '../helpers/utils';
 
 type CheckInStatusType = 
   | typeof APPLICATION_STATUS.PENDING

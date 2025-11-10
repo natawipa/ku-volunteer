@@ -3,7 +3,7 @@ import React, { useState, useRef, KeyboardEvent, useEffect, useCallback } from '
 import Image from 'next/image';
 import { USER_ROLES, UI_CONSTANTS } from '../../../lib/constants';
 import { activitiesApi } from '../../../lib/activities';
-import { isValidCheckInChar, sanitizeCheckInCode, cleanErrorMessage, isActivityStatusError } from '../lib/utils';
+import { isValidCheckInChar, sanitizeCheckInCode, cleanErrorMessage, isActivityStatusError } from '../helpers/utils';
 
 interface CheckInProps {
   isOpen: boolean;

@@ -266,7 +266,7 @@ export default function EventPage({ params }: PageProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4mt-11 transition-all duration-300 rounded-lg"
+        <div className="flex justify-between items-center pt-4 mt-7 transition-all duration-300 rounded-lg"
           ref={actionButtonRef}
         >
           <button onClick={() => router.back()} className="bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-green-600/50 cursor-pointer transition-all">
