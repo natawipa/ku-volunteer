@@ -2,6 +2,8 @@ from typing import Any
 from urllib.parse import urlencode
 
 from django.conf import settings
+from django.core.validators import validate_email as django_validate_email
+from django.core.exceptions import ValidationError
 from django.contrib.auth import authenticate
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
@@ -75,6 +77,14 @@ class LoginView(APIView):
         if not email or not password:
             return Response(
                 {'error': 'Email and password are required'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        # Validate email format
+        try:
+            django_validate_email(email)
+        except ValidationError:
+            return Response(
+                {'email': ['Enter a valid email address.']},
                 status=status.HTTP_400_BAD_REQUEST
             )
 

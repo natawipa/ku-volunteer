@@ -5,6 +5,7 @@ from django.db import models
 from django.utils import timezone
 
 from config.constants import OrganizationType, UserRoles, ValidationLimits
+from config.utils import validate_student_id, validate_student_year
 
 
 def user_profile_image_path(instance, filename):
@@ -108,9 +109,10 @@ class StudentProfile(models.Model):
         max_length=ValidationLimits.MAX_STUDENT_ID_LENGTH,
         blank=True,
         null=True,
-        unique=True
+        unique=True,
+        validators=[validate_student_id]
     )
-    year = models.IntegerField(blank=True, null=True)
+    year = models.IntegerField(blank=True, null=True, validators=[validate_student_year])
     faculty = models.CharField(max_length=ValidationLimits.MAX_ORGANIZATION_NAME_LENGTH, blank=True, null=True)
     major = models.CharField(max_length=ValidationLimits.MAX_ORGANIZATION_NAME_LENGTH, blank=True, null=True)
 

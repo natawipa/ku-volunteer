@@ -50,6 +50,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'config',  # Add config app to enable management commands
     'users',
     'social_django',
     'activities',
