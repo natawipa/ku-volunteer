@@ -104,14 +104,33 @@ export const UI_CONSTANTS = {
   MODAL_TRANSITION_DURATION: 200,
   MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
   SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
+  POLL_INTERVAL: 30000, // 30 seconds
+  CHECK_IN_POLL_INTERVAL: 10000, // 10 seconds
+  CHECK_IN_CODE_LENGTH: 6,
+} as const;
+
+export const BUTTON_STYLES = {
+  PRIMARY: 'bg-[#96C693] text-white px-8 py-3 rounded-lg hover:bg-[#72A070] cursor-pointer transition-all text-center',
+  SECONDARY: 'bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-gray-200 cursor-pointer transition-all',
+  DISABLED: 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium',
+  DANGER: 'bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 cursor-pointer transition-all',
+} as const;
+
+export const CHECK_IN_STYLES = {
+  CHECKED_IN: { bgColor: 'bg-[#FFEAF4]', textColor: 'text-[#E169A1]', label: 'Checked In' },
+  ABSENT: { bgColor: 'bg-[#FFE8B1]', textColor: 'text-[#C08A06]', label: 'Absent' },
+  APPROVED: { bgColor: 'bg-[#D6E9D5]', textColor: 'text-[#215700]', label: 'Approved' },
 } as const;
 
 export const APPLICATION_STATUS = {
   PENDING: 'pending', 
   APPROVED: 'approved',
   REJECTED: 'rejected', 
-  CANCELLED: 'cancelled'
-}
+  CANCELLED: 'cancelled',
+  CHECKED_IN: 'checked_in',
+  PLEASE_CHECKIN: 'please_checkin',
+  ABSENT: 'absent'
+} as const;
 
 // Error messages
 export const ERROR_MESSAGES = {

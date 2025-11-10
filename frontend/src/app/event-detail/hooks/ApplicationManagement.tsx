@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from 'react';
 import { activitiesApi } from '../../../lib/activities';
-import { APPLICATION_STATUS } from '../../../lib/constants';
+import { APPLICATION_STATUS, UI_CONSTANTS } from '../../../lib/constants';
 import type { ActivityApplication, CreateApplicationRequest } from '../../../lib/types';
 
 export function ApplicationManagement(eventId: number | null, isStudent: boolean) {
@@ -90,14 +90,11 @@ export function ApplicationManagement(eventId: number | null, isStudent: boolean
     }
   };
 
-  // Poll for updates every 30 seconds
+  // polling with constant
   useEffect(() => {
     if (!isStudent) return;
     
-    const interval = setInterval(() => {
-      checkUserApplication();
-    }, 30000);
-
+    const interval = setInterval(checkUserApplication, UI_CONSTANTS.POLL_INTERVAL);
     return () => clearInterval(interval);
   }, [isStudent, checkUserApplication]);
 

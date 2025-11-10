@@ -1,7 +1,9 @@
 import React from 'react';
 import Image from 'next/image';
-import { APPLICATION_STATUS } from '../../lib/constants';
+import { APPLICATION_STATUS, CHECK_IN_STYLES } from '../../lib/constants';
 import type { ActivityApplication, CheckInRecord } from '../../lib/types';
+import { determineCheckInStatus } from './hooks/useCheckInStatus';
+import { isActivityEnded, formatEventDate } from './lib/utils';
 
 // Interfaces
 interface TransformedEvent {
@@ -43,6 +45,19 @@ interface CheckInResponse {
   count: number;
   results: CheckInRecord[];
 }
+
+// status badge logic
+const getStatusBadge = (status: string) => {
+  switch (status) {
+    case 'checked_in':
+      return CHECK_IN_STYLES.CHECKED_IN;
+    case 'absent':
+      return CHECK_IN_STYLES.ABSENT;
+    case APPLICATION_STATUS.APPROVED:
+    default:
+      return CHECK_IN_STYLES.APPROVED;
+  }
+};
 
 // ApplicantsList Component
 export function ApplicantsList({
@@ -132,37 +147,7 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
     const checkInRecord = getStudentCheckInRecord(studentId);
     console.log('Check-in record result:', checkInRecord);
     
-    // check if student has checked in
-    if (checkInRecord?.attendance_status === 'present') {
-      console.log('Returning: checked_in');
-      return 'checked_in';
-    }
-    
-    // check if student is marked absent by organizer
-    if (checkInRecord?.attendance_status === 'absent' && checkInRecord?.marked_absent_at) {
-      console.log('Returning: absent (marked by organizer)');
-      return 'absent';
-    }
-    
-    // check if activity has end
-    if (eventEndDate) {
-      const now = new Date();
-      const endDate = new Date(eventEndDate);
-      
-      console.log('Checking end date:', { now: now.toISOString(), endDate: endDate.toISOString(), isEnded: now > endDate });
-      
-      if (now > endDate) {
-        // Activity has ended and student didn't check in = absent
-        if (!checkInRecord || (checkInRecord.attendance_status as string) !== 'present') {
-          console.log('Returning: absent (activity ended, no check-in)');
-          return 'absent';
-        }
-      }
-    }
-
-    // Default: approved (activity ongoing, no check-in yet)
-    console.log('Returning: approved');
-    return APPLICATION_STATUS.APPROVED;
+    return determineCheckInStatus(checkInRecord, eventEndDate);
   }, [checkInRecords, getStudentCheckInRecord, eventEndDate]);
 
   // Fetch check-in records for activity
@@ -202,9 +187,9 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
       }
     };
 
-    const isActivityEnded = eventEndDate && new Date() > new Date(eventEndDate);
+    const activityEnded = isActivityEnded(eventEndDate);
 
-    if (isActivityEnded) {
+    if (activityEnded) {
       console.log('Activity has ended - fetching check-in records once');
       fetchCheckInRecords();
       return; // Stop auto-refresh when activity ended
@@ -214,26 +199,10 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
     fetchCheckInRecords();
     
     // auto-refresh every 10 seconds
-    const interval = setInterval(() => {
-      console.log('Auto-refreshing check-in records...');
-      fetchCheckInRecords();
-    }, 10000);
+    const interval = setInterval(() => {fetchCheckInRecords();}, 10000);
     
     return () => clearInterval(interval);
   }, [activityId, applications.length, eventEndDate]);
-  
-  // Get status badge color and label
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'checked_in':
-        return { bgColor: 'bg-[#FFEAF4]', textColor: 'text-[#E169A1]', label: 'Checked In' };
-      case 'absent':
-        return { bgColor: 'bg-[#FFE8B1]', textColor: 'text-[#C08A06]', label: 'Absent' };
-      case APPLICATION_STATUS.APPROVED:
-      default:
-        return { bgColor: 'bg-[#D6E9D5]', textColor: 'text-[#215700]', label: 'Approved' };
-    }
-  };
   
   if (loading || loadingCheckIn) {
     return <div className="text-center py-8">Loading participants...</div>;
@@ -241,11 +210,10 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
 
   const approvedApplications = applications.filter(app => app.status === APPLICATION_STATUS.APPROVED);
 
-    const sortedApplications = [...approvedApplications].sort((a, b) => {
+  const sortedApplications = [...approvedApplications].sort((a, b) => {
     const statusA = getApplicationStatus(a);
     const statusB = getApplicationStatus(b);
     
-    // Priority order: checked_in > absent > approved
     const priorityOrder = { 'checked_in': 0, 'absent': 1, [APPLICATION_STATUS.APPROVED]: 2 };
     const priorityA = priorityOrder[statusA as keyof typeof priorityOrder] ?? 3;
     const priorityB = priorityOrder[statusB as keyof typeof priorityOrder] ?? 3;
@@ -281,11 +249,9 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
                   Approved on: {new Date(application.decision_at || '').toLocaleDateString('en-GB')}
                 </p>
               </div>
-              <div className="flex gap-4 items-center">
-                <span className={`px-4 py-2 rounded-full text-sm font-semibold ${badge.bgColor} ${badge.textColor} whitespace-nowrap`}>
-                  {badge.label}
-                </span>
-              </div>
+              <span className={`px-4 py-2 rounded-full text-sm font-semibold ${badge.bgColor} ${badge.textColor} whitespace-nowrap`}>
+                {badge.label}
+              </span>
             </div>
           );
         })
@@ -314,11 +280,7 @@ export function EventDetails({ event }: EventDetailsProps) {
             <p><strong>Post at:</strong> {event.post}</p>
           </div>
           <div className="grid lg:grid-cols-2 md:grid-cols-2 gap-4">
-            {event.datestart === event.dateend ? (
-              <p><strong>Date:</strong> {event.datestart} at {event.timestart} - {event.timeend}</p>
-            ) : (
-              <p><strong>Date:</strong> {event.datestart} {event.timestart} - {event.dateend} {event.timeend}</p>
-            )}
+            <p><strong>Date:</strong> {formatEventDate(event.datestart, event.dateend, event.timestart, event.timeend)}</p>
             <p><strong>Location:</strong> {event.location}</p>
             <p><strong>Type:</strong> {event.category.join(", ")}</p>
             <p><strong>Capacity:</strong> {event.currentParticipants} / {event.capacity} people</p>

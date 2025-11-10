@@ -18,6 +18,7 @@ import { ApplicantsList, ApprovedList, EventDetails } from "../EventManagement";
 import RejectionModal from "../components/OrganizerRejectionModal";
 import { useEventData } from "../hooks/useEventData";
 import { ApplicationManagement } from "../hooks/ApplicationManagement";
+import { useCheckInStatus } from '../hooks/useCheckInStatus';
 
 
 interface PageProps { params: Promise<{ id: string }> }
@@ -28,7 +29,6 @@ export default function EventPage({ params }: PageProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'details' | 'applicants' | 'approved'>('details');
   const router = useRouter();
-
   // Organizer state
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
@@ -41,8 +41,20 @@ export default function EventPage({ params }: PageProps) {
 
   // Custom hooks
   const { event, loading, error } = useEventData(eventId);
-  const { applicationStatus, applying, checkUserApplication, handleApply, handleCancelApplication } = 
-    ApplicationManagement(eventId, userRole === USER_ROLES.STUDENT);
+  const { 
+    applicationStatus, 
+    applying, 
+    checkUserApplication, 
+    handleApply, 
+    handleCancelApplication 
+  } = ApplicationManagement(eventId, userRole === USER_ROLES.STUDENT);
+  
+  const studentCheckInStatus = useCheckInStatus(
+    eventId,
+    event,
+    applicationStatus,
+    userRole === USER_ROLES.STUDENT
+  );
 
   // Extract event ID from params
   useEffect(() => {
@@ -142,6 +154,15 @@ export default function EventPage({ params }: PageProps) {
     }
   };
 
+  // Handle check-in success - refresh application status
+  const handleCheckInSuccess = useCallback(async () => {
+    if (userRole === USER_ROLES.STUDENT) {
+      await checkUserApplication();
+    } else if (userRole === USER_ROLES.ORGANIZER) {
+      await fetchApplications();
+    }
+  }, [userRole, checkUserApplication, fetchApplications]);
+
   // Loading & Error states
   if (loading) {
     return (
@@ -172,7 +193,13 @@ export default function EventPage({ params }: PageProps) {
 
   const transformedEvent = transformActivityData(event);
   const isOrganizer = userRole === USER_ROLES.ORGANIZER;
+  const isStudent = userRole === USER_ROLES.STUDENT;
   const showOrganizerContent = isOrganizer && activeSection !== 'details';
+
+  // Determine display status for badge
+  const displayStatus = isStudent && studentCheckInStatus 
+    ? studentCheckInStatus 
+    : applicationStatus;
 
   return (
     <div className="relative pt-6 px-4">
@@ -185,7 +212,7 @@ export default function EventPage({ params }: PageProps) {
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
         <div className="text-center mb-4">
           <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
-          <EventStatusBadge status={applicationStatus} />
+          <EventStatusBadge status={displayStatus} />
         </div>
 
         {isOrganizer && (
@@ -238,25 +265,16 @@ export default function EventPage({ params }: PageProps) {
           </button>
 
           {isAuthenticated ? (
-            userRole === USER_ROLES.STUDENT ? (
-              <ActionButton
-                applicationStatus={applicationStatus}
-                applying={applying}
-                event={event}
-                onApply={handleApply}
-                onCancel={handleCancelApplication}
-                role={userRole}
-              />
-            ) : isOrganizer ? (
-              <ActionButton
-                applying={applying}
-                eventID={eventId}
-                event={event}
-                role={userRole}
-              />
-            ) : (
-              <button className="bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed" disabled>Not Available</button>
-            )
+            <ActionButton
+              applicationStatus={isStudent ? applicationStatus : undefined}
+              applying={applying}
+              event={event}
+              onApply={isStudent ? handleApply : undefined}
+              onCancel={isStudent ? handleCancelApplication : undefined}
+              role={userRole}
+              eventID={eventId}
+              onCheckInSuccess={handleCheckInSuccess}
+            />
           ) : (
             <Link href="/login" className="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all text-center">
               Login to Apply

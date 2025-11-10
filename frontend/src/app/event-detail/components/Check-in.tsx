@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useRef, KeyboardEvent, useEffect, useCallback } from 'react';
 import Image from 'next/image';
-import { USER_ROLES } from '../../../lib/constants';
+import { USER_ROLES, UI_CONSTANTS } from '../../../lib/constants';
 import { activitiesApi } from '../../../lib/activities';
+import { isValidCheckInChar, sanitizeCheckInCode, cleanErrorMessage, isActivityStatusError } from '../lib/utils';
 
 interface CheckInProps {
   isOpen: boolean;
@@ -12,7 +13,6 @@ interface CheckInProps {
   role: string | null;
   description?: string;
   activityId?: number | null;
-  isMultiDay?: boolean;
 }
 
 export default function CheckIn({ 
@@ -23,9 +23,8 @@ export default function CheckIn({
   role, 
   description, 
   activityId,
-  isMultiDay = false
 }: CheckInProps) {
-  const [code, setCode] = useState<string[]>(['', '', '', '', '', '']);
+  const [code, setCode] = useState<string[]>(Array(UI_CONSTANTS.CHECK_IN_CODE_LENGTH).fill(''));
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const [isMounted, setIsMounted] = useState(false);
   const [validationError, setValidationError] = useState<string>('');
@@ -33,34 +32,7 @@ export default function CheckIn({
   const [loadingCode, setLoadingCode] = useState(false);
   const [alreadyCheckedInToday, setAlreadyCheckedInToday] = useState(false);
 
-  const cleanErrorMessage = (error: string): string => {
-    if (error.includes('already ended')) {
-      return 'This activity has already ended.';
-    }
-    if (error.includes('not started yet') || error.includes('not started')) {
-      return 'This activity has not started yet.';
-    }
-    // Remove brackets 
-    if (error.startsWith('[') && error.endsWith(']')) {
-      try {
-        const parsed = JSON.parse(error);
-        return Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : error;
-      } catch {
-        const match = error.match(/\['([^']+)'\]/);
-        return match?.[1] || error;
-      }
-    }
-    return error;
-  };
-
-  const isActivityStatusError = (error: string): boolean => {
-    return error.includes('already ended') || 
-           error.includes('not started yet') ||
-           error.includes('activity has already ended') ||
-           error.includes('activity has not started');
-  };
-
-   // Check if current student already checked in
+  // Check if current student already checked in
   const checkStudentCheckInStatus = useCallback(async () => {
     if (role !== USER_ROLES.STUDENT || !activityId) {
       console.log('Skipping check-in status - not a student or no activity');
@@ -139,7 +111,7 @@ export default function CheckIn({
         }, 100);
       }
     } else {
-      setCode(['', '', '', '', '', '']);
+      setCode(Array(UI_CONSTANTS.CHECK_IN_CODE_LENGTH).fill(''));
       setValidationError('');
       setFetchedCode('');
     }
@@ -147,32 +119,22 @@ export default function CheckIn({
 
   // Handle backdrop click
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (e.target === e.currentTarget) {
-      onClose();
-    }
-  };
-
-  // random char validation
-  const validateInput = (value: string): boolean => {
-    if (value === '') return true;
-    return /^[A-Za-z0-9]$/.test(value);
+    if (e.target === e.currentTarget) onClose();
   };
 
   const handleChange = (index: number, value: string) => {
-    const sanitizedValue = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+    const sanitized = sanitizeCheckInCode(value);
     
-    if (sanitizedValue && !validateInput(sanitizedValue)) {
-      return; 
-    }
+    if (sanitized && !isValidCheckInChar(sanitized)) return;
     
-    if (sanitizedValue.length > 1) {
-      const chars = sanitizedValue.split('').slice(0, 6);
+    if (sanitized.length > 1) {
+      const chars = sanitized.split('').slice(0, UI_CONSTANTS.CHECK_IN_CODE_LENGTH);
       const newCode = [...code];
       
       // Validate each character in the pasted content
       for (let i = 0; i < chars.length; i++) {
         const charIndex = index + i;
-        if (charIndex < 6 && validateInput(chars[i])) {
+        if (charIndex < UI_CONSTANTS.CHECK_IN_CODE_LENGTH && isValidCheckInChar(chars[i])) {
           newCode[charIndex] = chars[i];
         }
       }
@@ -180,25 +142,22 @@ export default function CheckIn({
       setCode(newCode);
       setValidationError('');
       
-      // Focus on the last filled input or next empty one
-      const lastFilledIndex = Math.min(index + chars.length - 1, 5);
+      const lastFilledIndex = Math.min(index + chars.length - 1, UI_CONSTANTS.CHECK_IN_CODE_LENGTH - 1);
       const nextEmptyIndex = newCode.findIndex((char, i) => i > lastFilledIndex && char === '');
       const indexToFocus = nextEmptyIndex === -1 ? lastFilledIndex : nextEmptyIndex;
       inputRefs.current[indexToFocus]?.focus();
-    } else if (sanitizedValue.length === 1) {
-      // Single character typed
+    } else if (sanitized.length === 1) {
       const newCode = [...code];
-      newCode[index] = sanitizedValue;
+      newCode[index] = sanitized;
       setCode(newCode);
       setValidationError('');
       
-      // Focus on next empty box
-      if (index < 5) {
+      if (index < UI_CONSTANTS.CHECK_IN_CODE_LENGTH - 1) {
         const nextEmptyIndex = newCode.findIndex((char, i) => i > index && char === '');
         if (nextEmptyIndex !== -1) {
           inputRefs.current[nextEmptyIndex]?.focus();
         } else {
-          inputRefs.current[5]?.focus();
+          inputRefs.current[UI_CONSTANTS.CHECK_IN_CODE_LENGTH - 1]?.focus();
         }
       }
     } else {
@@ -234,15 +193,14 @@ export default function CheckIn({
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
-    const pastedData = e.clipboardData.getData('text');
-    const sanitizedValue = pastedData.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 6);
+    const sanitized = sanitizeCheckInCode(e.clipboardData.getData('text')).slice(0, UI_CONSTANTS.CHECK_IN_CODE_LENGTH);
     
-    if (sanitizedValue.length > 0) {
-      const chars = sanitizedValue.split('');
+    if (sanitized.length > 0) {
+      const chars = sanitized.split('');
       const newCode = [...code];
       
       for (let i = 0; i < chars.length; i++) {
-        if (i < 6 && validateInput(chars[i])) {
+        if (i < UI_CONSTANTS.CHECK_IN_CODE_LENGTH && isValidCheckInChar(chars[i])) {
           newCode[i] = chars[i];
         }
       }
@@ -250,20 +208,13 @@ export default function CheckIn({
       setCode(newCode);
       setValidationError('');
       
-      const lastFilledIndex = Math.min(chars.length - 1, 5);
+      const lastFilledIndex = Math.min(chars.length - 1, UI_CONSTANTS.CHECK_IN_CODE_LENGTH - 1);
       inputRefs.current[lastFilledIndex]?.focus();
     }
   };
 
   const handleSubmit = () => {
     const fullCode = code.join('');
-    
-    console.log('SUBMIT DEBUG:', {
-      role,
-      fullCode,
-      isStudent: role === USER_ROLES.STUDENT,
-    });
-    
     setValidationError('');
     
     if (!fullCode) {
@@ -271,8 +222,7 @@ export default function CheckIn({
       return;
     }
 
-    console.log('Submitting code:', fullCode);
-    onSubmit(fullCode); // Send to backend for validation
+    onSubmit(fullCode);
   };
 
   const isCodeComplete = code.every(char => char !== '');
@@ -283,11 +233,10 @@ export default function CheckIn({
     
     if (role === USER_ROLES.STUDENT) {
       return "Please enter activities' check-in code to check your attendance.";
-    } else if (role === USER_ROLES.ORGANIZER) {
+    } if (role === USER_ROLES.ORGANIZER) {
       return "Please inform the students participating in this activity to use this code to check in and record their attendance.";
-    } else {
-      return "Please enter the check-in code provided at the event.";
     }
+    return "Please enter the check-in code provided at the event.";
   };
 
   if (!isOpen) return null;
@@ -329,8 +278,7 @@ export default function CheckIn({
             {isActivityStatusError(validationError) && (
               <div className="flex justify-center mb-6">
                 <div className="text-center w-full">
-                  <div className={`text-xl font-bold rounded-xl py-4 px-6 border-2 'bg-gray-100 border-b-2 border-[#FFBADA] text-black' ${
-                    validationError.includes('already ended') }`}>
+                  <div className="text-xl font-bold rounded-xl py-4 px-6 border-2 bg-gray-100 border-b-2 border-[#FFBADA] text-black">
                     {cleanErrorMessage(validationError)}
                   </div>
                 </div>
@@ -371,7 +319,7 @@ export default function CheckIn({
                       ))}
                     </div>
 
-                    {/* Description, show while checking in */}
+                    {/* Description */}
                     <div className="text-center mb-6">
                       <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
                       <p className="text-gray-600 text-sm">
@@ -403,18 +351,9 @@ export default function CheckIn({
                 </div>
               </>
             )}
-
-            {/* Validation Error
-            {validationError && (
-              <div className="text-center mb-4">
-                <p className="text-red-500 text-sm font-medium bg-red-50 py-2 px-3 rounded-lg border border-red-200">
-                  {validationError}
-                </p>
-              </div>
-            )} */}
           </section>
 
-          {/* submit button for student, only show if not already checked in and not activity status error */}
+          {/* submit button for student */}
           {role === USER_ROLES.STUDENT && !alreadyCheckedInToday && !isActivityStatusError(validationError) && (
             <button
               onClick={handleSubmit}
