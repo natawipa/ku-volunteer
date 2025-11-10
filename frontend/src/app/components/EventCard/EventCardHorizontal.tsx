@@ -103,7 +103,6 @@ export default function EventCardHorizontal({
 
   const mainCategory = Array.isArray(event.category) ? event.category[0] : event.category;
   const { color } = getCategoryBackground(mainCategory);
-// FFDEE0, FFCCCF - pink
 
   const cardClasses = [
     "relative flex flex-col sm:flex-row gap-4 items-start sm:items-stretch overflow-hidden rounded-lg",

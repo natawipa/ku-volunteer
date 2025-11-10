@@ -209,9 +209,11 @@ export default function EventPage({ params }: PageProps) {
   const showOrganizerContent = isOrganizer && activeSection !== 'details';
 
   // Determine display status for badge
-  const displayStatus = isStudent && studentCheckInStatus 
-    ? studentCheckInStatus 
-    : applicationStatus;
+  const displayStatus = isOrganizer 
+    ? event.status // Show activity status for organizers
+    : isStudent && studentCheckInStatus 
+      ? studentCheckInStatus 
+      : applicationStatus;
 
   return (
     <div className="relative pt-6 px-4">
@@ -226,7 +228,8 @@ export default function EventPage({ params }: PageProps) {
           <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
           <EventStatusBadge 
             status={displayStatus} 
-            onPleaseCheckInClick={scrollToCheckInButton}
+            onPleaseCheckInClick={isStudent ? scrollToCheckInButton : undefined}
+            isActivityStatus={isOrganizer} // Tell badge this is activity status
           />
         </div>
 
