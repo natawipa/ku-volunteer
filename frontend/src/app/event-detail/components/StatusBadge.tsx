@@ -7,6 +7,7 @@ type AllStatuses = ApplicationStatus | CheckInStatus;
 
 interface StatusBadgeProps {
   status: AllStatuses | string | null;
+  onPleaseCheckInClick?: () => void;
 }
 
 const STATUS_CONFIG = {
@@ -40,14 +41,44 @@ const STATUS_CONFIG = {
   }
 } as const;
 
-export default function StatusBadge({ status }: StatusBadgeProps) {
+export default function StatusBadge({ status, onPleaseCheckInClick }: StatusBadgeProps) {
   if (!status) return null;
 
   const config = STATUS_CONFIG[status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG[APPLICATION_STATUS.PENDING];
+  const isPleaseCheckIn = status === APPLICATION_STATUS.PLEASE_CHECKIN;
+
+  const handleClick = () => {
+    if (isPleaseCheckIn && onPleaseCheckInClick) {
+      onPleaseCheckInClick();
+    }
+  };
 
   return (
-    <div className={`inline-flex items-center px-3 py-1 mt-3 rounded-full text-sm font-medium border ${config.color}`}>
+    <div 
+      onClick={handleClick}
+      className={`inline-flex items-center px-3 py-1 mt-3 rounded-full text-sm font-medium border ${config.color} ${
+        isPleaseCheckIn ? 'cursor-pointer hover:scale-105 transition-transform duration-200 animate-pulse' : ''
+      }`}
+      role={isPleaseCheckIn ? 'button' : undefined}
+      tabIndex={isPleaseCheckIn ? 0 : undefined}
+      onKeyDown={(e) => {
+        if (isPleaseCheckIn && (e.key === 'Enter' || e.key === ' ')) {
+          e.preventDefault();
+          handleClick();
+        }
+      }}
+    >
       {config.text}
+      {isPleaseCheckIn && (
+        <svg 
+          className="ml-2 w-4 h-4 animate-bounce" 
+          fill="none" 
+          stroke="currentColor" 
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      )}
     </div>
   );
 }

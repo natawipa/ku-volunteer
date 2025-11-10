@@ -29,6 +29,8 @@ export default function EventPage({ params }: PageProps) {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [activeSection, setActiveSection] = useState<'details' | 'applicants' | 'approved'>('details');
   const router = useRouter();
+  const actionButtonRef = React.useRef<HTMLDivElement>(null);
+  
   // Organizer state
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
@@ -163,6 +165,16 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [userRole, checkUserApplication, fetchApplications]);
 
+  // Scroll to check-in button
+  const scrollToCheckInButton = useCallback(() => {
+    if (actionButtonRef.current) {
+      actionButtonRef.current.scrollIntoView({ 
+        behavior: 'smooth', 
+        block: 'center' 
+      });
+    }
+  }, []);
+
   // Loading & Error states
   if (loading) {
     return (
@@ -212,7 +224,10 @@ export default function EventPage({ params }: PageProps) {
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
         <div className="text-center mb-4">
           <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
-          <EventStatusBadge status={displayStatus} />
+          <EventStatusBadge 
+            status={displayStatus} 
+            onPleaseCheckInClick={scrollToCheckInButton}
+          />
         </div>
 
         {isOrganizer && (
@@ -223,17 +238,9 @@ export default function EventPage({ params }: PageProps) {
           />
         )}
 
-        {/* Status Warnings */}
-        {event.status !== ACTIVITY_STATUS.OPEN && (
-          <div className="bg-yellow-100 border border-yellow-300 text-yellow-700 px-4 py-3 rounded mb-4">
-            {event.status === ACTIVITY_STATUS.PENDING && 'This event is pending approval'}
-            {event.status === ACTIVITY_STATUS.FULL && 'This event is full'}
-            {event.status === ACTIVITY_STATUS.CLOSED && 'This event is closed'}
-            {event.status === ACTIVITY_STATUS.CANCELLED && 'This event has been cancelled'}
-          </div>
-        )}
-        {event.capacity_reached && event.status === ACTIVITY_STATUS.OPEN && (
-          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded mb-4">
+        {/* show capacity warning*/}
+        {!isOrganizer && !applicationStatus && event.capacity_reached && event.status === ACTIVITY_STATUS.OPEN && (
+          <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4">
             This event has reached maximum capacity
           </div>
         )}
@@ -259,7 +266,9 @@ export default function EventPage({ params }: PageProps) {
         )}
 
         {/* Action Buttons */}
-        <div className="flex justify-between items-center pt-4 border-t mt-11">
+        <div className="flex justify-between items-center pt-4mt-11 transition-all duration-300 rounded-lg"
+          ref={actionButtonRef}
+        >
           <button onClick={() => router.back()} className="bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-green-600/50 cursor-pointer transition-all">
             Back
           </button>
