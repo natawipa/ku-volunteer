@@ -81,15 +81,6 @@ const AllEventsPage: React.FC = () => {
     fetchEvents();
   }, []);
 
-  // Create filter configuration
-  const filterConfig: EventFilterConfig = {
-    activities,
-    userRole,
-    isAuthenticated,
-    userApplications,
-    organizerProfileId
-  };
-
   // Use getMyEvents for authenticated users, getAllEvents for unauthenticated
   const events = useMemo(() => {
     const filterConfig: EventFilterConfig = {
