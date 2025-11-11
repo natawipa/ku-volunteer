@@ -57,13 +57,13 @@ class UtilsTest(TestCase):
         with self.assertRaises(ValidationError) as cm:
             validate_activity_categories([])
 
-        self.assertIn('between 1 and 4 items', str(cm.exception))
+        self.assertIn('between 1 and 3 items', str(cm.exception))
 
         # Too many categories
         with self.assertRaises(ValidationError) as cm:
-            validate_activity_categories(['a', 'b', 'c', 'd', 'e'])
+            validate_activity_categories(['a', 'b', 'c', 'd'])
 
-        self.assertIn('between 1 and 4 items', str(cm.exception))
+        self.assertIn('between 1 and 3 items', str(cm.exception))
 
     def test_validate_activity_categories_empty_strings(self):
         """Test validate_activity_categories with empty strings."""
