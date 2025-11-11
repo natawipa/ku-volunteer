@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect } from "react";
+import Link from "next/link"; // Import Link from Next.js
 
 import { auth } from "../lib/utils";
 import { USER_ROLES } from "../lib/constants";
@@ -16,6 +17,7 @@ import AdminLayout from "./admin/components/AdminLayout";
 import AdminContent from "./admin/AdminContent";
 import HeroImage from "./components/HeroImage";
 import Navbar from "./components/Navbar";
+import { CircleChevronRight } from "lucide-react"; // Only import icon from lucide-react
 
 const EVENT_TYPE_DEFINITIONS = [
   {
@@ -62,7 +64,12 @@ function SectionMyEvents({
 
   return (
     <section className="mb-6">
-      <h2 className="font-bold mb-4 text-2xl">My Events</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-bold text-2xl text-black">My Events</h2>
+        <Link href="/all-events" className="flex items-center gap-2 text-black font-medium text-base transition-colors cursor-pointer hover:text-gray-500 px-5">
+          View All ({events.length}) <CircleChevronRight size={20} />
+        </Link>
+      </div>
       <div className="flex gap-4 overflow-x-auto pb-4">
         {events.slice(0, 6).map((e) => (
           <EventCardSquare key={e.id} event={e} />

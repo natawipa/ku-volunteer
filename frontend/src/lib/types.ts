@@ -144,6 +144,26 @@ export interface ApplicationStats {
   cancelled: number;
 }
 
+export interface DeletionRequest {
+  id: number;
+  activity: number;
+  reason: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  reviewed_at?: string;
+  admin_note?: string;
+}
+
+export interface DeletionRequestEvent {
+  id: number;
+  activity: number | string;
+  reason: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  reviewed_at?: string;
+  admin_note?: string;
+}
+
 /** ===============================
  *  UI / COMPONENT PROP TYPES
  *  =============================== */

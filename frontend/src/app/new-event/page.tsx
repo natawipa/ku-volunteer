@@ -341,7 +341,7 @@ function ActivityFormContent() {
         alert('Deletion request submitted successfully. An admin will review it.');
         setShowDeleteModal(false);
         setDeletionReason("");
-        router.push('/all-events');
+        router.push(`/event-detail/${activityId}`);
       } else {
         throw new Error(deleteReqResponse.error || 'Failed to submit deletion request');
       }

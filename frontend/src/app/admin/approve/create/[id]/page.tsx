@@ -5,6 +5,10 @@ import React, { useEffect, useState } from "react";
 import { activitiesApi } from '@/lib/activities';
 import type { Activity } from '@/lib/types';
 import { API_ENDPOINTS, ENV } from '@/lib/constants';
+import HeroImage from "@/app/components/HeroImage";
+import Navbar from "@/app/components/Navbar";
+import RejectModal from "@/app/admin/components/RejectModal";
+import { useRouter } from 'next/navigation';
 
 interface ModerationResponse { detail: string }
 interface PageProps { params: Promise<{ id: string }> }
@@ -27,6 +31,7 @@ export default function Page({ params }: PageProps) {
   const [approveChecked, setApproveChecked] = useState(false);
   const [rejectChecked, setRejectChecked] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
+  const router = useRouter();
 
   // Fetch activity when eventId resolved
   useEffect(() => {
@@ -173,9 +178,9 @@ export default function Page({ params }: PageProps) {
   return (
     <div className="relative">
       {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-      <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
       <div className="relative p-6">
+      <Navbar />
+      <HeroImage />
       <Header showBigLogo={true}/>
 
         {message && <div className="max-w-4xl mx-auto mb-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded">{message}</div>}
@@ -263,19 +268,34 @@ export default function Page({ params }: PageProps) {
           <div className="flex justify-between pt-4 border-t mt-6">
             <button
               className="text-gray-600 hover:text-gray-900 cursor-pointer disabled:opacity-40"
-              disabled={actionLoading}
-              onClick={() => { setApproveChecked(false); setRejectChecked(false); setRejectReason(''); setMessage(null); }}
+              onClick={() => router.back()}
             >
-              Reset
+              Back
             </button>
             <button
-              className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-              disabled={actionLoading || (status === 'pending' && !approveChecked && !rejectChecked)}
+              className={`px-6 py-2 rounded-lg text-white transition-all ${
+                approveChecked
+                  ? "bg-green-600 hover:bg-green-700"
+                  : rejectChecked
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-gray-400 cursor-not-allowed"
+              }`}
+              disabled={actionLoading || (!approveChecked && !rejectChecked)}
               onClick={() => {
-                if (approveChecked) moderate('approve'); else if (rejectChecked) moderate('reject');
+                if (rejectChecked) {
+                  moderate('reject');
+                } else if (approveChecked) {
+                  moderate('approve');
+                }
               }}
             >
-              {actionLoading ? 'Submitting...' : 'Submit'}
+              {actionLoading ? 'Submitting...' 
+                : rejectChecked 
+                  ? 'Reject Creation' 
+                  : approveChecked 
+                    ? 'Approve Creation' 
+                    : 'Submit'
+              }
             </button>
           </div>
         </div>
@@ -283,47 +303,11 @@ export default function Page({ params }: PageProps) {
 
       {/* Reject Reason Modal */}
       {showRejectModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4 text-gray-900">Rejection Reason</h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Please provide a reason for rejecting this activity creation.
-            </p>
-            <textarea
-              className="w-full p-3 border border-gray-300 rounded-md focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none"
-              placeholder="Enter rejection reason..."
-              rows={4}
-              value={rejectReason}
-              onChange={e => setRejectReason(e.target.value)}
-              autoFocus
-            />
-            <div className="flex justify-end gap-3 mt-6">
-              <button
-                className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 transition-colors"
-                onClick={() => {
-                  setShowRejectModal(false);
-                  setRejectReason('');
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                onClick={() => {
-                  if (rejectReason.trim()) {
-                    setRejectChecked(true);
-                    setShowRejectModal(false);
-                  } else {
-                    setMessage('Please enter a rejection reason.');
-                  }
-                }}
-                disabled={!rejectReason.trim()}
-              >
-                Confirm Reject
-              </button>
-            </div>
-          </div>
-        </div>
+        <RejectModal 
+          setShowRejectModal={setShowRejectModal} rejectReason={rejectReason}
+          setRejectReason={setRejectReason} setRejectChecked={setRejectChecked}
+          setMessage={setMessage} isCreationReject={true}
+        />
       )}
     </div>
   );

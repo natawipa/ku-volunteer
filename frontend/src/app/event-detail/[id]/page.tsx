@@ -35,6 +35,7 @@ export default function EventPage({ params }: PageProps) {
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [hasPendingDeletion, setHasPendingDeletion] = useState(false);
 
   // Rejection modal state
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
@@ -87,6 +88,38 @@ export default function EventPage({ params }: PageProps) {
     }
   } , [eventId, userRole]);
 
+  // Check for pending deletion request
+  const checkDeletionRequest = useCallback(async () => {
+    if (eventId == null || Number.isNaN(eventId) || userRole !== USER_ROLES.ORGANIZER) return;
+    
+    try {
+      console.log('Checking deletion requests for activity:', eventId);
+      const response = await activitiesApi.getDeletionRequests();
+      console.log('Deletion requests response:', response);
+      
+      if (response.success && response.data) {
+        console.log('All deletion requests:', response.data);
+        
+        // Find deletion request for this activity
+        const pendingRequest = response.data.find((req) => {
+          const reqActivityId = Number(req.activity);
+          const matches = reqActivityId === eventId && (!req.status || req.status === 'pending');
+          console.log(`Checking request ID ${req.id}: activity=${reqActivityId}, eventId=${eventId}, 
+                        status=${req.status}, matches=${matches}`);
+          return matches;
+        });
+        console.log('Pending deletion request found:', pendingRequest);
+        setHasPendingDeletion(!!pendingRequest);
+      } else {
+        console.log('Failed to fetch deletion requests:', response.error);
+        setHasPendingDeletion(false);
+      }
+    } catch (error) {
+      console.error('Error checking deletion request:', error);
+      setHasPendingDeletion(false);
+    }
+  }, [eventId, userRole]);
+
   useEffect(() => {
     if (userRole === USER_ROLES.ORGANIZER) fetchApplications();
   }, [userRole, fetchApplications]);
@@ -100,6 +133,17 @@ export default function EventPage({ params }: PageProps) {
       checkUserApplication();
     }
   }, [eventId, isAuthenticated, userRole, checkUserApplication]);
+
+  // Check deletion status for organizers
+  useEffect(() => {
+    if (userRole === USER_ROLES.ORGANIZER && eventId) {
+      checkDeletionRequest();
+      
+      // Refresh deletion status every 30 seconds
+      const interval = setInterval(checkDeletionRequest, 30000);
+      return () => clearInterval(interval);
+    }
+  }, [userRole, eventId, checkDeletionRequest]);
 
   // Organizer handlers
   const handleApprove = async (applicationId: number) => {
@@ -210,7 +254,9 @@ export default function EventPage({ params }: PageProps) {
 
   // Determine display status for badge
   const displayStatus = isOrganizer 
-    ? event.status // Show activity status for organizers
+    ? hasPendingDeletion 
+      ? 'deletion_pending' 
+      : event.status // Show deletion pending or normal activity status
     : isStudent && studentCheckInStatus 
       ? studentCheckInStatus 
       : applicationStatus;
@@ -229,7 +275,7 @@ export default function EventPage({ params }: PageProps) {
           <EventStatusBadge 
             status={displayStatus} 
             onPleaseCheckInClick={isStudent ? scrollToCheckInButton : undefined}
-            isActivityStatus={isOrganizer} // Tell badge this is activity status
+            isActivityStatus={isOrganizer}
           />
         </div>
 
