@@ -105,7 +105,7 @@ const AllEventsPage: React.FC = () => {
     } else {
       return getAllEvents(filterConfig);
     }
-  }, [activities, userRole, userApplications, organizerProfileId, isAuthenticated, filterConfig]);
+  }, [activities, userRole, userApplications, organizerProfileId, isAuthenticated]);
 
   const filteredEvents = useMemo(() => {
     return events.filter(event => {
