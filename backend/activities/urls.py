@@ -20,6 +20,10 @@ from .views import (
     StudentApprovedActivitiesView,
     ActivityPosterImageListCreateView,
     ActivityPosterImageDetailView,
+    ActivityCheckInCodeView,
+    StudentCheckInView,
+    ActivityCheckInListView,
+    StudentCheckInStatusView,
 )
 
 
@@ -51,4 +55,9 @@ urlpatterns = [
     # Poster image endpoints
     path('<int:activity_id>/posters/', ActivityPosterImageListCreateView.as_view(), name='activity-poster-images'),
     path('<int:activity_id>/posters/<int:pk>/', ActivityPosterImageDetailView.as_view(), name='activity-poster-image-detail'),
+    # Check-in endpoints
+    path('<int:activity_id>/checkin-code/', ActivityCheckInCodeView.as_view(), name='activity-checkin-code'),
+    path('<int:activity_id>/checkin/', StudentCheckInView.as_view(), name='student-checkin'),
+    path('<int:activity_id>/checkin-list/', ActivityCheckInListView.as_view(), name='activity-checkin-list'),
+    path('<int:activity_id>/checkin-status/', StudentCheckInStatusView.as_view(), name='student-checkin-status'),
 ]
