@@ -104,7 +104,7 @@ jobs:
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           echo "Running Activities app tests ..."
-          python manage.py test activities.tests --verbosity=2 --parallel=auto
+          python manage.py test activities.tests --verbosity=2
 
       - name: 🧪 Run Users Tests
         working-directory: ./backend
@@ -119,7 +119,7 @@ jobs:
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           echo "Running Users app tests ..."
-          python manage.py test users.tests --verbosity=2 --parallel=auto
+          python manage.py test users.tests --verbosity=2
 
       - name: 🧪 Run Config Tests
         working-directory: ./backend
@@ -134,7 +134,7 @@ jobs:
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
           echo "Running Config tests ..."
-          python manage.py test config --verbosity=2 --parallel=auto
+          python manage.py test config --verbosity=2
 
       - name: 📊 Run All Tests with Coverage
         working-directory: ./backend
