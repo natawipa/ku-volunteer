@@ -18,9 +18,9 @@ jobs:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: ${{ secrets.TEST_DB_NAME}}
-          POSTGRES_USER: ${{ secrets.TEST_DB_USER}}
-          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
+          POSTGRES_DB: ${{ secrets.DB_NAME}}
+          POSTGRES_USER: ${{ secrets.DB_USER}}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD}}
         ports:
           - 5432:5432
         options: >-
@@ -48,11 +48,11 @@ jobs:
       - name: 🔍 Check Django configuration
         working-directory: ./backend
         env:
-          DB_NAME: ${{ secrets.TEST_DB_NAME}}
-          DB_USER: ${{ secrets.TEST_DB_USER}}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME}}
+          DB_USER: ${{ secrets.DB_USER}}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          DB_HOST: ${{ secrets.DB_HOST}}
+          DB_PORT: ${{ secrets.DB_PORT}}
           SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -62,11 +62,11 @@ jobs:
       - name: 🗃️ Run migrations
         working-directory: ./backend
         env:
-          DB_NAME: ${{ secrets.TEST_DB_NAME}}
-          DB_USER: ${{ secrets.TEST_DB_USER}}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME}}
+          DB_USER: ${{ secrets.DB_USER}}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          DB_HOST: ${{ secrets.DB_HOST}}
+          DB_PORT: ${{ secrets.DB_PORT}}
           SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -76,11 +76,11 @@ jobs:
       - name: 🧪 Run Activities Tests
         working-directory: ./backend
         env:
-          DB_NAME: ${{ secrets.TEST_DB_NAME}}
-          DB_USER: ${{ secrets.TEST_DB_USER}}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME}}
+          DB_USER: ${{ secrets.DB_USER}}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          DB_HOST: ${{ secrets.DB_HOST}}
+          DB_PORT: ${{ secrets.DB_PORT}}
           SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -91,11 +91,11 @@ jobs:
       - name: 🧪 Run Users Tests
         working-directory: ./backend
         env:
-          DB_NAME: ${{ secrets.TEST_DB_NAME}}
-          DB_USER: ${{ secrets.TEST_DB_USER}}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME}}
+          DB_USER: ${{ secrets.DB_USER}}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          DB_HOST: ${{ secrets.DB_HOST}}
+          DB_PORT: ${{ secrets.DB_PORT}}
           SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -106,11 +106,11 @@ jobs:
       - name: 🧪 Run Config Tests
         working-directory: ./backend
         env:
-          DB_NAME: ${{ secrets.TEST_DB_NAME}}
-          DB_USER: ${{ secrets.TEST_DB_USER}}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME}}
+          DB_USER: ${{ secrets.DB_USER}}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          DB_HOST: ${{ secrets.DB_HOST}}
+          DB_PORT: ${{ secrets.DB_PORT}}
           SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -121,11 +121,11 @@ jobs:
       - name: 📊 Run All Tests with Coverage
         working-directory: ./backend
         env:
-          DB_NAME: ${{ secrets.TEST_DB_NAME}}
-          DB_USER: ${{ secrets.TEST_DB_USER}}
-          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
-          DB_HOST: localhost
-          DB_PORT: 5432
+          DB_NAME: ${{ secrets.DB_NAME}}
+          DB_USER: ${{ secrets.DB_USER}}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          DB_HOST: ${{ secrets.DB_HOST}}
+          DB_PORT: ${{ secrets.DB_PORT}}
           SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
