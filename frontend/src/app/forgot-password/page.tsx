@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import React, { useState } from 'react';
+import { Mail } from 'lucide-react';
 import Card from '../../app/(auth)/components/Card';
 import { apiService } from '@/lib/api';
 
@@ -43,9 +44,7 @@ const ForgotPasswordPage: React.FC = () => {
         <Card title="Check Your Email">
           <div className="text-center space-y-4">
             <div className="w-16 h-16 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
-              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
+              <Mail className="w-8 h-8 text-green-600" />
             </div>
             <p className="text-gray-600">
               We&apos;ve sent a password reset link to <strong>{email}</strong>
