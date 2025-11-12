@@ -24,7 +24,7 @@ function ActivityFormContent() {
   const [dateStart, setDateStart] = useState<string>("");
   const [dateEnd, setDateEnd] = useState<string>("");
   const [timeStart, setTimeStart] = useState<string>("00:00");
-  const [timeEnd, setTimeEnd] = useState<string>("23:59");
+  const [timeEnd, setTimeEnd] = useState<string>("00:00");
   const [hour, setHour] = useState<number | "">("");
   const [maxParticipants, setMaxParticipants] = useState<number | "">("");
   const [categories, setCategories] = useState<string[]>([]);
