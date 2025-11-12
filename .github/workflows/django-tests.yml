@@ -16,7 +16,7 @@ env:
   DB_PASSWORD: ku_test_password
   DB_HOST: localhost
   DB_PORT: 5432
-  SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
+  SECRET_KEY: ${{ secrets.TEST_SECRET_KEY || 'test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check' }}
   DEBUG: 'True'
   ALLOWED_HOSTS: localhost,127.0.0.1
 
