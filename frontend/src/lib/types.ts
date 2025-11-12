@@ -97,9 +97,11 @@ export interface ActivityApplication {
   activity_title?: string;
   activity_id_stored?: number; // Stored activity ID (persists after deletion)
 
+  student?: number;
   studentid: number;
   student_email?: string;
   student_name?: string;
+  student_id_external?: string;
 
   status: ApplicationStatus;
   submitted_at: string;
@@ -140,6 +142,26 @@ export interface ApplicationStats {
   approved: number;
   rejected: number;
   cancelled: number;
+}
+
+export interface DeletionRequest {
+  id: number;
+  activity: number;
+  reason: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  reviewed_at?: string;
+  admin_note?: string;
+}
+
+export interface DeletionRequestEvent {
+  id: number;
+  activity: number | string;
+  reason: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  requested_at: string;
+  reviewed_at?: string;
+  admin_note?: string;
 }
 
 /** ===============================
@@ -222,6 +244,20 @@ export interface FormState<T> {
   isSubmitting: boolean;
   isValid: boolean;
 }
+
+export interface CheckInRecord {
+  id: number;
+  student: number;
+  student_name: string;
+  student_email: string;
+  attendance_status: 'absent' | 'pending' | 'present';
+  checked_in_at: string;
+  check_in_code: string;
+  activity: number;
+  activity_title: string;
+  marked_absent_at?: string;
+}
+
 
 /** ===============================
  *  DOM EVENT TYPES
