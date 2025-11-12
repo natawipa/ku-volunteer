@@ -440,6 +440,48 @@ class ApiService {
       };
     }
   }
+
+  async forgotPassword(email: string): Promise<ApiResponse<{message: string}>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/forgot-password/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.error || 'Failed to send reset email' };
+      }
+    } catch (error) {
+      console.error('Forgot password error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
+
+  async resetPassword(email: string, token: string, password: string): Promise<ApiResponse<{message: string}>> {
+    try {
+      const response = await fetch(`${API_BASE_URL}/users/reset-password/`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, token, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        return { success: true, data };
+      } else {
+        return { success: false, error: data.error || 'Failed to reset password' };
+      }
+    } catch (error) {
+      console.error('Reset password error:', error);
+      return { success: false, error: 'Network error' };
+    }
+  }
 }
 
 export const apiService = new ApiService();

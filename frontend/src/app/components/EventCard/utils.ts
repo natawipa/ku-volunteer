@@ -188,7 +188,18 @@ export function getMyEvents(config: EventFilterConfig): EventCardData[] {
     return activities
       .filter(activity => approvedActivityIds.includes(activity.id))
       .map(transformActivityToEvent)
-      .sort((a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime());
+      .sort((a, b) => {
+        // separate complete status
+        const aIsComplete = a.status?.toLowerCase() === ACTIVITY_STATUS.COMPLETE;
+        const bIsComplete = b.status?.toLowerCase() === ACTIVITY_STATUS.COMPLETE;
+        
+        // if one complete, put it to bottom
+        if (aIsComplete && !bIsComplete) return 1;
+        if (!aIsComplete && bIsComplete) return -1;
+        
+        // if both complete, sort by start date
+        return new Date(b.dateStart).getTime() - new Date(a.dateStart).getTime();
+      });
   }
   
   if (userRole === USER_ROLES.ORGANIZER) {
@@ -202,7 +213,12 @@ export function getMyEvents(config: EventFilterConfig): EventCardData[] {
     
     return filteredActivities
       .map(transformActivityToEvent)
-      .sort((a, b) => new Date(a.dateStart).getTime() - new Date(b.dateStart).getTime());
+      .sort((a, b) => {
+        // Sort by latest creation date (most recent first)
+        const dateA = a.posted_at || '';
+        const dateB = b.posted_at || '';
+        return new Date(dateB).getTime() - new Date(dateA).getTime();
+      });
   }
   
   return [];

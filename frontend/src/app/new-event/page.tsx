@@ -24,7 +24,7 @@ function ActivityFormContent() {
   const [dateStart, setDateStart] = useState<string>("");
   const [dateEnd, setDateEnd] = useState<string>("");
   const [timeStart, setTimeStart] = useState<string>("00:00");
-  const [timeEnd, setTimeEnd] = useState<string>("23:59");
+  const [timeEnd, setTimeEnd] = useState<string>("00:00");
   const [hour, setHour] = useState<number | "">("");
   const [maxParticipants, setMaxParticipants] = useState<number | "">("");
   const [categories, setCategories] = useState<string[]>([]);
@@ -108,20 +108,43 @@ function ActivityFormContent() {
           setCoverUrl(null);
         }
         
-        // Format dates for input fields (YYYY-MM-DD)
+        // Format dates for input fields
         if (activityData.start_at) {
           const startDate = new Date(activityData.start_at);
-          setDateStart(startDate.toISOString().split('T')[0]);
-          setTimeStart(startDate.toTimeString().slice(0, 5));
+          const year = startDate.getFullYear();
+          const month = String(startDate.getMonth() + 1).padStart(2, '0');
+          const day = String(startDate.getDate()).padStart(2, '0');
+          const hours = String(startDate.getHours()).padStart(2, '0');
+          const minutes = String(startDate.getMinutes()).padStart(2, '0');
+          
+          setDateStart(`${year}-${month}-${day}`);
+          setTimeStart(`${hours}:${minutes}`);
         }
         
         if (activityData.end_at) {
           const endDate = new Date(activityData.end_at);
-          setDateEnd(endDate.toISOString().split('T')[0]);
-          setTimeEnd(endDate.toTimeString().slice(0, 5));
+          const year = endDate.getFullYear();
+          const month = String(endDate.getMonth() + 1).padStart(2, '0');
+          const day = String(endDate.getDate()).padStart(2, '0');
+          const hours = String(endDate.getHours()).padStart(2, '0');
+          const minutes = String(endDate.getMinutes()).padStart(2, '0');
+          
+          setDateEnd(`${year}-${month}-${day}`);
+          setTimeEnd(`${hours}:${minutes}`);
         }
         
         console.log('Activity data loaded for editing:', activityData);
+        
+        // Debug log to verify times
+        console.log('Time debug:', {
+          start_at: activityData.start_at,
+          parsedStart: new Date(activityData.start_at),
+          displayTimeStart: `${String(new Date(activityData.start_at).getUTCHours()).padStart(2, '0')}:${String(new Date(activityData.start_at).getUTCMinutes()).padStart(2, '0')}`,
+          end_at: activityData.end_at,
+          parsedEnd: new Date(activityData.end_at),
+          displayTimeEnd: `${String(new Date(activityData.end_at).getUTCHours()).padStart(2, '0')}:${String(new Date(activityData.end_at).getUTCMinutes()).padStart(2, '0')}`
+        });
+        
         // load existing poster images if present on activityData
         try {
           const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
@@ -154,15 +177,29 @@ function ActivityFormContent() {
             setCategories(activityData.categories || []);
             setMaxParticipants(activityData.max_participants || "");
             setHour(activityData.hours_awarded || "");
+            // LOCAL time
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
-              setDateStart(startDate.toISOString().split('T')[0]);
-              setTimeStart(startDate.toTimeString().slice(0, 5));
+              const year = startDate.getFullYear();
+              const month = String(startDate.getMonth() + 1).padStart(2, '0');
+              const day = String(startDate.getDate()).padStart(2, '0');
+              const hours = String(startDate.getHours()).padStart(2, '0');
+              const minutes = String(startDate.getMinutes()).padStart(2, '0');
+              
+              setDateStart(`${year}-${month}-${day}`);
+              setTimeStart(`${hours}:${minutes}`);
             }
+            
             if (activityData.end_at) {
               const endDate = new Date(activityData.end_at);
-              setDateEnd(endDate.toISOString().split('T')[0]);
-              setTimeEnd(endDate.toTimeString().slice(0, 5));
+              const year = endDate.getFullYear();
+              const month = String(endDate.getMonth() + 1).padStart(2, '0');
+              const day = String(endDate.getDate()).padStart(2, '0');
+              const hours = String(endDate.getHours()).padStart(2, '0');
+              const minutes = String(endDate.getMinutes()).padStart(2, '0');
+              
+              setDateEnd(`${year}-${month}-${day}`);
+              setTimeEnd(`${hours}:${minutes}`);
             }
             // set coverUrl from backend image field (normalize relative urls)
             if (activityData.cover_image || activityData.cover_image_url) {
@@ -308,7 +345,7 @@ function ActivityFormContent() {
         alert('Deletion request submitted successfully. An admin will review it.');
         setShowDeleteModal(false);
         setDeletionReason("");
-        router.push('/all-events');
+        router.push(`/event-detail/${activityId}`);
       } else {
         throw new Error(deleteReqResponse.error || 'Failed to submit deletion request');
       }
@@ -384,9 +421,14 @@ function ActivityFormContent() {
     setIsSubmitting(true);
   
     try {
+      // combine date and time
       const formatLocalDateTime = (dateStr: string, timeStr: string) => {
-       return `${dateStr}T${timeStr}:00`; // Returns string like "2024-01-13T15:00:00"
+        // If either part is missing, return an empty string.
+        if (!dateStr || !timeStr) return '';
+        const local = new Date(`${dateStr}T${timeStr}`);
+        return local.toISOString();
       };
+
       const startDateTime = formatLocalDateTime(dateStart, timeStart);
       const endDateTime = formatLocalDateTime(dateEnd, timeEnd);
       const activityData = {

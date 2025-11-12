@@ -8,6 +8,9 @@ import { activitiesApi } from "@/lib/activities";
 import type { Activity } from '@/lib/types';
 import { ENV, API_ENDPOINTS } from "@/lib/constants";
 import type { DeletionRequestEvent } from "@/app/admin/events/components/AdminDeletionRequestCard";
+import Navbar from "@/app/components/Navbar";
+import HeroImage from "@/app/components/HeroImage";
+import RejectModal from "@/app/admin/components/RejectModal";
 
 interface ModerationResponse { detail: string }
 interface PageProps { params: Promise<{ id: string }> }
@@ -31,6 +34,7 @@ export default function Page({ params }: PageProps) {
   const [rejectChecked, setRejectChecked] = useState(false);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [deletionRequest, setDeletionRequest] = useState<DeletionRequestEvent | null>(null);
+  const [showRejectModal, setShowRejectModal] = useState(false);
 
   // Fetch activity when eventId resolved
   useEffect(() => {
@@ -39,7 +43,7 @@ export default function Page({ params }: PageProps) {
 
   const fetchRequests = async () => {
     try {
-      // 1️⃣ Fetch all deletion requests
+      // fetch all deletion requests
       const reqRes = await activitiesApi.getDeletionRequests();
       if (!mounted) return;
 
@@ -49,7 +53,7 @@ export default function Page({ params }: PageProps) {
         return;
       }
 
-      // 2️⃣ Find the specific deletion request by request id OR by related activity id (backward compat)
+      // find the specific deletion request by request id
       const requests = reqRes.data as DeletionRequestEvent[];
       const req = requests.find(
         (r) => Number(r.id) === Number(eventId) || Number(r.activity) === Number(eventId)
@@ -62,7 +66,7 @@ export default function Page({ params }: PageProps) {
 
       setDeletionRequest(req);
 
-      // 3️⃣ Fetch the related activity by its foreign key
+      // fetch the related activity
       if (req.activity == null) {
         setError("Related activity not found");
         setLoading(false);
@@ -231,23 +235,9 @@ export default function Page({ params }: PageProps) {
   return (
     <div className="relative">
       {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[220px]"></div>
-
-      {/* Mountain background */}
-      <Image
-        src="/mountain.svg"
-        alt="mountain"
-        width={920}
-        height={410}
-        className="w-full h-[200px] absolute inset-0 top-0 object-cover"
-      />
-
-      <div className="relative p-6">
-        {/* Background */}
-        <div className="absolute inset-0 bg-gradient-to-b from-[#DAE9DC] to-white h-[350px]" />
-        <div className="absolute inset-0 top-0 h-[510px] bg-[url('/mountain.svg')] bg-cover bg-center pt-11 mt-5" />
-        <div className="relative p-6">
-        <Header showBigLogo={true}/>
+      <Navbar />
+      <HeroImage />
+      <Header showBigLogo={true}/>
 
         {/* Event Detail Card */}
         <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
@@ -321,6 +311,7 @@ export default function Page({ params }: PageProps) {
                   onChange={() => {
                     setApproveChecked(true);
                     setRejectChecked(false);
+                    setShowRejectModal(false);
                   }}
                 />
                 Approve Deletion
@@ -331,32 +322,41 @@ export default function Page({ params }: PageProps) {
                   className="w-4 h-4"
                   checked={rejectChecked}
                   onChange={() => {
-                    setRejectChecked(true);
+                    setShowRejectModal(true);
                     setApproveChecked(false);
                   }}
                 />
                 Reject Deletion
               </label>
-              {rejectChecked && (
-                <textarea
-                  className="w-full p-2 border border-gray-300 rounded-md focus:ring-red-500"
-                  placeholder="Add reason for rejection..."
-                  rows={3}
-                  value={rejectReason}
-                  onChange={(e) => setRejectReason(e.target.value)}
+              {showRejectModal && (
+                <RejectModal 
+                  setShowRejectModal={setShowRejectModal}
+                  rejectReason={rejectReason}
+                  setRejectReason={setRejectReason}
+                  setRejectChecked={setRejectChecked}
+                  setMessage={setMessage}
                 />
               )}
             </div>
 
             {/* Action Buttons */}
             <div className="flex justify-between pt-4 border-t mt-6">
-              <button className="text-gray-600 hover:text-gray-900">Cancel</button>
+              <button 
+                onClick={() => router.back()}
+                className="text-gray-600 hover:text-gray-900 px-4 py-2"
+              >
+                Cancel
+              </button>
               <button
-                disabled={actionLoading}
-                onClick={() =>
-                  moderate(approveChecked ? "approve" : rejectChecked ? "reject" : "approve")
-                }
-                className={`px-6 py-2 rounded-lg text-white ${
+                disabled={actionLoading || (!approveChecked && !rejectChecked)}
+                onClick={() => {
+                  if (rejectChecked) {
+                    moderate("reject");
+                  } else if (approveChecked) {
+                    moderate("approve");
+                  }
+                }}
+                className={`px-6 py-2 rounded-lg text-white transition-all ${
                   approveChecked
                     ? "bg-green-600 hover:bg-green-700"
                     : rejectChecked
@@ -364,7 +364,7 @@ export default function Page({ params }: PageProps) {
                     : "bg-gray-400 cursor-not-allowed"
                 }`}
               >
-                {actionLoading ? "Submitting..." : "Submit"}
+                {actionLoading ? "Submitting..." : rejectChecked ? "Reject Deletion" : approveChecked ? "Approve Deletion" : "Submit"}
               </button>
             </div>
 
@@ -372,7 +372,5 @@ export default function Page({ params }: PageProps) {
           </div>
         </div>
       </div>
-    </div>
-    </div>
   );
 }

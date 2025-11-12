@@ -7,7 +7,8 @@ import type {
   ApiResponse, 
   CreateApplicationRequest,
   ReviewApplicationRequest,
-  ActivityApplication} from './types';
+  ActivityApplication,
+  CheckInRecord } from './types';
 
 // Create activity data type that matches your backend serializer
 export interface CreateActivityData {
@@ -209,22 +210,39 @@ export const activitiesApi = {
 
     // Build FormData for multipart upload
     const form = new FormData();
-    // Append known fields explicitly to avoid any/implicit typings
-    if ((payload as CreateActivityData).title) form.append('title', String((payload as CreateActivityData).title));
-    if ((payload as CreateActivityData).description) form.append('description', String((payload as CreateActivityData).description));
-    if ((payload as CreateActivityData).location) form.append('location', String((payload as CreateActivityData).location));
-    if ((payload as CreateActivityData).start_at) form.append('start_at', String((payload as CreateActivityData).start_at));
-    if ((payload as CreateActivityData).end_at) form.append('end_at', String((payload as CreateActivityData).end_at));
-    if ((payload as CreateActivityData).max_participants !== undefined && (payload as CreateActivityData).max_participants !== null) form.append('max_participants', String((payload as CreateActivityData).max_participants));
-    if ((payload as CreateActivityData).hours_awarded !== undefined && (payload as CreateActivityData).hours_awarded !== null) form.append('hours_awarded', String((payload as CreateActivityData).hours_awarded));
-    if ((payload as CreateActivityData).categories) form.append('categories', JSON.stringify((payload as CreateActivityData).categories));
+    const p = payload as CreateActivityData;
+    
+    console.log('🔍 Creating activity with data:', {
+      title: p.title,
+      description: p.description,
+      location: p.location,
+      start_at: p.start_at,
+      end_at: p.end_at,
+      max_participants: p.max_participants,
+      hours_awarded: p.hours_awarded,
+      categories: p.categories,
+      hasCover: !!cover,
+    });
+    
+    if (p.title) form.append('title', String(p.title));
+    if (p.description) form.append('description', String(p.description));
+    if (p.location) form.append('location', String(p.location));
+    if (p.start_at) form.append('start_at', String(p.start_at));
+    if (p.end_at) form.append('end_at', String(p.end_at));
+    if (p.max_participants !== undefined && p.max_participants !== null) form.append('max_participants', String(p.max_participants));
+    if (p.hours_awarded !== undefined && p.hours_awarded !== null) form.append('hours_awarded', String(p.hours_awarded));
+    if (p.categories) form.append('categories', JSON.stringify(p.categories));
 
     if (cover) form.append('cover_image', cover);
 
-    // Send multipart request to create activity. We use fetch directly to allow FormData
     try {
-  const token = localStorage.getItem('access_token');
-  const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.CREATE}`, {
+      const token = localStorage.getItem('access_token');
+      const endpoint = `${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.CREATE}`;
+      
+      console.log('Fetching endpoint:', endpoint);
+      console.log('Token present:', !!token);
+      
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -232,62 +250,101 @@ export const activitiesApi = {
         body: form,
       });
 
+      console.log('Response status:', res.status, res.statusText);
+      console.log('Response headers:', {
+        contentType: res.headers.get('content-type'),
+      });
+
       const text = await res.text();
-      const dataRes = text ? JSON.parse(text) : null;
+      console.log('Response (first 1000 chars):', text.substring(0, 1000));
+
+      // Check if response is HTML
+      if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+        console.error('Backend returned HTML (likely 404 or 500 error)');
+        console.error('Full HTML response:', text);
+        return { 
+          success: false, 
+          error: `Server error ${res.status}. Backend returned HTML instead of JSON. Check server logs.` 
+        };
+      }
+
+      let dataRes;
+      try {
+        dataRes = text ? JSON.parse(text) : null;
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', parseError);
+        return { 
+          success: false, 
+          error: `Invalid JSON response: ${text.substring(0, 200)}` 
+        };
+      }
+
       if (!res.ok) {
+        console.error('API returned error:', dataRes);
         return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
       }
 
       console.log('Activity created successfully');
-
-      // If posters provided, upload them to posters endpoint
-      if (dataRes && dataRes.id && pictures && pictures.length > 0) {
+      
+      // Upload poster images if provided and activity was created successfully
+      if (pictures && pictures.length > 0 && dataRes.id) {
         console.log(`Uploading ${pictures.length} poster image(s) for new activity ${dataRes.id}...`);
         const uploadResult = await this.uploadPosterImages(dataRes.id, pictures);
         
         if (!uploadResult.success) {
-          console.error('Poster upload failed:', uploadResult.error);
-          // Return partial success - activity created but posters failed
+          console.warn('Poster upload failed:', uploadResult.error);
           return {
             success: true,
             data: dataRes,
             error: `Activity created, but poster upload failed: ${uploadResult.error}`
           };
         }
-      } else {
-        console.log('No posters to upload for new activity');
       }
-
+      
       return { success: true, data: dataRes };
     } catch (error) {
-      console.error('createActivity (multipart) error:', error);
+      console.error('createActivity error:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Network error' };
     }
   },
 
-  // Update activity
+    // Update activity
   async updateActivity(id: string | number, data: Partial<Activity> & { cover?: File | null; pictures?: File[] | null }): Promise<ApiResponse<Activity>> {
     const { cover, pictures, ...payload } = data;
-    if (!cover && (!pictures || pictures.length === 0)) {
-      return httpClient.put<Activity>(API_ENDPOINTS.ACTIVITIES.UPDATE(id), payload);
-    }
-
     const form = new FormData();
-  // Explicitly append expected fields (typed to Partial<Activity>)
-  const p = payload as Partial<Activity>;
-  if (p.title) form.append('title', String(p.title));
-  if (p.description) form.append('description', String(p.description));
-  if (p.location) form.append('location', String(p.location));
-  if ((p as unknown as { start_at?: string }).start_at) form.append('start_at', String((p as unknown as { start_at?: string }).start_at));
-  if ((p as unknown as { end_at?: string }).end_at) form.append('end_at', String((p as unknown as { end_at?: string }).end_at));
-  if (p.max_participants !== undefined && p.max_participants !== null) form.append('max_participants', String(p.max_participants));
-  if (p.hours_awarded !== undefined && p.hours_awarded !== null) form.append('hours_awarded', String(p.hours_awarded));
-  if (p.categories) form.append('categories', JSON.stringify(p.categories));
+    const p = payload as Partial<Activity>;
+    if (p.title) form.append('title', String(p.title));
+    if (p.description) form.append('description', String(p.description));
+    if (p.location) form.append('location', String(p.location));
+    
+    // Handle date fields 
+    if (p.start_at) {
+      const startDate = new Date(p.start_at);
+      form.append('start_at', startDate.toISOString());
+    }
+    if (p.end_at) {
+      const endDate = new Date(p.end_at);
+      form.append('end_at', endDate.toISOString());
+    }
+    if (p.max_participants !== undefined && p.max_participants !== null) 
+      form.append('max_participants', String(p.max_participants));
+    if (p.hours_awarded !== undefined && p.hours_awarded !== null) 
+      form.append('hours_awarded', String(p.hours_awarded));
+    if (p.categories) 
+      form.append('categories', JSON.stringify(p.categories));
     if (cover) form.append('cover_image', cover);
 
     try {
-  const token = localStorage.getItem('access_token');
-  const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.UPDATE(id)}`, {
+      const token = localStorage.getItem('access_token');
+      console.log('Updating activity with FormData:', {
+        title: p.title,
+        start_at: p.start_at,
+        end_at: p.end_at,
+        hasCover: !!cover,
+        hasPictures: !!(pictures && pictures.length > 0)
+      });
+
+      const res = await fetch(`${ENV.API_BASE_URL}${API_ENDPOINTS.ACTIVITIES.UPDATE(id)}`, {
         method: 'PUT',
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -296,34 +353,46 @@ export const activitiesApi = {
       });
 
       const text = await res.text();
-      const dataRes = text ? JSON.parse(text) : null;
+      console.log('Update response status:', res.status, res.statusText);
+      
+      let dataRes = null;
+      try {
+        dataRes = text ? JSON.parse(text) : null;
+      } catch (parseError) {
+        console.error('Failed to parse update response:', parseError);
+        return { 
+          success: false, 
+          error: `Server returned invalid JSON: ${text.substring(0, 200)}` 
+        };
+      }
+
       if (!res.ok) {
-        return { success: false, error: dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) };
+        console.error('Update failed:', dataRes);
+        return { 
+          success: false, 
+          error: dataRes?.detail || dataRes?.message || `Server error ${res.status}` 
+        };
       }
 
       console.log('Activity updated successfully');
 
       // Upload poster images if provided
-      if (pictures && pictures.length > 0 && dataRes && dataRes.id) {
-        console.log(`Uploading ${pictures.length} poster image(s) for activity ${dataRes.id}...`);
-        const uploadResult = await this.uploadPosterImages(dataRes.id, pictures);
+      if (pictures && pictures.length > 0) {
+        console.log(`Uploading ${pictures.length} poster image(s)...`);
+        const uploadResult = await this.uploadPosterImages(id, pictures);
         
         if (!uploadResult.success) {
-          console.error('Poster upload failed:', uploadResult.error);
-          // Return partial success - activity updated but posters failed
           return {
             success: true,
             data: dataRes,
             error: `Activity updated, but poster upload failed: ${uploadResult.error}`
           };
         }
-      } else {
-        console.log('No new posters to upload');
       }
 
       return { success: true, data: dataRes };
     } catch (error) {
-      console.error('updateActivity (multipart) error:', error);
+      console.error('updateActivity error:', error);
       return { success: false, error: error instanceof Error ? error.message : 'Network error' };
     }
   },
@@ -335,11 +404,11 @@ export const activitiesApi = {
     try {
       const token = localStorage.getItem('access_token');
       
-      // First, get existing posters to determine which order numbers are available
+      // get existing posters to determine which order numbers are available
       console.log('Fetching existing posters to find available order slots...');
       
-      // Add a delay to ensure database has been updated after any deletions
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Add a delay to ensure database has been updated
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       const existingPostersResp = await this.getPosterImages(activityId);
       const existingOrders = new Set<number>();
@@ -393,7 +462,7 @@ export const activitiesApi = {
         return { success: false, error };
       }
       
-      // Post each image individually because the backend serializer expects a single image per POST
+      // Post each image individually
       for (let idx = 0; idx < pictures.length; idx++) {
         const pic = pictures[idx];
         const orderToUse = availableOrders[idx];
@@ -434,7 +503,7 @@ export const activitiesApi = {
           console.error(`Failed to upload poster ${idx + 1} (order ${orderToUse}):`, dataRes);
           const errorMsg = dataRes?.detail || dataRes?.message || JSON.stringify(dataRes) || `Server error ${res.status}`;
           
-          // If it's a duplicate key error, provide helpful context
+          // provide helpful context if its duplicate order error
           if (errorMsg.includes('unique') || errorMsg.includes('duplicate') || errorMsg.includes('already exists')) {
             console.error('Duplicate order conflict detected!');
             console.error('Tried to use order:', orderToUse);
@@ -448,6 +517,11 @@ export const activitiesApi = {
           return { success: false, error: errorMsg };
         }
         console.log(`Poster ${idx + 1} uploaded successfully with order ${orderToUse}`);
+        
+        // Add small delay between uploads
+        if (idx < pictures.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
       
       console.log('All posters uploaded successfully!');
@@ -590,4 +664,194 @@ export const activitiesApi = {
     }
     return result;
   },
+
+  // Get today's check-in code for an activity (organizer)
+  async getCheckInCode(activityId: string | number): Promise<ApiResponse<{ id: number; code: string; valid_date: string; created_at: string }>> {
+    try {
+      const token = localStorage.getItem('access_token');
+      const endpoint = `/api/activities/${activityId}/checkin-code/`;
+      const fullUrl = `${ENV.API_BASE_URL}${endpoint}`;
+      
+      console.log('getCheckInCode DEBUG:', { 
+        activityId, 
+        endpoint, 
+        fullUrl,
+        hasToken: !!token,
+        tokenLength: token?.length 
+      });
+      
+      const res = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      console.log('Response status:', res.status);
+      console.log('Response headers:', {
+        contentType: res.headers.get('content-type'),
+        contentLength: res.headers.get('content-length'),
+      });
+
+      const text = await res.text();
+      console.log('Response text:', text.substring(0, 500));
+
+      // if response is HTML (error page)
+      if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+        console.error('Backend returned HTML (404 or 500):', text.substring(0, 200));
+        return { success: false, error: `Endpoint not found (${res.status}). Check your backend URL.` };
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', text);
+        return { success: false, error: `Invalid JSON response: ${text.substring(0, 100)} ${parseError}` };
+      }
+
+      console.log('Parsed data:', data);
+
+      if (!res.ok) {
+        console.error('API error response:', data);
+        return { success: false, error: data?.detail || data?.error || `HTTP ${res.status}` };
+      }
+
+      console.log('Check-in code fetched successfully:', data.code);
+      return { success: true, data };
+    } catch (error) {
+      console.error('getCheckInCode exception:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+    }
+  },
+
+  // Submit check-in code (student)
+  async submitCheckIn(activityId: string | number, code: string): Promise<ApiResponse<{ success: boolean; message?: string }>> {
+    try {
+      const token = localStorage.getItem('access_token');
+      const endpoint = `/api/activities/${activityId}/checkin/`;
+      const fullUrl = `${ENV.API_BASE_URL}${endpoint}`;
+      
+      console.log('submitCheckIn DEBUG:', { 
+        activityId, 
+        code,
+        fullUrl,
+        hasToken: !!token,
+      });
+      
+      const res = await fetch(fullUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ code }),
+      });
+
+      console.log('Response status:', res.status);
+      const text = await res.text();
+      console.log('Response:', text.substring(0, 500));
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', text);
+        return { success: false, error: `Invalid JSON: ${text.substring(0, 100)} ${parseError}` };
+      }
+
+      console.log('Parsed check-in response:', data);
+
+      if (!res.ok) {
+        console.error('Check-in API error:', {
+          status: res.status,
+          detail: data?.detail,
+          error: data?.error,
+          fullData: data
+        });
+        return { success: false, error: data?.detail || data?.error || `HTTP ${res.status}` };
+      }
+
+      console.log('Check-in successful!', data);
+      return { success: true, data };
+    } catch (error) {
+      console.error('submitCheckIn exception:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error' };
+    }
+  },
+
+    async getCheckInList(activityId: string | number): Promise<ApiResponse<CheckInRecord[]>> {
+    try {
+      const token = localStorage.getItem('access_token');
+      const endpoint = `/api/activities/${activityId}/checkin-list/`;
+      const fullUrl = `${ENV.API_BASE_URL}${endpoint}`;
+      
+      console.log('getCheckInList DEBUG:', { 
+        activityId, 
+        endpoint, 
+        fullUrl,
+        hasToken: !!token,
+      });
+      
+      const res = await fetch(fullUrl, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      console.log('Response status:', res.status);
+      console.log('Response headers:', {
+        contentType: res.headers.get('content-type'),
+        contentLength: res.headers.get('content-length'),
+      });
+
+      const text = await res.text();
+      console.log('Response text:', text.substring(0, 500));
+     if (text.startsWith('<!DOCTYPE') || text.startsWith('<html')) {
+        console.error('Backend returned HTML (404 or 500):', text.substring(0, 200));
+        return { success: false, error: `Endpoint not found (${res.status}). Check your backend URL.`, data: [] };
+      }
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (parseError) {
+        console.error('Failed to parse JSON:', text);
+        return { success: false, error: `Invalid JSON response: ${text.substring(0, 100)} ${parseError}`, data: [] };
+      }
+
+      console.log('Parsed data:', data);
+
+      if (!res.ok) {
+        console.error('API error response:', data);
+        return { success: false, error: data?.detail || data?.error || `HTTP ${res.status}`, data: [] };
+      }
+
+      // Handle both paginated and direct array responses
+      let checkInList: CheckInRecord[] = [];
+      
+      if (Array.isArray(data)) {
+        checkInList = data;
+      } else if (data?.results && Array.isArray(data.results)) {
+        checkInList = data.results;
+      }
+      console.log('Check-in list fetched successfully:', checkInList);
+      return { success: true, data: checkInList };
+    } catch (error) {
+      console.error('getCheckInList exception:', error);
+      return { success: false, error: error instanceof Error ? error.message : 'Network error', data: [] };
+    }
+  },
+
+  async getCheckInStatus(activityId: string | number): Promise<ApiResponse<CheckInRecord>> {
+    return httpClient.get<CheckInRecord>(API_ENDPOINTS.ACTIVITIES.CHECK_IN_STATUS(activityId));
+  },
+  
+  async getActivityCheckInRecords(activityId: string | number): Promise<ApiResponse<CheckInRecord[]>> {
+    return httpClient.get<CheckInRecord[]>(API_ENDPOINTS.ACTIVITIES.CHECK_IN_LIST(activityId));
+  },
+
 };
