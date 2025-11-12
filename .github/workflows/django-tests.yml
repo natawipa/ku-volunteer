@@ -48,6 +48,21 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
 
+      - name: 🔍 Debug - List Python files
+        working-directory: ./backend
+        run: |
+          echo "=== Checking if app directories exist ==="
+          ls -la
+          echo ""
+          echo "=== Users app ==="
+          ls -la users/ || echo "users/ not found!"
+          echo ""
+          echo "=== Activities app ==="
+          ls -la activities/ || echo "activities/ not found!"
+          echo ""
+          echo "=== Config app ==="
+          ls -la config/ || echo "config/ not found!"
+
       - name: 🔍 Check Django configuration
         working-directory: ./backend
         env:
