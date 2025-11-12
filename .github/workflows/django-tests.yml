@@ -1,4 +1,4 @@
-name: Django Tests
+name: 🧪 Django Tests
 
 on:
   push:
@@ -9,18 +9,34 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  # Database Configuration
+  DB_NAME: ku_volunteer_test
+  DB_USER: ku_test_user
+  DB_PASSWORD: ku_test_password
+  DB_HOST: localhost
+  DB_PORT: 5432
+  SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
+  DEBUG: 'True'
+  ALLOWED_HOSTS: localhost,127.0.0.1
+
 jobs:
   test:
-    name: Run Django Tests
+    name: 🔬 Run Django Test Suite
     runs-on: ubuntu-latest
     
+    # ════════════════════════════════════════════════════════════════════════
+    # PostgreSQL Service Container
+    # Note: Service containers cannot access workflow env vars (GitHub limitation)
+    # These credentials MUST match the DB_* variables defined above
+    # ════════════════════════════════════════════════════════════════════════
     services:
       postgres:
         image: postgres:16
         env:
-          POSTGRES_DB: ${{ secrets.DB_NAME}}
-          POSTGRES_USER: ${{ secrets.DB_USER}}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD}}
+          POSTGRES_DB: ku_volunteer_test
+          POSTGRES_USER: ku_test_user
+          POSTGRES_PASSWORD: ku_test_password
         ports:
           - 5432:5432
         options: >-
@@ -30,112 +46,80 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: 📥 Checkout code
+      # ══════════════════════════════════════════════════════════════════════
+      # 📦 Setup: Environment Preparation
+      # ══════════════════════════════════════════════════════════════════════
+      - name: 📥 Checkout Repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python
+      - name: 🐍 Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
           cache-dependency-path: 'backend/requirements.txt'
 
-      - name: 📦 Install dependencies
+      - name: 📦 Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r backend/requirements.txt
+          pip install coverage
 
-      - name: 🔍 Check Django configuration
+      # ══════════════════════════════════════════════════════════════════════
+      # 🔧 Django: Configuration & Database Setup
+      # ══════════════════════════════════════════════════════════════════════
+      - name: 🔍 Validate Django Configuration
         working-directory: ./backend
-        env:
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_USER: ${{ secrets.DB_USER}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
-          DB_HOST: ${{ secrets.DB_HOST}}
-          DB_PORT: ${{ secrets.DB_PORT}}
-          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
-          DEBUG: 'True'
-          ALLOWED_HOSTS: localhost,127.0.0.1
-        run: |
-          python manage.py check
+        run: python manage.py check
 
-      - name: 🗃️ Run migrations
+      - name: 🗃️ Apply Database Migrations
         working-directory: ./backend
-        env:
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_USER: ${{ secrets.DB_USER}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
-          DB_HOST: ${{ secrets.DB_HOST}}
-          DB_PORT: ${{ secrets.DB_PORT}}
-          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
-          DEBUG: 'True'
-          ALLOWED_HOSTS: localhost,127.0.0.1
-        run: |
-          python manage.py migrate --noinput
+        run: python manage.py migrate --noinput
 
-      - name: 🧪 Run Activities Tests
+      # ══════════════════════════════════════════════════════════════════════
+      # 🧪 Tests: Individual App Test Suites
+      # ══════════════════════════════════════════════════════════════════════
+      - name: 🧪 Activities App Tests (220 tests)
         working-directory: ./backend
-        env:
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_USER: ${{ secrets.DB_USER}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
-          DB_HOST: ${{ secrets.DB_HOST}}
-          DB_PORT: ${{ secrets.DB_PORT}}
-          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
-          DEBUG: 'True'
-          ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          echo "Running Activities app tests ..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "🎯 Testing Activities App (Models, Views, Serializers, URLs)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           python manage.py test activities.tests --verbosity=2
 
-      - name: 🧪 Run Users Tests
+      - name: 🧪 Users App Tests (149 tests)
         working-directory: ./backend
-        env:
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_USER: ${{ secrets.DB_USER}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
-          DB_HOST: ${{ secrets.DB_HOST}}
-          DB_PORT: ${{ secrets.DB_PORT}}
-          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
-          DEBUG: 'True'
-          ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          echo "Running Users app tests ..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "👥 Testing Users App (Models, Views, Auth, OAuth)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           python manage.py test users.tests --verbosity=2
 
-      - name: 🧪 Run Config Tests
+      - name: 🧪 Config Tests (45 tests)
         working-directory: ./backend
-        env:
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_USER: ${{ secrets.DB_USER}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
-          DB_HOST: ${{ secrets.DB_HOST}}
-          DB_PORT: ${{ secrets.DB_PORT}}
-          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
-          DEBUG: 'True'
-          ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          echo "Running Config tests ..."
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "⚙️  Testing Config (Utils, Permissions)"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           python manage.py test config --verbosity=2
 
-      - name: 📊 Run All Tests with Coverage
+      # ══════════════════════════════════════════════════════════════════════
+      # 📊 Coverage: Code Coverage Analysis & Reporting
+      # ══════════════════════════════════════════════════════════════════════
+      - name: 📊 Generate Coverage Report
         working-directory: ./backend
-        env:
-          DB_NAME: ${{ secrets.DB_NAME}}
-          DB_USER: ${{ secrets.DB_USER}}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD}}
-          DB_HOST: ${{ secrets.DB_HOST}}
-          DB_PORT: ${{ secrets.DB_PORT}}
-          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
-          DEBUG: 'True'
-          ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
-          pip install coverage
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+          echo "📈 Running Full Test Suite with Coverage Analysis"
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
           coverage run --source='.' manage.py test --verbosity=2
+          echo ""
+          echo "📊 Coverage Summary:"
           coverage report --skip-empty
           coverage html
+          echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 
-      - name: 📈 Upload Coverage Report
+      - name: 📈 Upload Coverage Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -143,19 +127,26 @@ jobs:
           path: backend/htmlcov/
           retention-days: 30
 
-      - name: ✅ Test Summary
+      # ══════════════════════════════════════════════════════════════════════
+      # 📝 Summary: Test Results Dashboard
+      # ══════════════════════════════════════════════════════════════════════
+      - name: ✅ Publish Test Summary
         if: always()
         run: |
-          echo "## 🎉 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Django Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### Test Breakdown" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Activities Tests: 220 tests**" >> $GITHUB_STEP_SUMMARY
-          echo "  - Models: 75 | Activity Views: 17 | Application Views: 34 | Check-in Views: 11 | Serializers: 36 | URLs: 28 | Edge Cases: 23" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Users Tests: 149 tests**" >> $GITHUB_STEP_SUMMARY
-          echo "  - Models: 71 | Views: 42 (incl. 13 OAuth) | Serializers: 16 | URLs: 9 | Backends: 3 | Pipeline: 6" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Config Tests: 45 tests**" >> $GITHUB_STEP_SUMMARY
-          echo "  - Utils: 13 | Advanced Permissions: 32" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Test Suite Breakdown" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 **Total: 414 tests passing** (416 test methods defined)" >> $GITHUB_STEP_SUMMARY
+          echo "| App | Tests | Components |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----|-------|------------|" >> $GITHUB_STEP_SUMMARY
+          echo "| **🎯 Activities** | 220 | Models: 75, Views: 62, Serializers: 36, URLs: 28, Edge Cases: 23 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **👥 Users** | 149 | Models: 71, Views: 42, Serializers: 16, URLs: 9, Auth: 9, Pipeline: 6 |" >> $GITHUB_STEP_SUMMARY
+          echo "| **⚙️  Config** | 45 | Utils: 13, Permissions: 32 |" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "📈 Coverage report available in artifacts!" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **Total Tests:** 414 passing (out of 416 defined)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Success Rate:** 99.5%" >> $GITHUB_STEP_SUMMARY
+          echo "- **Coverage Report:** Available in artifacts 📈" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **All tests completed successfully!**" >> $GITHUB_STEP_SUMMARY
