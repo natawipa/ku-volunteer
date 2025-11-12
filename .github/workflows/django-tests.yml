@@ -1,4 +1,4 @@
-name: 🧪 Django Tests
+name: Django Tests
 
 on:
   push:
@@ -14,6 +14,7 @@ on:
 
 jobs:
   test:
+    name: Run Django Tests
     runs-on: ubuntu-latest
     
     services:
@@ -50,7 +51,11 @@ jobs:
       - name: 🔍 Check Django configuration
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          DB_NAME: ku_volunteer_db
+          DB_USER: ku_volunteer_user
+          DB_PASSWORD: testpassword123
+          DB_HOST: localhost
+          DB_PORT: 5432
           SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -60,7 +65,11 @@ jobs:
       - name: 🗃️ Run migrations
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          DB_NAME: ku_volunteer_db
+          DB_USER: ku_volunteer_user
+          DB_PASSWORD: testpassword123
+          DB_HOST: localhost
+          DB_PORT: 5432
           SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -70,7 +79,11 @@ jobs:
       - name: 🧪 Run Activities Tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          DB_NAME: ku_volunteer_db
+          DB_USER: ku_volunteer_user
+          DB_PASSWORD: testpassword123
+          DB_HOST: localhost
+          DB_PORT: 5432
           SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -81,7 +94,11 @@ jobs:
       - name: 🧪 Run Users Tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          DB_NAME: ku_volunteer_db
+          DB_USER: ku_volunteer_user
+          DB_PASSWORD: testpassword123
+          DB_HOST: localhost
+          DB_PORT: 5432
           SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -92,7 +109,11 @@ jobs:
       - name: 🧪 Run Config Tests
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          DB_NAME: ku_volunteer_db
+          DB_USER: ku_volunteer_user
+          DB_PASSWORD: testpassword123
+          DB_HOST: localhost
+          DB_PORT: 5432
           SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
@@ -103,7 +124,11 @@ jobs:
       - name: 📊 Run All Tests with Coverage
         working-directory: ./backend
         env:
-          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          DB_NAME: ku_volunteer_db
+          DB_USER: ku_volunteer_user
+          DB_PASSWORD: testpassword123
+          DB_HOST: localhost
+          DB_PORT: 5432
           SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
