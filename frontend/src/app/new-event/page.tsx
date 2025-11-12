@@ -108,15 +108,14 @@ function ActivityFormContent() {
           setCoverUrl(null);
         }
         
-        // Format dates for input fields (YYYY-MM-DD)
+        // Format dates for input fields
         if (activityData.start_at) {
           const startDate = new Date(activityData.start_at);
-          // Use UTC methods to avoid timezone conversion
-          const year = startDate.getUTCFullYear();
-          const month = String(startDate.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(startDate.getUTCDate()).padStart(2, '0');
-          const hours = String(startDate.getUTCHours()).padStart(2, '0');
-          const minutes = String(startDate.getUTCMinutes()).padStart(2, '0');
+          const year = startDate.getFullYear();
+          const month = String(startDate.getMonth() + 1).padStart(2, '0');
+          const day = String(startDate.getDate()).padStart(2, '0');
+          const hours = String(startDate.getHours()).padStart(2, '0');
+          const minutes = String(startDate.getMinutes()).padStart(2, '0');
           
           setDateStart(`${year}-${month}-${day}`);
           setTimeStart(`${hours}:${minutes}`);
@@ -124,12 +123,11 @@ function ActivityFormContent() {
         
         if (activityData.end_at) {
           const endDate = new Date(activityData.end_at);
-          // Use UTC methods to avoid timezone conversion
-          const year = endDate.getUTCFullYear();
-          const month = String(endDate.getUTCMonth() + 1).padStart(2, '0');
-          const day = String(endDate.getUTCDate()).padStart(2, '0');
-          const hours = String(endDate.getUTCHours()).padStart(2, '0');
-          const minutes = String(endDate.getUTCMinutes()).padStart(2, '0');
+          const year = endDate.getFullYear();
+          const month = String(endDate.getMonth() + 1).padStart(2, '0');
+          const day = String(endDate.getDate()).padStart(2, '0');
+          const hours = String(endDate.getHours()).padStart(2, '0');
+          const minutes = String(endDate.getMinutes()).padStart(2, '0');
           
           setDateEnd(`${year}-${month}-${day}`);
           setTimeEnd(`${hours}:${minutes}`);
@@ -179,23 +177,29 @@ function ActivityFormContent() {
             setCategories(activityData.categories || []);
             setMaxParticipants(activityData.max_participants || "");
             setHour(activityData.hours_awarded || "");
+            // LOCAL time
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
-              setDateStart(startDate.toISOString().split('T')[0]);
-              setTimeStart(startDate.toLocaleTimeString('en-GB', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-              }));
+              const year = startDate.getFullYear();
+              const month = String(startDate.getMonth() + 1).padStart(2, '0');
+              const day = String(startDate.getDate()).padStart(2, '0');
+              const hours = String(startDate.getHours()).padStart(2, '0');
+              const minutes = String(startDate.getMinutes()).padStart(2, '0');
+              
+              setDateStart(`${year}-${month}-${day}`);
+              setTimeStart(`${hours}:${minutes}`);
             }
+            
             if (activityData.end_at) {
               const endDate = new Date(activityData.end_at);
-              setDateEnd(endDate.toISOString().split('T')[0]);
-              setTimeEnd(endDate.toLocaleTimeString('en-GB', { 
-                hour: '2-digit', 
-                minute: '2-digit',
-                hour12: false 
-              }));
+              const year = endDate.getFullYear();
+              const month = String(endDate.getMonth() + 1).padStart(2, '0');
+              const day = String(endDate.getDate()).padStart(2, '0');
+              const hours = String(endDate.getHours()).padStart(2, '0');
+              const minutes = String(endDate.getMinutes()).padStart(2, '0');
+              
+              setDateEnd(`${year}-${month}-${day}`);
+              setTimeEnd(`${hours}:${minutes}`);
             }
             // set coverUrl from backend image field (normalize relative urls)
             if (activityData.cover_image || activityData.cover_image_url) {
