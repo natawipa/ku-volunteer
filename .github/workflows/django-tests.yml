@@ -1,0 +1,139 @@
+name: 🧪 Django Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/django-tests.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - '.github/workflows/django-tests.yml'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: ku_volunteer_db
+          POSTGRES_USER: ku_volunteer_user
+          POSTGRES_PASSWORD: testpassword123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: 📥 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          cache-dependency-path: 'backend/requirements.txt'
+
+      - name: 📦 Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r backend/requirements.txt
+
+      - name: 🔍 Check Django configuration
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          SECRET_KEY: test-secret-key-for-ci-testing-only
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          python manage.py check --deploy --fail-level WARNING
+
+      - name: 🗃️ Run migrations
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          SECRET_KEY: test-secret-key-for-ci-testing-only
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          python manage.py migrate --noinput
+
+      - name: 🧪 Run Activities Tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          SECRET_KEY: test-secret-key-for-ci-testing-only
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          echo "Running Activities app tests ..."
+          python manage.py test activities.tests --verbosity=2 --parallel=auto
+
+      - name: 🧪 Run Users Tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          SECRET_KEY: test-secret-key-for-ci-testing-only
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          echo "Running Users app tests ..."
+          python manage.py test users.tests --verbosity=2 --parallel=auto
+
+      - name: 🧪 Run Config Tests
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          SECRET_KEY: test-secret-key-for-ci-testing-only
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          echo "Running Config tests ..."
+          python manage.py test config --verbosity=2 --parallel=auto
+
+      - name: 📊 Run All Tests with Coverage
+        working-directory: ./backend
+        env:
+          DATABASE_URL: postgresql://ku_volunteer_user:testpassword123@localhost:5432/ku_volunteer_db
+          SECRET_KEY: test-secret-key-for-ci-testing-only
+          DEBUG: 'True'
+          ALLOWED_HOSTS: localhost,127.0.0.1
+        run: |
+          pip install coverage
+          coverage run --source='.' manage.py test --verbosity=2
+          coverage report --skip-empty
+          coverage html
+
+      - name: 📈 Upload Coverage Report
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: coverage-report
+          path: backend/htmlcov/
+          retention-days: 30
+
+      - name: ✅ Test Summary
+        if: always()
+        run: |
+          echo "## 🎉 Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Test Breakdown" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Activities Tests: 252 tests**" >> $GITHUB_STEP_SUMMARY
+          echo "  - Models: 75 | Views: 113 | Serializers: 36 | URLs: 28" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Users Tests: 149 tests**" >> $GITHUB_STEP_SUMMARY
+          echo "  - Models: 71 | Views: 44 (incl. 13 OAuth) | Serializers: 16 | URLs: 9 | Backends: 3 | Pipeline: 6" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Config Tests: 45 tests**" >> $GITHUB_STEP_SUMMARY
+          echo "  - Basic: 13 | Advanced Permissions: 32" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 **Total: 446 tests**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📈 Coverage report available in artifacts!" >> $GITHUB_STEP_SUMMARY

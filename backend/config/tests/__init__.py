@@ -1,0 +1,3 @@
+"""
+Config app tests package.
+"""
