@@ -264,7 +264,7 @@ class ApplicationSerializerTestCase(TestCase):
         
         expected_fields = {
             'id', 'activity', 'activity_id', 'activity_title', 'activity_id_stored',
-            'student', 'student_email', 'student_name',
+            'student', 'student_email', 'student_name', 'student_id_external',
             'status', 'submitted_at', 'decision_at', 'decision_by', 'decision_by_email', 'notes'
         }
         self.assertEqual(set(data.keys()), expected_fields)
