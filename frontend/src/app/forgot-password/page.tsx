@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import React, { useState } from 'react';
 import Card from '../../app/(auth)/components/Card';
+import { apiService } from '@/lib/api';
 
 const ForgotPasswordPage: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -21,11 +22,19 @@ const ForgotPasswordPage: React.FC = () => {
     setLoading(true);
     setError('');
 
-    // Simulate API call for now
-    setTimeout(() => {
+    try {
+      const result = await apiService.forgotPassword(email.trim().toLowerCase());
+      
+      if (result.success) {
+        setIsSubmitted(true);
+      } else {
+        setError(result.error || 'Failed to send reset email');
+      }
+    } catch {
+      setError('Network error occurred. Please try again.');
+    } finally {
       setLoading(false);
-      setIsSubmitted(true);
-    }, 2000);
+    }
   };
 
   if (isSubmitted) {
