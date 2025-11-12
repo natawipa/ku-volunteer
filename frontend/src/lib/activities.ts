@@ -285,6 +285,22 @@ export const activitiesApi = {
       }
 
       console.log('Activity created successfully');
+      
+      // Upload poster images if provided and activity was created successfully
+      if (pictures && pictures.length > 0 && dataRes.id) {
+        console.log(`Uploading ${pictures.length} poster image(s) for new activity ${dataRes.id}...`);
+        const uploadResult = await this.uploadPosterImages(dataRes.id, pictures);
+        
+        if (!uploadResult.success) {
+          console.warn('Poster upload failed:', uploadResult.error);
+          return {
+            success: true,
+            data: dataRes,
+            error: `Activity created, but poster upload failed: ${uploadResult.error}`
+          };
+        }
+      }
+      
       return { success: true, data: dataRes };
     } catch (error) {
       console.error('createActivity error:', error);
@@ -392,7 +408,7 @@ export const activitiesApi = {
       console.log('Fetching existing posters to find available order slots...');
       
       // Add a delay to ensure database has been updated
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 800));
       
       const existingPostersResp = await this.getPosterImages(activityId);
       const existingOrders = new Set<number>();
@@ -501,6 +517,11 @@ export const activitiesApi = {
           return { success: false, error: errorMsg };
         }
         console.log(`Poster ${idx + 1} uploaded successfully with order ${orderToUse}`);
+        
+        // Add small delay between uploads
+        if (idx < pictures.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 300));
+        }
       }
       
       console.log('All posters uploaded successfully!');
