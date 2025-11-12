@@ -33,10 +33,10 @@ jobs:
 
     steps:
       - name: 📥 Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: 'pip'
@@ -114,7 +114,7 @@ jobs:
           coverage html
 
       - name: 📈 Upload Coverage Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
@@ -127,13 +127,13 @@ jobs:
           echo "## 🎉 Test Results" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Test Breakdown" >> $GITHUB_STEP_SUMMARY
-          echo "- ✅ **Activities Tests: 252 tests**" >> $GITHUB_STEP_SUMMARY
-          echo "  - Models: 75 | Views: 113 | Serializers: 36 | URLs: 28" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ **Activities Tests: 220 tests**" >> $GITHUB_STEP_SUMMARY
+          echo "  - Models: 75 | Activity Views: 17 | Application Views: 34 | Check-in Views: 11 | Serializers: 36 | URLs: 28 | Edge Cases: 23" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ **Users Tests: 149 tests**" >> $GITHUB_STEP_SUMMARY
-          echo "  - Models: 71 | Views: 44 (incl. 13 OAuth) | Serializers: 16 | URLs: 9 | Backends: 3 | Pipeline: 6" >> $GITHUB_STEP_SUMMARY
+          echo "  - Models: 71 | Views: 42 (incl. 13 OAuth) | Serializers: 16 | URLs: 9 | Backends: 3 | Pipeline: 6" >> $GITHUB_STEP_SUMMARY
           echo "- ✅ **Config Tests: 45 tests**" >> $GITHUB_STEP_SUMMARY
-          echo "  - Basic: 13 | Advanced Permissions: 32" >> $GITHUB_STEP_SUMMARY
+          echo "  - Utils: 13 | Advanced Permissions: 32" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 **Total: 446 tests**" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 **Total: 414 tests passing** (416 test methods defined)" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "📈 Coverage report available in artifacts!" >> $GITHUB_STEP_SUMMARY
