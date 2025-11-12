@@ -398,7 +398,7 @@ class StudentProfileModelTest(TestCase):
         self.assertIsNone(profile.faculty)
         self.assertIsNone(profile.major)
 
-    def test_one_to_one_relationship_with_user(self):
+    def test_one_to_one_relationship_student_profile_with_user(self):
         """Test one-to-one relationship between User and StudentProfile."""
         profile = StudentProfile.objects.create(
             user=self.user,
@@ -683,7 +683,7 @@ class OrganizerProfileModelTest(TestCase):
         self.assertIsNone(profile.organization_type)
         self.assertIsNone(profile.organization_name)
 
-    def test_one_to_one_relationship_with_user(self):
+    def test_one_to_one_relationship_organizer_profile_with_user(self):
         """Test one-to-one relationship between User and OrganizerProfile."""
         profile = OrganizerProfile.objects.create(
             user=self.user,

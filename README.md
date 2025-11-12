@@ -53,13 +53,11 @@ This creates:
 - **25 Student accounts**: For testing applications and activity participation
 - **3 Organizer accounts**: 2 from the same organization (Green Earth Foundation), 1 from a different organization (Tech For Good)
 - **10 Activities total** (5 per organization) with varied statuses:
-  - **COMPLETE** (2 activities): Ended 30 days ago, 100% filled (16 approved students each)
-  - **DURING** (2 activities): Currently happening, 100% filled (21 approved students each)
-  - **UPCOMING** (2 activities): Starts in 3 days, 50% filled + pending applications
-  - **OPEN** (2 activities): Starts in 20 days, 30% filled + pending applications
-  - **FULL** (2 activities): Starts in 10 days, 100% filled (15 approved students each), no more applications allowed
-- **150+ Student Applications** across all activities with proper status distribution
-
+  - **COMPLETE** (2 activities): Ended 30 days ago
+  - **DURING** (2 activities): Currently happening
+  - **UPCOMING** (2 activities): Starts in 3 days
+  - **OPEN** (2 activities): Starts in 20 days
+  - **FULL** (2 activities): Starts in 10 days
 **Sample Login Credentials:**
 - **Admin**: 
   - Email: `admin@ku.th`
@@ -141,12 +139,6 @@ docker compose exec backend python manage.py migrate
 # Seed the database with sample data
 docker compose exec backend python manage.py seed_data
 ```
-
-**Missing participants in activity detail page**
-- If you see fewer participants than expected, check the pagination settings in `backend/config/pagination.py`
-- Default `page_size` is set to 100 to accommodate activities with many participants
-- For activities with 100+ participants, consider increasing this value or implementing proper pagination UI
-
 **Google OAuth redirect_uri_mismatch**
 - Ensure Google Console has Authorized redirect URI: `http://localhost:8000/api/auth/google/callback/`
 
