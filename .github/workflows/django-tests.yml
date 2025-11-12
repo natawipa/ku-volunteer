@@ -8,7 +8,6 @@ on:
       - '.github/workflows/django-tests.yml'
   pull_request:
     branches: [main]
-    # Run on all file changes in PRs, not just backend
 
 jobs:
   test:
@@ -17,11 +16,11 @@ jobs:
     
     services:
       postgres:
-        image: postgres:15-alpine
+        image: postgres:16
         env:
-          POSTGRES_DB: ku_volunteer_db
-          POSTGRES_USER: ku_volunteer_user
-          POSTGRES_PASSWORD: testpassword123
+          POSTGRES_DB: ${{ secrets.TEST_DB_NAME}}
+          POSTGRES_USER: ${{ secrets.TEST_DB_USER}}
+          POSTGRES_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
         ports:
           - 5432:5432
         options: >-
@@ -49,12 +48,12 @@ jobs:
       - name: 🔍 Check Django configuration
         working-directory: ./backend
         env:
-          DB_NAME: ku_volunteer_db
-          DB_USER: ku_volunteer_user
-          DB_PASSWORD: testpassword123
+          DB_NAME: ${{ secrets.TEST_DB_NAME}}
+          DB_USER: ${{ secrets.TEST_DB_USER}}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
           DB_HOST: localhost
           DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
+          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
@@ -63,12 +62,12 @@ jobs:
       - name: 🗃️ Run migrations
         working-directory: ./backend
         env:
-          DB_NAME: ku_volunteer_db
-          DB_USER: ku_volunteer_user
-          DB_PASSWORD: testpassword123
+          DB_NAME: ${{ secrets.TEST_DB_NAME}}
+          DB_USER: ${{ secrets.TEST_DB_USER}}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
           DB_HOST: localhost
           DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
+          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
@@ -77,12 +76,12 @@ jobs:
       - name: 🧪 Run Activities Tests
         working-directory: ./backend
         env:
-          DB_NAME: ku_volunteer_db
-          DB_USER: ku_volunteer_user
-          DB_PASSWORD: testpassword123
+          DB_NAME: ${{ secrets.TEST_DB_NAME}}
+          DB_USER: ${{ secrets.TEST_DB_USER}}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
           DB_HOST: localhost
           DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
+          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
@@ -92,12 +91,12 @@ jobs:
       - name: 🧪 Run Users Tests
         working-directory: ./backend
         env:
-          DB_NAME: ku_volunteer_db
-          DB_USER: ku_volunteer_user
-          DB_PASSWORD: testpassword123
+          DB_NAME: ${{ secrets.TEST_DB_NAME}}
+          DB_USER: ${{ secrets.TEST_DB_USER}}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
           DB_HOST: localhost
           DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
+          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
@@ -107,12 +106,12 @@ jobs:
       - name: 🧪 Run Config Tests
         working-directory: ./backend
         env:
-          DB_NAME: ku_volunteer_db
-          DB_USER: ku_volunteer_user
-          DB_PASSWORD: testpassword123
+          DB_NAME: ${{ secrets.TEST_DB_NAME}}
+          DB_USER: ${{ secrets.TEST_DB_USER}}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
           DB_HOST: localhost
           DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
+          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
@@ -122,12 +121,12 @@ jobs:
       - name: 📊 Run All Tests with Coverage
         working-directory: ./backend
         env:
-          DB_NAME: ku_volunteer_db
-          DB_USER: ku_volunteer_user
-          DB_PASSWORD: testpassword123
+          DB_NAME: ${{ secrets.TEST_DB_NAME}}
+          DB_USER: ${{ secrets.TEST_DB_USER}}
+          DB_PASSWORD: ${{ secrets.TEST_DB_PASSWORD}}
           DB_HOST: localhost
           DB_PORT: 5432
-          SECRET_KEY: test-secret-key-for-ci-testing-only-with-at-least-fifty-characters-to-pass-security-check
+          SECRET_KEY: ${{ secrets.TEST_SECRET_KEY}}
           DEBUG: 'True'
           ALLOWED_HOSTS: localhost,127.0.0.1
         run: |
