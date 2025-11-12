@@ -111,17 +111,42 @@ function ActivityFormContent() {
         // Format dates for input fields (YYYY-MM-DD)
         if (activityData.start_at) {
           const startDate = new Date(activityData.start_at);
-          setDateStart(startDate.toISOString().split('T')[0]);
-          setTimeStart(startDate.toTimeString().slice(0, 5));
+          // Use UTC methods to avoid timezone conversion
+          const year = startDate.getUTCFullYear();
+          const month = String(startDate.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(startDate.getUTCDate()).padStart(2, '0');
+          const hours = String(startDate.getUTCHours()).padStart(2, '0');
+          const minutes = String(startDate.getUTCMinutes()).padStart(2, '0');
+          
+          setDateStart(`${year}-${month}-${day}`);
+          setTimeStart(`${hours}:${minutes}`);
         }
         
         if (activityData.end_at) {
           const endDate = new Date(activityData.end_at);
-          setDateEnd(endDate.toISOString().split('T')[0]);
-          setTimeEnd(endDate.toTimeString().slice(0, 5));
+          // Use UTC methods to avoid timezone conversion
+          const year = endDate.getUTCFullYear();
+          const month = String(endDate.getUTCMonth() + 1).padStart(2, '0');
+          const day = String(endDate.getUTCDate()).padStart(2, '0');
+          const hours = String(endDate.getUTCHours()).padStart(2, '0');
+          const minutes = String(endDate.getUTCMinutes()).padStart(2, '0');
+          
+          setDateEnd(`${year}-${month}-${day}`);
+          setTimeEnd(`${hours}:${minutes}`);
         }
         
         console.log('Activity data loaded for editing:', activityData);
+        
+        // Debug log to verify times
+        console.log('Time debug:', {
+          start_at: activityData.start_at,
+          parsedStart: new Date(activityData.start_at),
+          displayTimeStart: `${String(new Date(activityData.start_at).getUTCHours()).padStart(2, '0')}:${String(new Date(activityData.start_at).getUTCMinutes()).padStart(2, '0')}`,
+          end_at: activityData.end_at,
+          parsedEnd: new Date(activityData.end_at),
+          displayTimeEnd: `${String(new Date(activityData.end_at).getUTCHours()).padStart(2, '0')}:${String(new Date(activityData.end_at).getUTCMinutes()).padStart(2, '0')}`
+        });
+        
         // load existing poster images if present on activityData
         try {
           const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
@@ -157,12 +182,20 @@ function ActivityFormContent() {
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
               setDateStart(startDate.toISOString().split('T')[0]);
-              setTimeStart(startDate.toTimeString().slice(0, 5));
+              setTimeStart(startDate.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              }));
             }
             if (activityData.end_at) {
               const endDate = new Date(activityData.end_at);
               setDateEnd(endDate.toISOString().split('T')[0]);
-              setTimeEnd(endDate.toTimeString().slice(0, 5));
+              setTimeEnd(endDate.toLocaleTimeString('en-GB', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              }));
             }
             // set coverUrl from backend image field (normalize relative urls)
             if (activityData.cover_image || activityData.cover_image_url) {
@@ -308,7 +341,7 @@ function ActivityFormContent() {
         alert('Deletion request submitted successfully. An admin will review it.');
         setShowDeleteModal(false);
         setDeletionReason("");
-        router.push('/all-events');
+        router.push(`/event-detail/${activityId}`);
       } else {
         throw new Error(deleteReqResponse.error || 'Failed to submit deletion request');
       }
@@ -384,9 +417,14 @@ function ActivityFormContent() {
     setIsSubmitting(true);
   
     try {
+      // combine date and time
       const formatLocalDateTime = (dateStr: string, timeStr: string) => {
-       return `${dateStr}T${timeStr}:00`; // Returns string like "2024-01-13T15:00:00"
+        // If either part is missing, return an empty string.
+        if (!dateStr || !timeStr) return '';
+        const local = new Date(`${dateStr}T${timeStr}`);
+        return local.toISOString();
       };
+
       const startDateTime = formatLocalDateTime(dateStart, timeStart);
       const endDateTime = formatLocalDateTime(dateEnd, timeEnd);
       const activityData = {

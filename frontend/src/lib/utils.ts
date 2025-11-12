@@ -1,5 +1,5 @@
 import { API_ENDPOINTS, ENV, ERROR_MESSAGES, STORAGE_KEYS } from './constants';
-import type { ApiError, ApiResponse, LoginResponse } from './types';
+import type { ApiError, ApiResponse, LoginResponse, Activity } from './types';
 
 // HTTP client class for API requests
 class HttpClient {
@@ -357,3 +357,82 @@ export const handleApiError = (error: ApiError | string): string => {
   
   return ERROR_MESSAGES.SERVER_ERROR;
 };
+
+// Transform activity data for event-detail
+interface PosterImage {
+  image: string;
+}
+
+export interface TransformedEvent {
+  id: number;
+  title: string;
+  post: string;
+  datestart: string;
+  dateend: string;
+  timestart: string;
+  timeend: string;
+  location: string;
+  category: string[];
+  capacity: number;
+  currentParticipants: number;
+  organizer: string;
+  description: string;
+  image: string;
+  additionalImages: string[];
+}
+
+function normalizeUrl(url: string): string {
+  if (!url) return url;
+  try {
+    new URL(url);
+    return url;
+  } catch {
+    const base = ENV.API_BASE_URL.replace(/\/$/, '');
+    let path = url.startsWith('/') ? url : `/${url}`;
+    if (!path.startsWith('/media')) {
+      path = path.startsWith('/') ? `/media${path}` : `/media/${path}`;
+    }
+    return `${base}${path}`;
+  }
+}
+
+export function transformActivityData(activity: Activity): TransformedEvent {
+  const posterImages: PosterImage[] = Array.isArray((activity as unknown as { poster_images?: PosterImage[] }).poster_images) 
+    ? (activity as unknown as { poster_images: PosterImage[] }).poster_images 
+    : [];
+
+  return {
+    id: activity.id,
+    title: activity.title || 'Untitled Activity',
+    post: new Date(activity.created_at || new Date()).toLocaleDateString('en-GB'),
+    datestart: new Date(activity.start_at || new Date()).toLocaleDateString('en-GB'),
+    dateend: new Date(activity.end_at || new Date()).toLocaleDateString('en-GB'),
+    timestart: new Date(activity.start_at || new Date()).toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    }),
+    timeend: new Date(activity.end_at || new Date()).toLocaleTimeString('en-GB', { 
+      hour: '2-digit', 
+      minute: '2-digit'
+    }),
+    location: activity.location || 'Unknown Location',
+    category: activity.categories || [],
+    capacity: activity.max_participants || 0,
+    currentParticipants: activity.current_participants || 0,
+    organizer: activity.organizer_name || 'Unknown Organizer',
+    description: activity.description || 'No description available',
+    image: (() => {
+      const raw = activity.cover_image_url || activity.cover_image || null;
+      if (raw && typeof raw === 'string') return normalizeUrl(raw);
+      if (posterImages.length > 0) {
+        const first = posterImages.find(p => typeof p.image === 'string' && p.image.length > 0);
+        if (first?.image) return normalizeUrl(first.image);
+      }
+      return "/default-event.jpg";
+    })(),
+    additionalImages: posterImages
+      .map(p => p.image)
+      .filter((image): image is string => typeof image === 'string' && image.length > 0)
+      .map(normalizeUrl),
+  };
+}
