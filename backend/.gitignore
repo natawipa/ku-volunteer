@@ -10,10 +10,6 @@ __pycache__/
 static/
 media/
 
-# Django migrations
-**/migrations/
-!**/migrations/__init__.py
-
 # SQLite database
 *.sqlite3
 
