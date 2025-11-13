@@ -35,6 +35,7 @@ interface ApprovedListProps {
   applications: ActivityApplication[];
   loading: boolean;
   eventEndDate?: string;
+  eventStartDate?: string;
 }
 
 interface EventDetailsProps {
@@ -160,7 +161,7 @@ export function ApplicantsList({
   );
 }
 
-export function ApprovedList({ applications, loading, eventEndDate }: ApprovedListProps) {
+export function ApprovedList({ applications, loading, eventEndDate, eventStartDate }: ApprovedListProps) {
   const [checkInRecords, setCheckInRecords] = React.useState<CheckInRecord[]>([]);
   const [loadingCheckIn, setLoadingCheckIn] = React.useState(false);
   const activityId = applications[0]?.activity_id || applications[0]?.activity;
@@ -184,13 +185,13 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
 
     const studentId = application.student ?? application.studentid;
     
-    console.log('Look up student with ID:', { studentId, totalRecords: checkInRecords.length, eventEndDate });
+    console.log('Look up student with ID:', { studentId, totalRecords: checkInRecords.length, eventEndDate, eventStartDate });
     
     const checkInRecord = getStudentCheckInRecord(studentId);
     console.log('Check-in record result:', checkInRecord);
     
-    return determineCheckInStatus(checkInRecord, eventEndDate);
-  }, [checkInRecords, getStudentCheckInRecord, eventEndDate]);
+    return determineCheckInStatus(checkInRecord, eventEndDate, eventStartDate);
+  }, [checkInRecords, getStudentCheckInRecord, eventEndDate, eventStartDate]);
 
   // Fetch check-in records for activity
   React.useEffect(() => {
