@@ -307,7 +307,12 @@ export default function EventPage({ params }: PageProps) {
               />
             )}
             {activeSection === 'approved' && (
-              <ApprovedList applications={applications} loading={loadingApplications} eventEndDate={transformedEvent.dateend} />
+              <ApprovedList 
+                applications={applications} 
+                loading={loadingApplications} 
+                eventEndDate={event.end_at}
+                eventStartDate={event.start_at}
+              />
             )}
           </div>
         ) : (

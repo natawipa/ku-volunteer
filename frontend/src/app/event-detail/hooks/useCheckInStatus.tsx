@@ -68,16 +68,32 @@ export function useCheckInStatus(
 
 export function determineCheckInStatus(
   checkInRecord: CheckInRecord | undefined,
-  eventEndDate: string | undefined
-): string {
+  eventEndDate: string | undefined,
+  eventStartDate: string | undefined
+): string {  
   // if student has checked in
   if (checkInRecord?.attendance_status === 'present') {
-    return APPLICATION_STATUS.CHECKED_IN;
+    console.log('Student is CHECKED_IN (present)');
+    return 'checked_in';
   }
 
-  // if student is marked absent by organizer
-  if (checkInRecord?.attendance_status === 'absent' && checkInRecord?.marked_absent_at) {
-    return APPLICATION_STATUS.ABSENT;
+  // if student is marked absent by organizer or system
+  if (checkInRecord?.attendance_status === 'absent') {
+    console.log('Student is ABSENT (marked)');
+    return 'absent';
+  }
+  
+  // Check if activity has started
+  if (eventStartDate) {
+    const now = new Date();
+    const startDate = new Date(eventStartDate);
+    
+    console.log('Checking if activity has started:', { now, startDate, hasStarted: now >= startDate });
+    
+    if (now >= startDate) {
+      // Activity has started and student hasn't checked in = absent
+      return 'absent';
+    }
   }
   
   // if activity has ended
@@ -87,12 +103,10 @@ export function determineCheckInStatus(
     
     if (now > endDate) {
       // Activity has ended and student didn't check in = absent
-      if (!checkInRecord || checkInRecord.attendance_status as string!== 'present') {
-        return APPLICATION_STATUS.ABSENT;
-      }
+      return 'absent';
     }
   }
 
-  // approved (activity ongoing
+  // approved (activity not started yet)
   return APPLICATION_STATUS.APPROVED;
 }
