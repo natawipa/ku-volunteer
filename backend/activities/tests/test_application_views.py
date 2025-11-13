@@ -385,7 +385,7 @@ class StudentCheckInViewTestCase(TestCase):
         self.code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
 
     def test_check_in_with_valid_code(self):

@@ -75,7 +75,7 @@ class StudentCheckInViewTestCase(TestCase):
         self.code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
 
     def test_check_in_with_valid_code(self):
@@ -208,7 +208,7 @@ class CheckInCodeManagementTestCase(TestCase):
         # Verify code exists (may have been created automatically)
         code = DailyCheckInCode.objects.filter(
             activity=self.activity,
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         ).first()
         if code:
             self.assertEqual(len(code.code), 6)
@@ -219,7 +219,7 @@ class CheckInCodeManagementTestCase(TestCase):
         code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         self.client.force_authenticate(user=self.organizer_user)
@@ -236,7 +236,7 @@ class CheckInCodeManagementTestCase(TestCase):
         old_code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='OLD123',
-            valid_date=timezone.now().date() - timedelta(days=1)
+            valid_date=timezone.localtime().date() - timedelta(days=1)
         )
         
         self.client.force_authenticate(user=self.organizer_user)

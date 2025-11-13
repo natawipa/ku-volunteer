@@ -99,7 +99,7 @@ class StudentCheckInTestCase(TestCase):
         self.daily_code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
 
     def test_check_in_with_valid_code(self):
@@ -192,7 +192,7 @@ class StudentCheckInTestCase(TestCase):
         DailyCheckInCode.objects.create(
             activity=future_activity,
             code='FUT123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         with self.assertRaises(ValidationError) as context:
@@ -230,7 +230,7 @@ class StudentCheckInTestCase(TestCase):
         DailyCheckInCode.objects.create(
             activity=past_activity,
             code='PST123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         with self.assertRaises(ValidationError) as context:

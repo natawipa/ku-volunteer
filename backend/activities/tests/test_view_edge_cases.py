@@ -129,7 +129,7 @@ class ConcurrencyTestCase(TestCase):
         code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         # Try to check in twice
@@ -483,7 +483,7 @@ class EdgeCaseTestCase(TestCase):
         DailyCheckInCode.objects.create(
             activity=activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         self.client.force_authenticate(user=self.student_user)
@@ -520,7 +520,7 @@ class EdgeCaseTestCase(TestCase):
         DailyCheckInCode.objects.create(
             activity=activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         self.client.force_authenticate(user=self.student_user)
@@ -792,7 +792,7 @@ class EdgeCaseTestCase(TestCase):
         DailyCheckInCode.objects.create(
             activity=activity,
             code='EXP123',
-            valid_date=timezone.now().date() - timedelta(days=1)
+            valid_date=timezone.localtime().date() - timedelta(days=1)
         )
         
         self.client.force_authenticate(user=self.student_user)
@@ -829,7 +829,7 @@ class EdgeCaseTestCase(TestCase):
         DailyCheckInCode.objects.create(
             activity=activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
         
         self.client.force_authenticate(user=self.student_user)

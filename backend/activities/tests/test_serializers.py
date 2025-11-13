@@ -692,7 +692,7 @@ class DailyCheckInCodeSerializerTestCase(TestCase):
         self.code = DailyCheckInCode.objects.create(
             activity=self.activity,
             code='ABC123',
-            valid_date=timezone.now().date()
+            valid_date=timezone.localtime().date()
         )
 
     def test_daily_checkin_code_serializer_fields(self):
