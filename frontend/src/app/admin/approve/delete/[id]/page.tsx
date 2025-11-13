@@ -308,10 +308,13 @@ export default function Page({ params }: PageProps) {
                   type="checkbox"
                   className="w-4 h-4"
                   checked={approveChecked}
-                  onChange={() => {
-                    setApproveChecked(true);
-                    setRejectChecked(false);
-                    setShowRejectModal(false);
+                  onChange={() => { 
+                    setApproveChecked(v => !v); 
+                    if (!approveChecked) { 
+                      setRejectChecked(false); 
+                      setRejectReason(''); 
+                      setShowRejectModal(false);
+                    } 
                   }}
                 />
                 Approve Deletion
@@ -322,8 +325,15 @@ export default function Page({ params }: PageProps) {
                   className="w-4 h-4"
                   checked={rejectChecked}
                   onChange={() => {
-                    setShowRejectModal(true);
-                    setApproveChecked(false);
+                    if (!rejectChecked) {
+                      setShowRejectModal(true);
+                      setRejectChecked(true);
+                      setApproveChecked(false);
+                    } else {
+                      setRejectChecked(false);
+                      setRejectReason('');
+                      setShowRejectModal(false);
+                    }
                   }}
                 />
                 Reject Deletion
