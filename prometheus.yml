@@ -1,0 +1,31 @@
+# Prometheus Configuration for KU Volunteer
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'ku-volunteer-monitor'
+
+# Scrape configurations
+scrape_configs:
+  # Django application metrics
+  - job_name: 'django'
+    static_configs:
+      - targets: ['backend:8000']
+        labels:
+          service: 'backend'
+          environment: 'development'
+
+  # PostgreSQL database metrics
+  - job_name: 'postgres'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+        labels:
+          service: 'database'
+          environment: 'development'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+        labels:
+          service: 'monitoring'
