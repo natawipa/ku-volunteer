@@ -179,10 +179,26 @@ def get_student_application_status(student, activity):
     Returns:
         str: Application status ('pending', 'approved', 'rejected', 'cancelled') or None if no application
     """
-    from activities.models import Application
+    from django.utils import timezone
+    from activities.models import Application, StudentCheckIn
     
     try:
         application = Application.objects.get(student=student, activity=activity)
+        
+        # Check if activity has started (based on time, not status field)
+        now = timezone.now()
+        activity_has_started = now >= activity.start_at
+        
+        # Only show check-in status if activity has started
+        if activity_has_started:
+            try:
+                checkin = StudentCheckIn.objects.get(student=student, activity=activity)
+                return checkin.attendance_status  # Returns 'present' or 'absent'
+            except StudentCheckIn.DoesNotExist:
+                # Activity started but no check-in record yet, return application status
+                return application.status
+        
+        # Activity hasn't started yet, return application status only
         return application.status
     except Application.DoesNotExist:
         return None

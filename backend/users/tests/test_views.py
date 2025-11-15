@@ -1,13 +1,17 @@
 """
 Comprehensive test cases for user views and API endpoints.
 """
-from django.test import TestCase
+from unittest.mock import patch, Mock
+import json
+from django.test import TestCase, RequestFactory
 from django.urls import reverse
+from django.core.cache import cache
 from rest_framework import status
 from rest_framework.test import APIClient
 from rest_framework_simplejwt.tokens import RefreshToken
 
 from users.models import User, StudentProfile, OrganizerProfile
+from users.views import google_jwt_redirect, google_login
 from config.constants import UserRoles, OrganizationType
 
 
@@ -522,3 +526,294 @@ class UserDeleteViewTest(TestCase):
         response = self.client.delete(self.delete_url)
         
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class OAuthRegistrationViewTest(TestCase):
+    """Test cases for OAuth registration completion endpoint."""
+
+    def setUp(self):
+        """Set up test client and mock OAuth session data."""
+        self.client = APIClient()
+        self.oauth_register_url = reverse('oauth-register')
+        self.session_key = 'test-session-123'
+        
+        # Mock OAuth session data
+        self.session_data = {
+            'email': 'newuser@gmail.com',
+            'details': {
+                'email': 'newuser@gmail.com',
+                'first_name': 'Test',
+                'last_name': 'User',
+                'picture': 'https://example.com/photo.jpg'
+            }
+        }
+
+    def test_oauth_registration_student_success(self):
+        """Test successful OAuth registration for student."""
+        # Set up session
+        cache.set(f"oauth_session_{self.session_key}", self.session_data, timeout=600)
+        
+        data = {
+            'oauth_session': self.session_key,
+            'email': 'newuser@gmail.com',
+            'password': 'temppass123',
+            'role': UserRoles.STUDENT,
+            'first_name': 'Test',
+            'last_name': 'User',
+            'student_id_external': '6512345678',
+            'year': 3,
+            'faculty': 'Engineering',
+            'major': 'Computer Engineering'
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertTrue(response.data['success'])
+        self.assertIn('access', response.data)
+        self.assertIn('refresh', response.data)
+        self.assertIn('user', response.data)
+        self.assertIn('redirect_url', response.data)
+        
+        # Verify user was created
+        user = User.objects.get(email='newuser@gmail.com')
+        self.assertEqual(user.role, UserRoles.STUDENT)
+        self.assertTrue(hasattr(user, 'profile'))
+        self.assertEqual(user.profile.student_id_external, '6512345678')
+        
+        # Verify session was cleared
+        self.assertIsNone(cache.get(f"oauth_session_{self.session_key}"))
+
+    def test_oauth_registration_organizer_success(self):
+        """Test successful OAuth registration for organizer."""
+        cache.set(f"oauth_session_{self.session_key}", self.session_data, timeout=600)
+        
+        data = {
+            'oauth_session': self.session_key,
+            'email': 'newuser@gmail.com',
+            'password': 'temppass123',
+            'role': UserRoles.ORGANIZER,
+            'first_name': 'Test',
+            'last_name': 'Organizer',
+            'organization': 'Kasetsart University',
+            'organization_name': 'Student Affairs'
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        user = User.objects.get(email='newuser@gmail.com')
+        self.assertEqual(user.role, UserRoles.ORGANIZER)
+        self.assertTrue(hasattr(user, 'organizer_profile'))
+
+    def test_oauth_registration_missing_session_key(self):
+        """Test OAuth registration without session key fails."""
+        data = {
+            'email': 'newuser@gmail.com',
+            'password': 'temppass123',
+            'role': UserRoles.STUDENT
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('OAuth session key is required', response.data['error'])
+
+    def test_oauth_registration_invalid_session(self):
+        """Test OAuth registration with invalid/expired session fails."""
+        data = {
+            'oauth_session': 'invalid-session',
+            'email': 'newuser@gmail.com',
+            'password': 'temppass123',
+            'role': UserRoles.STUDENT
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('OAuth session expired or invalid', response.data['error'])
+
+    def test_oauth_registration_email_mismatch(self):
+        """Test OAuth registration with mismatched email fails."""
+        cache.set(f"oauth_session_{self.session_key}", self.session_data, timeout=600)
+        
+        data = {
+            'oauth_session': self.session_key,
+            'email': 'different@gmail.com',  # Different from session
+            'password': 'temppass123',
+            'role': UserRoles.STUDENT,
+            'student_id_external': '6512345678'
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+        self.assertIn('Email must match OAuth session', response.data['error'])
+
+    def test_oauth_registration_invalid_data(self):
+        """Test OAuth registration with invalid data fails."""
+        cache.set(f"oauth_session_{self.session_key}", self.session_data, timeout=600)
+        
+        data = {
+            'oauth_session': self.session_key,
+            'email': 'newuser@gmail.com',
+            'password': '',  # Invalid: empty password
+            'role': UserRoles.STUDENT,
+            'student_id_external': '6512345678'
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertIn('error', response.data)
+
+    def test_oauth_registration_student_without_student_id(self):
+        """Test OAuth registration for student without student_id fails."""
+        cache.set(f"oauth_session_{self.session_key}", self.session_data, timeout=600)
+        
+        data = {
+            'oauth_session': self.session_key,
+            'email': 'newuser@gmail.com',
+            'password': 'temppass123',
+            'role': UserRoles.STUDENT
+            # Missing student_id_external
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_oauth_registration_duplicate_email(self):
+        """Test OAuth registration with existing email."""
+        # Create existing user
+        User.objects.create_user(
+            email='existing@gmail.com',
+            password='testpass123',
+            role=UserRoles.STUDENT
+        )
+        
+        session_key = 'test-session-456'
+        session_data = {
+            'email': 'existing@gmail.com',
+            'details': {'email': 'existing@gmail.com'}
+        }
+        cache.set(f"oauth_session_{session_key}", session_data, timeout=600)
+        
+        data = {
+            'oauth_session': session_key,
+            'email': 'existing@gmail.com',
+            'password': 'newpass123',
+            'role': UserRoles.STUDENT,
+            'student_id_external': '6512345678'
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        # Should fail due to unique email constraint
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_oauth_registration_session_persists_on_error(self):
+        """Test that OAuth session is NOT cleared on validation error."""
+        session_key = 'test-session-789'
+        session_data = {
+            'email': 'newuser@gmail.com',
+            'details': {'email': 'newuser@gmail.com'}
+        }
+        cache.set(f"oauth_session_{session_key}", session_data, timeout=600)
+        
+        data = {
+            'oauth_session': session_key,
+            'email': 'newuser@gmail.com',
+            'password': '',  # Invalid
+            'role': UserRoles.STUDENT,
+            'student_id_external': '6512345678'
+        }
+        
+        response = self.client.post(self.oauth_register_url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        # Session should still exist for retry
+        self.assertIsNotNone(cache.get(f"oauth_session_{session_key}"))
+
+
+class GoogleJWTRedirectTest(TestCase):
+    """Test cases for Google JWT redirect view."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.factory = RequestFactory()
+        self.user = User.objects.create_user(
+            email='test@test.com',
+            password='testpass123',
+            role=UserRoles.STUDENT,
+            first_name='Test',
+            last_name='User'
+        )
+        StudentProfile.objects.create(
+            user=self.user,
+            student_id_external='6512345678'
+        )
+
+    @patch('users.views.get_client_url')
+    def test_google_jwt_redirect_success(self, mock_get_client_url):
+        """Test successful JWT redirect."""
+        mock_get_client_url.return_value = 'http://localhost:3000'
+        
+        request = self.factory.get('/api/users/auth/google/jwt-redirect/')
+        request.user = self.user
+        
+        response = google_jwt_redirect(request)
+        
+        self.assertEqual(response.status_code, 302)  # Redirect
+        self.assertIn('http://localhost:3000/auth/callback', response.url)
+        self.assertIn('access=', response.url)
+        self.assertIn('refresh=', response.url)
+        self.assertIn(f'role={UserRoles.STUDENT}', response.url)
+
+    @patch('users.views.get_client_url')
+    def test_google_jwt_redirect_json_mode(self, mock_get_client_url):
+        """Test JWT redirect with JSON mode."""
+        mock_get_client_url.return_value = 'http://localhost:3000'
+        
+        request = self.factory.get('/api/users/auth/google/jwt-redirect/?json=1')
+        request.user = self.user
+        
+        response = google_jwt_redirect(request)
+        
+        self.assertEqual(response.status_code, 200)
+        data = json.loads(response.content)
+        self.assertIn('access', data)
+        self.assertIn('refresh', data)
+        self.assertIn('user', data)
+        self.assertEqual(data['user']['email'], 'test@test.com')
+
+
+class GoogleLoginTest(TestCase):
+    """Test cases for Google login redirect."""
+
+    def setUp(self):
+        """Set up test data."""
+        self.factory = RequestFactory()
+
+    @patch('django.conf.settings.SOCIAL_AUTH_GOOGLE_OAUTH2_REDIRECT_URI', 'http://localhost:8000/api/auth/google/callback')
+    def test_google_login_redirect_with_settings(self):
+        """Test Google login redirect with configured redirect URI."""
+        request = self.factory.get('/api/auth/google/login/')
+        
+        response = google_login(request)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/api/auth/login/google-oauth2/', response.url)
+        self.assertIn('redirect_uri=', response.url)
+
+    def test_google_login_redirect_without_settings(self):
+        """Test Google login redirect without configured redirect URI."""
+        request = self.factory.get('/api/auth/google/login/')
+        
+        response = google_login(request)
+        
+        self.assertEqual(response.status_code, 302)
+        self.assertIn('/api/auth/login/google-oauth2/', response.url)
