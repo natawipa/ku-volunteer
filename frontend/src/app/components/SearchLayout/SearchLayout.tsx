@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect, useMemo } from "react";
-import { USER_ROLES, STORAGE_KEYS } from "../../lib/constants";
+import { USER_ROLES, STORAGE_KEYS } from "../../../lib/constants";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import SearchCard from "./SearchCard";
-import SearchResults from "./SearchResults";
-import type { Activity } from "../../lib/types";
+import SearchCard from "../SearchCard";
+import SearchResults from "../SearchResults";
+import type { Activity } from "../../../lib/types";
 // Define Event type for transformed activities
 type Event = {
 	id: number;
@@ -57,8 +57,12 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	const [isSearchApplied, setIsSearchApplied] = useState(false);
 	const [searchHistory, setSearchHistory] = useState<string[]>(() => {
 		if (typeof window !== "undefined") {
-			const stored = localStorage.getItem("searchHistory");
-			return stored ? JSON.parse(stored) : [];
+			try {
+				const stored = localStorage.getItem("searchHistory");
+				return stored ? JSON.parse(stored) : [];
+			} catch {
+				return [];
+			}
 		}
 		return [];
 	});
@@ -66,7 +70,11 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 
 	useEffect(() => {
 		if (typeof window !== "undefined") {
-			localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+			try {
+				localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+			} catch {
+				// ignore storage errors
+			}
 		}
 	}, [searchHistory]);
 
@@ -81,32 +89,34 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	}, []);
 
   // Detect user role (student/organizer/admin)
-  useEffect(() => {
-    try {
-      const rawUser = localStorage.getItem('user');
-      if (rawUser) {
-        const parsed = JSON.parse(rawUser);
-        const role = parsed?.role ?? parsed?.user_role;
-        if (role) {
-          setUserRole(String(role).toLowerCase());
-          return;
-        }
-      }
-      const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
-      if (rawUserData) {
-        const parsed = JSON.parse(rawUserData);
-        const role = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
-        if (role) {
-          setUserRole(String(role).toLowerCase());
-          return;
-        }
-      }
-      const direct = localStorage.getItem('role') || localStorage.getItem('userRole');
-      if (direct) {
-        setUserRole(String(direct).toLowerCase());
-      }
-    } catch {}
-  }, []);
+useEffect(() => {
+	try {
+		const rawUser = localStorage.getItem('user');
+		if (rawUser) {
+			const parsed = JSON.parse(rawUser);
+			const role = parsed?.role ?? parsed?.user_role;
+			if (role) {
+				setUserRole(String(role).toLowerCase());
+				return;
+			}
+		}
+		const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+		if (rawUserData) {
+			const parsed = JSON.parse(rawUserData);
+			const role = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
+			if (role) {
+				setUserRole(String(role).toLowerCase());
+				return;
+			}
+		}
+		const direct = localStorage.getItem('role') || localStorage.getItem('userRole');
+		if (direct) {
+			setUserRole(String(direct).toLowerCase());
+		}
+	} catch {
+		// ignore storage errors
+	}
+}, []);
 
 	// Sync local search state with parent isSearchActive
 	useEffect(() => {
@@ -219,15 +229,16 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 							{searchHistory.map((item, idx) => (
 								<div key={idx} className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 cursor-pointer">
 									<span
-										onClick={() => {
+										onClick={(e) => {
+											e.stopPropagation();
 											setSearchQuery(item);
 											setIsSearchApplied(true);
 											setIsOpen(false);
 										}}
 										className="flex-1 text-left"
 									>
-										{item}
-									</span>
+									{item}
+								</span>
 									<button
 										onClick={(e) => {
 											e.stopPropagation();

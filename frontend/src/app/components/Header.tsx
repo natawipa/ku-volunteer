@@ -7,7 +7,7 @@ import { auth } from "../../lib/utils";
 import { USER_ROLES } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
 
-import SearchLayout from "./SearchLayout";
+import SearchLayout from "./SearchLayout/SearchLayout";
 
 interface HeaderProps {
   activities?: Activity[];
