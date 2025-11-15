@@ -57,12 +57,8 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	const [isSearchApplied, setIsSearchApplied] = useState(false);
 	const [searchHistory, setSearchHistory] = useState<string[]>(() => {
 		if (typeof window !== "undefined") {
-			try {
-				const stored = localStorage.getItem("searchHistory");
-				return stored ? JSON.parse(stored) : [];
-			} catch {
-				return [];
-			}
+			const stored = localStorage.getItem("searchHistory");
+			return stored ? JSON.parse(stored) : [];
 		}
 		return [];
 	});
@@ -70,11 +66,7 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 
 	useEffect(() => {
 		if (typeof window !== "undefined") {
-			try {
-				localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
-			} catch {
-				// ignore storage errors
-			}
+			localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
 		}
 	}, [searchHistory]);
 
@@ -89,34 +81,32 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	}, []);
 
   // Detect user role (student/organizer/admin)
-useEffect(() => {
-	try {
-		const rawUser = localStorage.getItem('user');
-		if (rawUser) {
-			const parsed = JSON.parse(rawUser);
-			const role = parsed?.role ?? parsed?.user_role;
-			if (role) {
-				setUserRole(String(role).toLowerCase());
-				return;
-			}
-		}
-		const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
-		if (rawUserData) {
-			const parsed = JSON.parse(rawUserData);
-			const role = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
-			if (role) {
-				setUserRole(String(role).toLowerCase());
-				return;
-			}
-		}
-		const direct = localStorage.getItem('role') || localStorage.getItem('userRole');
-		if (direct) {
-			setUserRole(String(direct).toLowerCase());
-		}
-	} catch {
-		// ignore storage errors
-	}
-}, []);
+  useEffect(() => {
+    try {
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        const parsed = JSON.parse(rawUser);
+        const role = parsed?.role ?? parsed?.user_role;
+        if (role) {
+          setUserRole(String(role).toLowerCase());
+          return;
+        }
+      }
+      const rawUserData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
+      if (rawUserData) {
+        const parsed = JSON.parse(rawUserData);
+        const role = parsed?.role ?? parsed?.user?.role ?? parsed?.user_role;
+        if (role) {
+          setUserRole(String(role).toLowerCase());
+          return;
+        }
+      }
+      const direct = localStorage.getItem('role') || localStorage.getItem('userRole');
+      if (direct) {
+        setUserRole(String(direct).toLowerCase());
+      }
+    } catch {}
+  }, []);
 
 	// Sync local search state with parent isSearchActive
 	useEffect(() => {
@@ -229,16 +219,15 @@ useEffect(() => {
 							{searchHistory.map((item, idx) => (
 								<div key={idx} className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 cursor-pointer">
 									<span
-										onClick={(e) => {
-											e.stopPropagation();
+										onClick={() => {
 											setSearchQuery(item);
 											setIsSearchApplied(true);
 											setIsOpen(false);
 										}}
 										className="flex-1 text-left"
 									>
-									{item}
-								</span>
+										{item}
+									</span>
 									<button
 										onClick={(e) => {
 											e.stopPropagation();

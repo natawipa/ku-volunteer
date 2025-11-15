@@ -12,7 +12,7 @@ import Header from "../../components/Header";
 import Navbar from "@/app/components/Navbar";
 import HeroImage from "@/app/components/HeroImage";
 import EventStatusBadge from "../components/StatusBadge";
-import ActionButton from "../components/ActionButton";
+import ActionButton from "../components/ActionButton/ActionButton";
 import OrganizerSection from "../components/OrganizerSection";
 import { ApplicantsList, ApprovedList, EventDetails } from "../EventManagement";
 import RejectionModal from "../components/OrganizerRejectionModal";
