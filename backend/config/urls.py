@@ -9,6 +9,14 @@ from social_django.views import complete as social_complete
 from users.views import google_login
 from django.conf import settings
 from django.conf.urls.static import static
+import sentry_sdk
+
+def trigger_error(request):
+    # Capture a message to test Sentry connection
+    sentry_sdk.capture_message("Sentry test triggered from Django", level="info")
+    
+    # Also trigger an actual exception
+    division_by_zero = 1 / 0
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -20,14 +28,9 @@ urlpatterns = [
     # Explicit Google OAuth endpoints (override login to enforce custom redirect_uri)
     path('api/auth/google/login/', google_login, name='google_login'),
     path('api/auth/google/callback/', social_complete, {"backend": "google-oauth2"}, name='google_callback'),
+    # Sentry test endpoint
+    path('sentry-debug/', trigger_error),
 ]
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-def trigger_error(request):
-    division_by_zero = 1 / 0
-urlpatterns = [
-    path('sentry-debug/', trigger_error),
-    # ...
-]

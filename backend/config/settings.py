@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import logging
 from datetime import timedelta
 from pathlib import Path
 
@@ -240,9 +241,29 @@ PASSWORD_RESET_TIMEOUT = 3600  # 1 hour in seconds
 
 # Sentry Configuration
 import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+
+# Set up logging integration
+logging_integration = LoggingIntegration(
+    level=logging.INFO,        # Capture info and above as breadcrumbs
+    event_level=logging.ERROR  # Send errors as events
+)
+
 sentry_sdk.init(
-    dsn="https://e9d9298721877832e8863711d91cdcf0@o4510369678622720.ingest.us.sentry.io/4510369691926529",
+    dsn="https://8dfe215a3c0b36f57a0adf56a9cc8184@o4510369678622720.ingest.us.sentry.io/4510369709948928",
+    integrations=[
+        DjangoIntegration(
+            transaction_style='url',
+        ),
+        logging_integration,
+    ],
     # Add data like request headers and IP for users;
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
     send_default_pii=True,
+    # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
+    traces_sample_rate=1.0,
+    # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
+    profiles_sample_rate=1.0,
+    debug=DEBUG,  # Enable debug mode in development
 )
