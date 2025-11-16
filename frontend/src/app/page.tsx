@@ -1,7 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect } from "react";
-import Link from "next/link"; // Import Link from Next.js
+import { useRef, useState, useEffect, Suspense } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 import { auth } from "../lib/utils";
 import { USER_ROLES } from "../lib/constants";
@@ -17,7 +18,8 @@ import AdminLayout from "./admin/components/AdminLayout";
 import AdminContent from "./admin/AdminContent";
 import HeroImage from "./components/HeroImage";
 import Navbar from "./components/Navbar";
-import { CircleChevronRight } from "lucide-react"; // Only import icon from lucide-react
+import { CircleChevronRight } from "lucide-react";
+import { useModal } from "./components/Modal";
 
 const EVENT_TYPE_DEFINITIONS = [
   {
@@ -108,7 +110,9 @@ function SectionAllEvents({
 }
 
 // Main Home Page Component
-export default function Home() {
+function HomeContent() {
+  const searchParams = useSearchParams();
+  const { showModal } = useModal();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -122,6 +126,19 @@ export default function Home() {
   
   // Organizer-specific state
   const [organizerProfileId, setOrganizerProfileId] = useState<number | null>(null);
+
+  // Check for success message in URL
+  useEffect(() => {
+    const successParam = searchParams.get('success');
+    if (successParam) {
+      showModal(decodeURIComponent(successParam));
+      
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('success');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams, showModal]);
 
   // Check Authentication on Mount
   useEffect(() => {
@@ -280,5 +297,21 @@ export default function Home() {
         )}
     </div>
     </div>
+  );
+}
+
+// Export with wrapper
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-3 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
