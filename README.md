@@ -39,6 +39,9 @@ This will start:
 - Backend (Django): http://localhost:8000
 - Frontend (Next.js): http://localhost:3000
 - PostgreSQL database
+- Prometheus (metrics): http://localhost:9090
+- Grafana** (dashboards): http://localhost:3001
+- PostgreSQL Exporter (database metrics): http://localhost:9187
 
 #### 3. Apply database migrations (first time only)
 ```bash
@@ -85,6 +88,9 @@ docker compose exec backend python manage.py createsuperuser
 - **Frontend**: http://localhost:3000
 - **Backend API**: http://localhost:8000
 - **Admin Panel**: http://localhost:8000/admin/
+- **Prometheus**: http://localhost:9090
+- **Grafana**: http://localhost:3001 (default credentials: admin/admin)
+- **Metrics Endpoint**: http://localhost:8000/metrics
 
 #### 7. Stop the stack
 ```bash
@@ -214,6 +220,54 @@ docker compose exec backend python manage.py test
 # Specific app tests
 docker compose exec backend python manage.py test users
 docker compose exec backend python manage.py test activities
+```
+
+---
+
+## Monitoring and Observability
+
+### Prometheus + Grafana Integration
+
+The application includes comprehensive system monitoring using Prometheus and Grafana.
+
+**Accessing Monitoring Tools:**
+- **Prometheus**: http://localhost:9090 - Metrics collection and querying
+- **Grafana**: http://localhost:3001 - Visualization dashboards (admin/admin)
+- **Django Metrics**: http://localhost:8000/metrics - Application metrics endpoint
+
+**Available Metrics:**
+- HTTP request rates and response codes
+- Request latency by endpoint
+- Database query performance
+- PostgreSQL connections and cache hit ratio
+- Application-level metrics
+
+**Pre-configured Dashboard:**
+The Grafana instance includes a pre-configured "KU Volunteer - System Metrics" dashboard with:
+- HTTP request rate by method
+- HTTP response rate by status code
+- Request latency gauges
+- Database query counts
+- PostgreSQL active connections
+- Database cache hit ratios
+
+**Viewing Metrics:**
+1. Access Grafana at http://localhost:3001
+2. Login with username: `admin`, password: `admin`
+3. Navigate to Dashboards → KU Volunteer - System Metrics
+4. Metrics refresh every 10 seconds by default
+
+**Querying Custom Metrics:**
+Visit Prometheus at http://localhost:9090 to run custom PromQL queries:
+```promql
+# Request rate
+rate(django_http_requests_total_by_method_total[5m])
+
+# Response status distribution
+django_http_responses_total_by_status_total
+
+# Database connections
+pg_stat_database_numbackends
 ```
 
 ---
