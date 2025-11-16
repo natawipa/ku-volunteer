@@ -40,7 +40,7 @@ class UserRegisterView(generics.CreateAPIView):
 class UserListView(generics.ListAPIView):
     """API view for listing all users (admin only)."""
 
-    queryset = User.objects.all().order_by('-created_at')
+    queryset = User.objects.all()
     serializer_class = UserSerializer
     permission_classes = [IsAuthenticated, IsAdmin]
 
@@ -241,10 +241,10 @@ class ForgotPasswordView(APIView):
         try:
             user = User.objects.get(email=email, is_active=True)
         except User.DoesNotExist:
-            # Don't reveal whether email exists or not for security
+            # Email not found in database
             return Response(
-                {'success': True, 'message': 'If your email exists in our system, you will receive a password reset link shortly.'},
-                status=status.HTTP_200_OK
+                {'error': 'No account found with this email address.'},
+                status=status.HTTP_400_BAD_REQUEST
             )
 
         # Generate reset token

@@ -237,3 +237,12 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ku-volunteer.com')
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour in seconds
+
+# Sentry Configuration
+import sentry_sdk
+sentry_sdk.init(
+    dsn="https://e9d9298721877832e8863711d91cdcf0@o4510369678622720.ingest.us.sentry.io/4510369691926529",
+    # Add data like request headers and IP for users;
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+)
