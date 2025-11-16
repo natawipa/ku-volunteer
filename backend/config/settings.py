@@ -258,7 +258,7 @@ logging_integration = LoggingIntegration(
 )
 
 sentry_sdk.init(
-    dsn="https://8dfe215a3c0b36f57a0adf56a9cc8184@o4510369678622720.ingest.us.sentry.io/4510369709948928",
+    dsn=os.getenv('SENTRY_DSN'),
     integrations=[
         DjangoIntegration(
             transaction_style='url',
@@ -268,9 +268,11 @@ sentry_sdk.init(
     # Add data like request headers and IP for users;
     # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
     send_default_pii=True,
-    # Set traces_sample_rate to 1.0 to capture 100% of transactions for performance monitoring.
-    traces_sample_rate=1.0,
-    # Set profiles_sample_rate to 1.0 to profile 100% of sampled transactions.
-    profiles_sample_rate=1.0,
+    # Set traces_sample_rate based on environment
+    traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '1.0' if DEBUG else '0.2')),
+    # Set profiles_sample_rate based on environment
+    profiles_sample_rate=float(os.getenv('SENTRY_PROFILES_SAMPLE_RATE', '1.0' if DEBUG else '0.1')),
+    environment=os.getenv('SENTRY_ENVIRONMENT', 'development' if DEBUG else 'production'),
+    release=os.getenv('SENTRY_RELEASE'),
     debug=DEBUG,  # Enable debug mode in development
 )
