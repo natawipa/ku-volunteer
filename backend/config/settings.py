@@ -39,9 +39,14 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
+# Add backend hostname for Docker network access (development/monitoring only)
+if DEBUG:
+    ALLOWED_HOSTS.append('backend')
+
 
 # Application definition
 INSTALLED_APPS = [
+    'django_prometheus',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'users', 
@@ -121,6 +126,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -130,6 +136,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -158,7 +165,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django_prometheus.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'ku_volunteer_db'),
         'USER': os.getenv('DB_USER', 'ku_user'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'ku_password'),

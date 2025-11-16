@@ -9,6 +9,7 @@ from social_django.views import complete as social_complete
 from users.views import google_login
 from django.conf import settings
 from django.conf.urls.static import static
+from django_prometheus import exports as prometheus_exports
 import sentry_sdk
 
 def trigger_error(request):
@@ -28,6 +29,8 @@ urlpatterns = [
     # Explicit Google OAuth endpoints (override login to enforce custom redirect_uri)
     path('api/auth/google/login/', google_login, name='google_login'),
     path('api/auth/google/callback/', social_complete, {"backend": "google-oauth2"}, name='google_callback'),
+    # Prometheus metrics endpoint (without middleware to avoid recursion)
+    path('metrics', prometheus_exports.ExportToDjangoView, name='prometheus-metrics'),
     # Sentry test endpoint
     path('sentry-debug/', trigger_error),
 ]
