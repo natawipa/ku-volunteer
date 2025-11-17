@@ -52,7 +52,7 @@ export function useModal() {
     if (!context) {
         console.warn('useModal is being used outside of ModalProvider. Modal will not work.');
         return {
-            showModal: (text: string, options?: Partial<ModalConfig>) => {
+            showModal: (text: string) => {
                 console.warn('Modal not available:', text);
             },
             hideModal: () => {

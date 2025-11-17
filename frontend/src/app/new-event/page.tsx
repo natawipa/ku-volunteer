@@ -229,7 +229,7 @@ function ActivityFormContent() {
         }
       })();
     }
-  }, [searchParams]);
+  }, [searchParams, showModal]);
 
   function normalizeUrl(url: string | null | undefined) {
     if (!url) return url ?? null;
