@@ -5,6 +5,7 @@ import Header from "../components/Header";
 import { useSearchParams, useRouter } from "next/navigation";
 import HeroImage from "../components/HeroImage";
 import Navbar from "../components/Navbar";
+import { useModal } from "../components/Modal";
 
 interface ActivityData { 
   id: string;
@@ -25,6 +26,7 @@ function DeleteConfirmationContent() {
   const [activityData, setActivityData] = useState<ActivityData | null>(null); // Changed from eventData
   const [activityName, setActivityName] = useState(""); // Changed from eventName
   const [reason, setReason] = useState("");
+  const { showModal } = useModal();
   const [errors, setErrors] = useState<{
     title?: string;
     reason?: string;
@@ -76,8 +78,8 @@ function DeleteConfirmationContent() {
 
       console.log("Delete Request Data:", JSON.stringify(deleteRequestData, null, 2));
       
-      alert("Delete request submitted! (Check console for data)");
-      // router.push('/');
+      showModal("Delete request submitted!") 
+     // router.push('/');
     }
   };
 

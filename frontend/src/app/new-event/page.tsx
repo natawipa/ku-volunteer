@@ -11,7 +11,6 @@ import { USER_ROLES, ENV } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
 import HeroImage from "../components/HeroImage";
 import Navbar from "../components/Navbar";
-import Modal from "../components/Modal";
 import { useModal } from "../components/Modal";
 
 function ActivityFormContent() {
@@ -60,13 +59,11 @@ function ActivityFormContent() {
         
         // Redirect if not authenticated or not organizer or admin
         if (!authenticated) {
-          <Modal needDecision={false} text="Please log in to create an activity." />
           router.push('/login');
           return;
         }
         
-        if (role !== USER_ROLES.ORGANIZER && role!== USER_ROLES.ADMIN) {
-          <Modal needDecision={false} text="Only organizers or admin can create activities." />
+        if (role !== USER_ROLES.ORGANIZER && role !== USER_ROLES.ADMIN) {
           router.push('/');
           return;
         }
@@ -158,7 +155,7 @@ function ActivityFormContent() {
         }
       } catch (error) {
         console.error('Error parsing activity data:', error);
-        <Modal needDecision={false} text="Error loading activity data for editing" />
+        setTimeout(() => showModal("Error loading activity data for editing"), 100);
       }
     }
     // If edit mode requested but no activityData param provided, fetch from API
@@ -224,10 +221,11 @@ function ActivityFormContent() {
             })();
           } else {
             console.warn('Failed to fetch activity for edit', resp.error);
-            <Modal needDecision={false} text="Unable to load activity for editing" />
+            setTimeout(() => showModal("Unable to load activity for editing"), 200);
           }
         } catch (error) {
           console.error('Error fetching activity:', error);
+          setTimeout(() => showModal("Unable to load activity for editing"), 200);
         }
       })();
     }
@@ -330,7 +328,7 @@ function ActivityFormContent() {
 
   const handleConfirmDelete = async () => {
     if (!deletionReason.trim()) {
-      <Modal needDecision={false} text="Please provide a reason for deletion" />
+      showModal("Please provide a reason for deletion");
       return;
     }
 
@@ -342,7 +340,7 @@ function ActivityFormContent() {
       const deleteReqResponse = await activitiesApi.requestDeletion(parseInt(activityId), deletionReason.trim());
       
       if (deleteReqResponse.success) {
-        <Modal needDecision={false} text="Deletion request submitted successfully. An admin will review it." />
+        showModal("Deletion request submitted successfully. Admin will review it.");
         setShowDeleteModal(false);
         setDeletionReason("");
         router.push(`/event-detail/${activityId}`);
@@ -351,7 +349,7 @@ function ActivityFormContent() {
       }
     } catch (error) {
       console.error('Delete request error:', error);
-      <Modal needDecision={false} text={"Failed to submit deletion request"} />
+      showModal("Failed to submit deletion request");
     } finally {
       setIsDeleting(false);
     }
@@ -407,13 +405,13 @@ function ActivityFormContent() {
     if (!validate()) return;
   
     if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole != USER_ROLES.ADMIN) {
-      <Modal needDecision={false} text="You must be logged in as an organizer to manage activities" />
+      showModal("You must be logged in as an organizer to manage activities");
       return;
     }
 
     // Prevent duplicate submissions
     if (activityCreated && !isEditMode) {
-      <Modal needDecision={false} text="Activity already created! Redirecting to homepage..." />
+      showModal("Activity already created! Redirecting to homepage...");
       router.push('/');
       return;
     }

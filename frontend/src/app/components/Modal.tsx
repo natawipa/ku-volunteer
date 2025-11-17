@@ -79,7 +79,7 @@ function ModalContent({
     text, 
     onConfirm, 
     onCancel, 
-    time = 2000, 
+    time = 4000, 
     width = "500px", 
     icon,
     onClose 
@@ -136,24 +136,24 @@ function ModalContent({
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div 
-                className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-8 py-8 relative" 
+                className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-10 py-10 relative" 
                 style={{ width: width }}
             >
                 {/* Icon */}
                 <div className="flex justify-center mb-4">
                     {icon === "trash" && (
                         <div className="bg-[#c6dcc8] rounded-full p-4">
-                            <Trash2 size={32} className="text-[#2D5016]" strokeWidth={1.5} />
+                            <Trash2 size={36} className="text-[#2D5016]" strokeWidth={1.5} />
                         </div>
                     )}
                     {icon === "usercheck" && (
                         <div className="bg-[#c6dcc8] rounded-full p-4">
-                            <UserRoundCheck size={32} className="text-[#2D5016]" strokeWidth={1.5} />
+                            <UserRoundCheck size={36} className="text-[#2D5016]" strokeWidth={1.5} />
                         </div>
                     )}
                     {icon === "x" && (
                         <div className="bg-[#c6dcc8] rounded-full p-4">
-                            <X size={32} className="text-[#2D5016]" strokeWidth={1.5} />
+                            <X size={36} className="text-[#2D5016]" strokeWidth={1.5} />
                         </div>
                     )}
                 </div>
