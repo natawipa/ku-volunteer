@@ -19,6 +19,7 @@ export default function NotificationBell() {
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
   const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for timestamps
+  void refreshKey; // Used to force re-renders via state change
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();

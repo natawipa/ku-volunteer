@@ -258,7 +258,6 @@ logging_integration = LoggingIntegration(
 )
 
 sentry_sdk.init(
-    debug=False,
     dsn=os.getenv('SENTRY_DSN'),
     integrations=[
         DjangoIntegration(

@@ -14,6 +14,7 @@ export default function NotificationsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'read'>('all');
   const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for timestamps
+  void refreshKey; // Used to force re-renders via state change
   const router = useRouter();
   const userRole = auth.getUserRole();
 
