@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, permissions, status
-from rest_framework.parsers import MultiPartParser, FormParser
+from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -65,8 +65,8 @@ class ActivityListCreateView(generics.ListCreateAPIView):
             return ActivityWriteSerializer
         return ActivitySerializer
 
-    # Accept multipart/form-data for POST (cover image upload)
-    parser_classes = [MultiPartParser, FormParser]
+    # Accept multipart/form-data for POST (cover image upload) and JSON for non-file submissions
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def perform_create(self, serializer: ActivityWriteSerializer) -> None:
         """Create activity with proper authorization."""
@@ -128,8 +128,8 @@ class ActivityRetrieveUpdateView(generics.RetrieveUpdateAPIView):
             return ActivityWriteSerializer
         return ActivitySerializer
 
-    # Accept multipart/form-data for PUT/PATCH when uploading cover
-    parser_classes = [MultiPartParser, FormParser]
+    # Accept multipart/form-data for PUT/PATCH when uploading cover and JSON for non-file updates
+    parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def perform_update(self, serializer: ActivityWriteSerializer) -> None:
         """Update activity with proper authorization."""
