@@ -35,7 +35,7 @@ interface ApprovedListProps {
   applications: ActivityApplication[];
   loading: boolean;
   eventEndDate?: string;
-  eventStartDate?: string;  // This is already added
+  eventStartDate?: string;
 }
 
 interface EventDetailsProps {

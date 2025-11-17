@@ -96,6 +96,7 @@ export function determineCheckInStatus(
     }
   }
   
+  
   // if activity has ended
   if (eventEndDate) {
     const now = new Date();
@@ -107,6 +108,14 @@ export function determineCheckInStatus(
     }
   }
 
-  // approved (activity not started yet)
+  // If activity has started (but not ended) and student hasn't checked in = absent
+  if (eventStartDate) {
+    const startDate = parseActivityDate(eventStartDate);
+    if (now >= startDate && (!checkInRecord || (checkInRecord.attendance_status as string) !== 'present')) {
+      return APPLICATION_STATUS.ABSENT;
+    }
+  }
+
+  // Default: approved (shouldn't reach here if dates are provided)
   return APPLICATION_STATUS.APPROVED;
 }
