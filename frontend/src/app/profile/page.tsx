@@ -14,6 +14,7 @@ import type { Activity, ActivityApplication } from "../../lib/types";
 import { auth } from "../../lib/utils";
 import { validateImageFile, validateProfileForm, YEAR_OPTIONS, ORGANIZATION_TYPE_OPTIONS, TITLE_OPTIONS } from "./validation";
 import Navbar from "../components/Navbar";
+import { useModal } from "../components/Modal";
 
 // Profile field configuration
 const profileFields = [
@@ -52,6 +53,7 @@ export default function Profile() {
   const [imageError, setImageError] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [saveLoading, setSaveLoading] = useState(false);
+  const { showModal } = useModal();
 
   // Events state (for My Events section)
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -325,8 +327,8 @@ export default function Profile() {
       setIsEditing(false);
       setFormErrors({});
     } else {
-      alert(res.error);
-    }
+      showModal('Failed to update profile.');
+        }
   };
 
   const handleCancel = () => {

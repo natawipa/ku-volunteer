@@ -11,6 +11,7 @@ import { USER_ROLES, ACTIVITY_STATUS } from "../../../lib/constants";
 import Header from "../../components/Header";
 import Navbar from "@/app/components/Navbar";
 import HeroImage from "@/app/components/HeroImage";
+import { useModal } from "@/app/components/Modal";
 import EventStatusBadge from "../components/StatusBadge";
 import ActionButton from "../components/ActionButton";
 import OrganizerSection from "../components/OrganizerSection";
@@ -30,6 +31,7 @@ export default function EventPage({ params }: PageProps) {
   const [activeSection, setActiveSection] = useState<'details' | 'applicants' | 'approved'>('details');
   const router = useRouter();
   const actionButtonRef = React.useRef<HTMLDivElement>(null);
+  const { showModal } = useModal();
   
   // Organizer state
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
@@ -147,19 +149,26 @@ export default function EventPage({ params }: PageProps) {
 
   // Organizer handlers
   const handleApprove = async (applicationId: number) => {
-    if (!confirm('Are you sure you want to approve this application?')) return;
+    showModal("Are you sure you want to approve this application?", {
+      needDecision: true,
+      icon: "usercheck",
+      onConfirm: () => handleConfirmApprove(applicationId),
+    });
+  };
+
+  const handleConfirmApprove = async (applicationId: number) => {
     try {
       setIsProcessing(true);
       const response = await activitiesApi.reviewApplication(applicationId, { action: 'approve' });
       if (response.success) {
-        alert('Application approved successfully!');
+        showModal('Application approved successfully!');
         await fetchApplications();
       } else {
-        alert(`Failed: ${response.error || 'Unknown error'}`);
+        showModal('Failed to approve application.');
       }
     } catch (error) {
       console.error('Error approving:', error);
-      alert('An error occurred.');
+      showModal('Failed to approve application.');
     } finally {
       setIsProcessing(false);
     }
@@ -173,7 +182,7 @@ export default function EventPage({ params }: PageProps) {
 
   const handleConfirmReject = async () => {
     if (!selectedApplicationId || !rejectionReason.trim()) {
-      alert('Please provide a reason for rejection.');
+      showModal("Please provide a reason for rejection.");
       return;
     }
     try {
@@ -183,18 +192,17 @@ export default function EventPage({ params }: PageProps) {
         reason: rejectionReason.trim()
       });
       if (response.success) {
-        alert('Application rejected successfully.');
+        showModal("Application rejected successfully.");
         setIsRejectModalOpen(false);
         setRejectionReason('');
         setSelectedApplicationId(null);
-        // Refresh the applications list
         await fetchApplications();
       } else {
-        alert(`Failed to reject application: ${response.error || 'Unknown error'}`);
+        showModal("Failed to reject application.");
       }
     } catch (error) {
       console.error('Error rejecting application:', error);
-      alert('An error occurred while rejecting the application.');
+      showModal("An error occurred while rejecting the application.");
     } finally {
       setIsProcessing(false);
     }
@@ -218,6 +226,20 @@ export default function EventPage({ params }: PageProps) {
       });
     }
   }, []);
+
+  // Check for success message in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const successParam = urlParams.get('success');
+    if (successParam) {
+      showModal(decodeURIComponent(successParam));
+      
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('success');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [showModal]);
 
   // Loading & Error states
   if (loading) {
@@ -307,7 +329,12 @@ export default function EventPage({ params }: PageProps) {
               />
             )}
             {activeSection === 'approved' && (
-              <ApprovedList applications={applications} loading={loadingApplications} eventEndDate={transformedEvent.dateend} eventStartDate={transformedEvent.datestart} />
+              <ApprovedList 
+                applications={applications} 
+                loading={loadingApplications} 
+                eventEndDate={event.end_at}
+                eventStartDate={event.start_at}
+              />
             )}
           </div>
         ) : (

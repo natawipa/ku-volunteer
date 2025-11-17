@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { APPLICATION_STATUS, CHECK_IN_STYLES } from '../../lib/constants';
 import type { ActivityApplication, CheckInRecord } from '../../lib/types';
 import { determineCheckInStatus } from './hooks/useCheckInStatus';
-import { isActivityEnded, formatEventDate } from './helpers/utils';
+import { isActivityEnded, isActivityNotStarted, formatEventDate } from './helpers/utils';
 
 // Interfaces
 interface TransformedEvent {
@@ -231,6 +231,7 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
     };
 
     const activityEnded = isActivityEnded(eventEndDate);
+    const activityNotStarted = isActivityNotStarted(eventStartDate);
 
     if (activityEnded) {
       console.log('Activity has ended - fetching check-in records once');
@@ -238,14 +239,17 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
       return; // Stop auto-refresh when activity ended
     }
 
-    // Fetch immediately if activity is ongoing
-    fetchCheckInRecords();
-    
-    // auto-refresh every 10 seconds
-    const interval = setInterval(() => {fetchCheckInRecords();}, 10000);
-    
-    return () => clearInterval(interval);
-  }, [activityId, applications.length, eventEndDate]);
+    if (!activityNotStarted) {
+      console.log('Activity has started');
+      fetchCheckInRecords();
+      
+      // auto-refresh every 10 seconds
+      const interval = setInterval(() => {fetchCheckInRecords();}, 10000);
+      return () => clearInterval(interval);
+    }
+
+    console.log('Activity has not started yet');
+  }, [activityId, applications.length, eventEndDate, eventStartDate]);
   
   if (loading || loadingCheckIn) {
     return <div className="text-center py-8">Loading participants...</div>;

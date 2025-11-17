@@ -5,6 +5,7 @@ import { activitiesApi } from '../../../lib/activities';
 import Link from 'next/link';
 import CheckIn from './Check-in';
 import { isActivityEnded, isActivityOngoing, isWithinActivityDateRange, parseActivityDate } from '../helpers/utils';
+import { useModal } from '../../components/Modal';
 
 interface EventActionButtonProps {
   applicationStatus?: string | null;
@@ -30,6 +31,7 @@ export default function EventActionButton({
   const activityId = eventID || event?.id;
   const [showCheckInModal, setShowCheckInModal] = useState(false);
   const [isCheckingIn, setIsCheckingIn] = useState(false);
+  const { showModal } = useModal();
   
   const activityStartDate = parseActivityDate(event.start_at);
   const activityEndDate = parseActivityDate(event.end_at);
@@ -44,7 +46,7 @@ export default function EventActionButton({
       console.log('Check-in API result:', result);
       
       if (result.success) {
-        alert('Check-in successful! Your attendance has been recorded.');
+        showModal('Check-in successful! Your attendance has been recorded.');
         if (onCheckInSuccess) onCheckInSuccess();
         setShowCheckInModal(false);
       } else {
@@ -52,17 +54,17 @@ export default function EventActionButton({
         console.error('Check-in failed:', errorMsg);
         
         if (errorMsg.toLowerCase().includes('already')) {
-          alert('You have already checked in to this activity.');
+          showModal('You have already checked in to this activity.');
           setShowCheckInModal(false);
         } else if (errorMsg.toLowerCase().includes('code')) {
-          alert(`Invalid Code\n\n${errorMsg}\n\nPlease ask the organizer for the correct code.`);
+          showModal(`Invalid Code, Please ask the organizer for the correct code.`);
         } else {
-          alert(`Check-in failed:\n${errorMsg}`);
+          showModal(`Check-in failed:\n${errorMsg}`);
         }
       }
     } catch (error) {
       console.error('Check-in exception:', error);
-      alert('Check-in failed. Please try again.');
+      showModal('Check-in failed. Please try again.');
     } finally {
       setIsCheckingIn(false);
     }

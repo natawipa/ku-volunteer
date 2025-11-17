@@ -240,7 +240,14 @@ export default function Page({ params }: PageProps) {
                 id="approveCheck"
                 className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
                 checked={approveChecked}
-                onChange={() => { setApproveChecked(v => !v); if (!approveChecked) { setRejectChecked(false); setRejectReason(''); } }}
+                onChange={() => { 
+                  setApproveChecked(v => !v); 
+                  if (!approveChecked) { 
+                    setRejectChecked(false); 
+                    setRejectReason(''); 
+                    setShowRejectModal(false);
+                  } 
+                }}
                 disabled={status !== 'pending' || actionLoading}
               />
               <label htmlFor="approveCheck" className="text-sm text-green-600">Approve Creation</label>
@@ -254,16 +261,25 @@ export default function Page({ params }: PageProps) {
                 onChange={() => { 
                   if (!rejectChecked) {
                     setShowRejectModal(true);
+                    setRejectChecked(true);
                     setApproveChecked(false);
                   } else {
                     setRejectChecked(false);
                     setRejectReason('');
+                    setShowRejectModal(false);
                   }
                 }}
                 disabled={status !== 'pending' || actionLoading}
               />
               <label htmlFor="rejectCheck" className="text-sm text-red-600">Reject Creation</label>
             </div>
+            {showRejectModal && (
+              <RejectModal 
+                setShowRejectModal={setShowRejectModal} rejectReason={rejectReason}
+                setRejectReason={setRejectReason} setRejectChecked={setRejectChecked}
+                setMessage={setMessage}
+              />
+            )}
           </div>
           <div className="flex justify-between pt-4 border-t mt-6">
             <button
@@ -300,15 +316,6 @@ export default function Page({ params }: PageProps) {
           </div>
         </div>
       </div>
-
-      {/* Reject Reason Modal */}
-      {showRejectModal && (
-        <RejectModal 
-          setShowRejectModal={setShowRejectModal} rejectReason={rejectReason}
-          setRejectReason={setRejectReason} setRejectChecked={setRejectChecked}
-          setMessage={setMessage} isCreationReject={true}
-        />
-      )}
     </div>
   );
 }
