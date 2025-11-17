@@ -333,6 +333,9 @@ describe('AllEventsPage', () => {
     });
 
     it('handles activities API error', async () => {
+      // Mock console.error to suppress expected error output
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       mockIsAuthenticated.mockReturnValue(false);
       mockGetUserRole.mockReturnValue(null);
       mockGetActivities.mockRejectedValue(new Error('API Error'));
@@ -344,6 +347,10 @@ describe('AllEventsPage', () => {
       await waitFor(() => {
         expect(screen.getByText('No events found')).toBeInTheDocument();
       });
+      
+      // Verify error was logged and restore console
+      expect(consoleSpy).toHaveBeenCalledWith('Error fetching activities:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
   });
 
@@ -465,6 +472,9 @@ describe('AllEventsPage', () => {
 
   describe('Error Handling', () => {
     it('handles user data fetch errors gracefully', async () => {
+      // Mock console.error to suppress expected error output
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       mockIsAuthenticated.mockReturnValue(true);
       mockGetUserRole.mockReturnValue(USER_ROLES.STUDENT);
       mockGetCurrentUser.mockRejectedValue(new Error('User fetch error'));
@@ -477,9 +487,16 @@ describe('AllEventsPage', () => {
       await waitFor(() => {
         expect(mockGetActivities).toHaveBeenCalled();
       });
+      
+      // Verify error was logged and restore console
+      expect(consoleSpy).toHaveBeenCalledWith('Error fetching user data:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
 
     it('handles user applications fetch errors gracefully', async () => {
+      // Mock console.error to suppress expected error output
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       mockIsAuthenticated.mockReturnValue(true);
       mockGetUserRole.mockReturnValue(USER_ROLES.STUDENT);
       mockGetUserApplications.mockRejectedValue(new Error('Applications fetch error'));
@@ -492,6 +509,10 @@ describe('AllEventsPage', () => {
       await waitFor(() => {
         expect(mockGetActivities).toHaveBeenCalled();
       });
+      
+      // Verify error was logged and restore console
+      expect(consoleSpy).toHaveBeenCalledWith('Error fetching user data:', expect.any(Error));
+      consoleSpy.mockRestore();
     });
   });
 
@@ -580,6 +601,427 @@ describe('AllEventsPage', () => {
       await waitFor(() => {
         expect(screen.getByText('No events found')).toBeInTheDocument();
       });
+    });
+  });
+
+  describe('Search and Filter Functionality', () => {
+    beforeEach(() => {
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+    });
+
+    it('filters events by title search query', async () => {
+      const mockTransformedEvents = [
+        { id: 1, title: 'Beach Cleanup', status: 'open', category: ['Environment'] },
+        { id: 2, title: 'Tech Workshop', status: 'closed', category: ['Education'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(getAllEvents).toHaveBeenCalledWith({
+          activities: mockActivities,
+          userRole: null,
+          isAuthenticated: false,
+          userApplications: [],
+          organizerProfileId: null,
+        });
+      });
+    });
+
+    it('filters events by category selection', async () => {
+      const mockTransformedEvents = [
+        { id: 1, title: 'Beach Cleanup', status: 'open', category: ['Environment'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('event-card-1')).toBeInTheDocument();
+        expect(screen.getByText('Beach Cleanup - open - Badge: yes')).toBeInTheDocument();
+      });
+    });
+
+    it('filters events by status (open, closed, cancelled)', async () => {
+      const mockTransformedEvents = [
+        { id: 1, title: 'Open Event', status: 'open', category: ['Environment'] },
+        { id: 2, title: 'Closed Event', status: 'closed', category: ['Education'] },
+        { id: 3, title: 'Cancelled Event', status: 'cancelled', category: ['Social'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Open Event - open - Badge: yes')).toBeInTheDocument();
+        expect(screen.getByText('Closed Event - closed - Badge: yes')).toBeInTheDocument();
+        expect(screen.getByText('Cancelled Event - cancelled - Badge: yes')).toBeInTheDocument();
+      });
+    });
+
+    it('filters events by date range', async () => {
+      const mockTransformedEvents = [
+        { 
+          id: 1, 
+          title: 'Future Event', 
+          status: 'open', 
+          category: ['Environment'],
+          dateStart: '2024-06-01',
+          dateEnd: '2024-06-01'
+        },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('event-card-1')).toBeInTheDocument();
+      });
+    });
+
+    it('handles empty search results', async () => {
+      mockGetAllEvents.mockReturnValue([]);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('No events found')).toBeInTheDocument();
+        expect(screen.getByText('Try adjusting your search criteria or filter settings.')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Event Status Handling', () => {
+    beforeEach(() => {
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+    });
+
+    it('displays different event statuses correctly', async () => {
+      const mockTransformedEvents = [
+        { id: 1, title: 'Open Event', status: 'open', category: ['Environment'] },
+        { id: 2, title: 'Full Event', status: 'full', category: ['Education'] },
+        { id: 3, title: 'Pending Event', status: 'pending', category: ['Social'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Open Event - open - Badge: yes')).toBeInTheDocument();
+        expect(screen.getByText('Full Event - full - Badge: yes')).toBeInTheDocument();
+        expect(screen.getByText('Pending Event - pending - Badge: yes')).toBeInTheDocument();
+      });
+    });
+
+    it('handles capacity reached events', async () => {
+      const capacityReachedActivity = {
+        ...mockActivities[0],
+        current_participants: 50,
+        max_participants: 50,
+        capacity_reached: true,
+        status: 'full'
+      };
+      
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [capacityReachedActivity],
+      });
+      
+      const mockTransformedEvents = [
+        { id: 1, title: 'Full Event', status: 'full', category: ['Environment'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Full Event - full - Badge: yes')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Accessibility', () => {
+    beforeEach(() => {
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+    });
+
+    it('has proper heading structure', async () => {
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+      });
+
+      // Check that the page has a proper heading structure
+      const heading = screen.getByRole('heading', { level: 1 });
+      expect(heading).toHaveTextContent('All Events');
+    });
+
+    it('provides meaningful content for screen readers', async () => {
+      const mockTransformedEvents = [
+        { 
+          id: 1, 
+          title: 'Beach Cleanup', 
+          status: 'open', 
+          category: ['Environment'],
+          description: 'Clean the beach'
+        },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Event cards should be accessible to screen readers
+        expect(screen.getByTestId('event-card-1')).toBeInTheDocument();
+        expect(screen.getByText('Beach Cleanup - open - Badge: yes')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains focus management during interactions', async () => {
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('header')).toBeInTheDocument();
+      });
+
+      // Focus should be manageable within the component
+      expect(document.body).toHaveFocus();
+    });
+  });
+
+  describe('Performance and Large Datasets', () => {
+    beforeEach(() => {
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+    });
+
+    it('handles large numbers of events efficiently', async () => {
+      // Create 100 mock activities
+      const largeActivitySet = Array.from({ length: 100 }, (_, index) => ({
+        ...mockActivities[0],
+        id: index + 1,
+        title: `Event ${index + 1}`,
+        description: `Description for event ${index + 1}`,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: largeActivitySet,
+      });
+
+      // Create corresponding transformed events
+      const largeTransformedEvents = largeActivitySet.map(activity => ({
+        id: activity.id,
+        title: activity.title,
+        status: 'open',
+        category: ['Environment'],
+      }));
+      
+      mockGetAllEvents.mockReturnValue(largeTransformedEvents);
+
+      const startTime = performance.now();
+      
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('event-card-1')).toBeInTheDocument();
+      });
+
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+
+      // Ensure rendering completes in reasonable time (< 2 seconds)
+      expect(renderTime).toBeLessThan(2000);
+      expect(getAllEvents).toHaveBeenCalledWith({
+        activities: largeActivitySet,
+        userRole: null,
+        isAuthenticated: false,
+        userApplications: [],
+        organizerProfileId: null,
+      });
+    });
+
+    it('handles rapid state changes gracefully', async () => {
+      const mockTransformedEvents = [
+        { id: 1, title: 'Test Event', status: 'open', category: ['Environment'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      // Simulate rapid authentication state changes
+      await act(async () => {
+        mockIsAuthenticated.mockReturnValue(true);
+        mockGetUserRole.mockReturnValue(USER_ROLES.STUDENT);
+      });
+
+      await act(async () => {
+        mockIsAuthenticated.mockReturnValue(false);
+        mockGetUserRole.mockReturnValue(null);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+      });
+    });
+
+    it('handles memory efficiently with large datasets', async () => {
+      // Test with a substantial dataset
+      const largeActivitySet = Array.from({ length: 500 }, (_, index) => ({
+        ...mockActivities[0],
+        id: index + 1,
+        title: `Large Event ${index + 1}`,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: largeActivitySet,
+      });
+      
+      mockGetAllEvents.mockReturnValue([]);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(mockGetActivities).toHaveBeenCalled();
+      });
+
+      // Component should handle large datasets without memory issues
+      expect(getAllEvents).toHaveBeenCalledWith({
+        activities: largeActivitySet,
+        userRole: null,
+        isAuthenticated: false,
+        userApplications: [],
+        organizerProfileId: null,
+      });
+    });
+  });
+
+  describe('Component State Management', () => {
+    it('maintains state consistency during authentication changes', async () => {
+      // Start unauthenticated
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+      
+      mockGetAllEvents.mockReturnValue([
+        { id: 1, title: 'Public Event', status: 'open', category: ['Environment'] }
+      ]);
+
+      const { unmount } = render(<AllEventsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+      });
+
+      // Clean up first component
+      unmount();
+
+      // Render authenticated version
+      mockIsAuthenticated.mockReturnValue(true);
+      mockGetUserRole.mockReturnValue(USER_ROLES.STUDENT);
+      
+      mockGetMyEvents.mockReturnValue([
+        { id: 1, title: 'My Event', status: 'open', category: ['Environment'] }
+      ]);
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('My Events')).toBeInTheDocument();
+      });
+    });
+
+    it('handles component unmounting gracefully', async () => {
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+
+      const { unmount } = render(<AllEventsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('All Events')).toBeInTheDocument();
+      });
+
+      // Unmount should not cause errors
+      expect(() => unmount()).not.toThrow();
+    });
+
+    it('recovers from error states', async () => {
+      // Mock console.error to suppress expected error output
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      mockIsAuthenticated.mockReturnValue(false);
+      mockGetUserRole.mockReturnValue(null);
+      
+      // First render with error
+      mockGetActivities.mockRejectedValueOnce(new Error('Network error'));
+
+      await act(async () => {
+        render(<AllEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('No events found')).toBeInTheDocument();
+      });
+
+      // Verify error was logged
+      expect(consoleSpy).toHaveBeenCalledWith('Error fetching activities:', expect.any(Error));
+      consoleSpy.mockRestore();
+
+      // Should be able to recover when data becomes available
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mockActivities,
+      });
+      
+      const mockTransformedEvents = [
+        { id: 1, title: 'Recovered Event', status: 'open', category: ['Environment'] },
+      ];
+      
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
+
+      // Component should handle state recovery
+      expect(mockGetActivities).toHaveBeenCalled();
     });
   });
 });

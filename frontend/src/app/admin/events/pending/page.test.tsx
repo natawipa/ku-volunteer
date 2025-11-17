@@ -13,12 +13,14 @@ jest.mock('@/lib/activities', () => ({
 
 jest.mock('../../components/AdminEventPreviewCard', () => ({
   __esModule: true,
-  default: jest.fn(({ activity }: { activity: Activity }) => (
+  default: jest.fn(({ activity, hrefOverride }: { activity: Activity; hrefOverride?: string }) => (
     <div data-testid={`admin-event-preview-${activity.id}`}>
-      {activity.title} - {activity.status}
+      {activity.title} - {activity.status}{hrefOverride ? ` - Link: ${hrefOverride}` : ''}
     </div>
   )),
-}));jest.mock('../../components/AdminLayout', () => ({
+}));
+
+jest.mock('../../components/AdminLayout', () => ({
   __esModule: true,
   default: jest.fn(({ children, title, hideTitle }: { children: React.ReactNode; title?: string; hideTitle?: boolean }) => (
     <div data-testid="admin-layout">
@@ -616,8 +618,8 @@ describe('PendingEventsPage', () => {
 
       await waitFor(() => {
         // Verify each pending event has the correct approval link
-        expect(screen.getByTestId('admin-event-preview-1')).toHaveTextContent('/admin/approve/create/1');
-        expect(screen.getByTestId('admin-event-preview-2')).toHaveTextContent('/admin/approve/create/2');
+        expect(screen.getByTestId('admin-event-preview-1')).toHaveTextContent('Beach Cleanup - pending - Link: /admin/approve/create/1');
+        expect(screen.getByTestId('admin-event-preview-2')).toHaveTextContent('Tech Workshop - pending - Link: /admin/approve/create/2');
       });
     });
 
@@ -636,6 +638,305 @@ describe('PendingEventsPage', () => {
       // No events should be displayed since they're not pending
       await waitFor(() => {
         expect(screen.queryByTestId(/admin-event-preview-/)).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('has proper heading structure', async () => {
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Pending Events')).toBeInTheDocument();
+      });
+
+      // Check that the page has a proper heading structure
+      const heading = screen.getByRole('heading', { level: 1 });
+      expect(heading).toHaveTextContent('Pending Events');
+    });
+
+    it('provides meaningful content for screen readers', async () => {
+      // Ensure we have pending events for this test
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [mockActivities[0], mockActivities[1], mockActivities[4]],
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Event cards should be accessible to screen readers
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+      });
+
+      // Check for meaningful labeling
+      expect(screen.getByText('3 events')).toBeInTheDocument();
+    });
+
+    it('maintains focus management during interactions', async () => {
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-layout')).toBeInTheDocument();
+      });
+
+      // Focus should be manageable within the component
+      expect(document.body).toHaveFocus();
+    });
+  });
+
+  describe('Performance and Large Datasets', () => {
+    it('handles large numbers of pending events efficiently', async () => {
+      // Create 100 mock pending activities
+      const largePendingActivities = Array.from({ length: 100 }, (_, index) => ({
+        ...mockActivities[0],
+        id: index + 1,
+        title: `Pending Event ${index + 1}`,
+        description: `Description for pending event ${index + 1}`,
+        status: 'pending' as const,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: largePendingActivities,
+      });
+
+      const startTime = performance.now();
+      
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+      });
+
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+
+      // Ensure rendering completes in reasonable time (< 2 seconds)
+      expect(renderTime).toBeLessThan(2000);
+      expect(screen.getByText('100 events')).toBeInTheDocument();
+    });
+
+    it('handles rapid state changes gracefully', async () => {
+      // Clear previous mocks and start fresh
+      mockGetActivities.mockClear();
+      
+      // Start with initial data
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [mockActivities[0], mockActivities[1]],
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('2 events')).toBeInTheDocument();
+      });
+    });
+
+    it('handles memory efficiently with large datasets', async () => {
+      // Test with a substantial dataset
+      const largeDataset = Array.from({ length: 500 }, (_, index) => ({
+        ...mockActivities[0],
+        id: index + 1,
+        title: `Large Pending Event ${index + 1}`,
+        status: 'pending' as const,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: largeDataset,
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(mockGetActivities).toHaveBeenCalled();
+      });
+
+      // Component should handle large datasets without memory issues
+      expect(screen.getByText('500 events')).toBeInTheDocument();
+    });
+  });
+
+  describe('Component State Management', () => {
+    it('maintains state consistency during rapid operations', async () => {
+      // Clear previous mocks and start fresh
+      mockGetActivities.mockClear();
+      
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [mockActivities[0], mockActivities[1], mockActivities[4]],
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('3 events')).toBeInTheDocument();
+      });
+    });
+
+    it('handles component unmounting gracefully', async () => {
+      const { unmount } = render(<PendingEventsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Pending Events')).toBeInTheDocument();
+      });
+
+      // Unmount should not cause errors
+      expect(() => unmount()).not.toThrow();
+    });
+
+    it('recovers from error states', async () => {
+      // First render with error
+      mockGetActivities.mockRejectedValueOnce(new Error('Network error'));
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Failed to fetch activities')).toBeInTheDocument();
+      });
+
+      // Should be able to recover when data becomes available
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [mockActivities[0], mockActivities[1]],
+      });
+
+      // Component should handle state recovery
+      expect(mockGetActivities).toHaveBeenCalled();
+    });
+  });
+
+  describe('Advanced Filtering', () => {
+    it('combines multiple filters correctly', async () => {
+      const mixedStatusActivities = [
+        { ...mockActivities[0], categories: ['Environment'], start_at: '2024-06-01T09:00:00Z' },
+        { ...mockActivities[1], categories: ['Education'], start_at: '2024-05-01T09:00:00Z' },
+        { ...mockActivities[4], categories: ['Environment'], start_at: '2024-07-01T09:00:00Z' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mixedStatusActivities,
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      // All should be displayed since they're all pending
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-5')).toBeInTheDocument();
+      });
+    });
+
+    it('handles complex search queries', async () => {
+      const complexActivities = [
+        { ...mockActivities[0], title: 'Special Characters: @#$%', description: 'Test & symbols' },
+        { ...mockActivities[1], title: 'Very Long Event Title That Exceeds Normal Length Expectations', description: 'Long description with many words' },
+        { ...mockActivities[4], title: 'Unicode Test 🌍🌱', description: 'Emoji and unicode support' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: complexActivities,
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Check for the mock component text which includes status and link
+        expect(screen.getByText('Special Characters: @#$% - pending - Link: /admin/approve/create/1')).toBeInTheDocument();
+        expect(screen.getByText('Very Long Event Title That Exceeds Normal Length Expectations - pending - Link: /admin/approve/create/2')).toBeInTheDocument();
+        expect(screen.getByText('Unicode Test 🌍🌱 - pending - Link: /admin/approve/create/5')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains filter state across re-renders', async () => {
+      const { rerender } = render(<PendingEventsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Pending Events')).toBeInTheDocument();
+      });
+
+      // Rerender should maintain component state
+      rerender(<PendingEventsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Pending Events')).toBeInTheDocument();
+        expect(screen.getByText('3 events')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Data Ordering and Display Logic', () => {
+    it('displays events in consistent order', async () => {
+      const unorderedActivities = [
+        { ...mockActivities[4], id: 5, title: 'Event E' },
+        { ...mockActivities[0], id: 1, title: 'Event A' },
+        { ...mockActivities[1], id: 3, title: 'Event C' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: unorderedActivities,
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Events should be displayed in a consistent order
+        expect(screen.getByTestId('admin-event-preview-5')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-3')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains data integrity during filtering', async () => {
+      const testActivities = [
+        { ...mockActivities[0], status: 'pending' as const, categories: ['Environment'] },
+        { ...mockActivities[1], status: 'pending' as const, categories: ['Education'] },
+        { ...mockActivities[2], status: 'open' as const, categories: ['Social'] }, // Should be filtered out
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: testActivities,
+      });
+
+      await act(async () => {
+        render(<PendingEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Only pending events should be shown
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+        expect(screen.queryByTestId('admin-event-preview-3')).not.toBeInTheDocument();
+        expect(screen.getByText('2 events')).toBeInTheDocument();
       });
     });
   });

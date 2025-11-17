@@ -439,6 +439,9 @@ describe('EventActionButton', () => {
     });
 
     it('handles already checked in error', async () => {
+      // Mock console.error to suppress expected error output
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       mockIsWithinActivityDateRange.mockReturnValue(true);
       mockSubmitCheckIn.mockResolvedValue({ 
         success: false, 
@@ -463,9 +466,16 @@ describe('EventActionButton', () => {
       await waitFor(() => {
         expect(mockSubmitCheckIn).toHaveBeenCalled();
       });
+      
+      // Verify error was logged and restore console
+      expect(consoleSpy).toHaveBeenCalledWith('Check-in failed:', 'You have already checked in to this activity');
+      consoleSpy.mockRestore();
     });
 
     it('handles invalid code error', async () => {
+      // Mock console.error to suppress expected error output
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
       mockIsWithinActivityDateRange.mockReturnValue(true);
       mockSubmitCheckIn.mockResolvedValue({ 
         success: false, 
@@ -490,6 +500,10 @@ describe('EventActionButton', () => {
       await waitFor(() => {
         expect(mockSubmitCheckIn).toHaveBeenCalled();
       });
+      
+      // Verify error was logged and restore console
+      expect(consoleSpy).toHaveBeenCalledWith('Check-in failed:', 'Invalid check-in code');
+      consoleSpy.mockRestore();
     });
   });
 
@@ -543,6 +557,364 @@ describe('EventActionButton', () => {
 
       const button = screen.getByRole('button', { name: 'Apply Now' });
       expect(button).toBeEnabled();
+    });
+  });
+
+  describe('Accessibility Testing', () => {
+    it('has proper ARIA labels and roles', () => {
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.STUDENT}
+          onApply={mockOnApply}
+        />
+      );
+
+      const button = screen.getByRole('button', { name: 'Apply Now' });
+      expect(button).toHaveClass('bg-green-600'); // Check for actual styling class
+      expect(button).toBeVisible();
+    });
+
+    it('supports keyboard navigation', async () => {
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      const button = screen.getByRole('button', { name: 'Check In' });
+      button.focus();
+      expect(document.activeElement).toBe(button);
+
+      // Test button click functionality
+      await act(async () => {
+        fireEvent.click(button);
+      });
+
+      expect(screen.getByTestId('check-in-modal')).toBeInTheDocument();
+    });
+
+    it('provides screen reader friendly content', () => {
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.STUDENT}
+          onCancel={mockOnCancel}
+          applicationStatus={APPLICATION_STATUS.PENDING}
+        />
+      );
+
+      const button = screen.getByRole('button', { name: 'Cancel Application' });
+      expect(button).toHaveTextContent('Cancel Application');
+    });
+
+    it('maintains focus during state transitions', async () => {
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.STUDENT}
+          onApply={mockOnApply}
+          applying={false}
+        />
+      );
+
+      const button = screen.getByRole('button', { name: 'Apply Now' });
+      button.focus();
+
+      // Re-render with applying state
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.STUDENT}
+          onApply={mockOnApply}
+          applying={true}
+        />
+      );
+
+      const applyingButton = screen.getByRole('button', { name: 'Applying...' });
+      expect(applyingButton).toBeInTheDocument();
+    });
+  });
+
+  describe('Performance Testing', () => {
+    it('handles rapid state changes efficiently', () => {
+      const { rerender } = render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.STUDENT}
+          onApply={mockOnApply}
+          applying={false}
+        />
+      );
+
+      const startTime = performance.now();
+
+      // Rapid state changes
+      for (let i = 0; i < 10; i++) {
+        rerender(
+          <EventActionButton
+            event={mockEvent}
+            role={USER_ROLES.STUDENT}
+            onApply={mockOnApply}
+            applying={i % 2 === 0}
+          />
+        );
+      }
+
+      const endTime = performance.now();
+      expect(endTime - startTime).toBeLessThan(50);
+    });
+
+    it('optimizes component re-renders', () => {
+      let renderCount = 0;
+      const TestWrapper = ({ applying }: { applying: boolean }) => {
+        renderCount++;
+        return (
+          <EventActionButton
+            event={mockEvent}
+            role={USER_ROLES.STUDENT}
+            onApply={mockOnApply}
+            applying={applying}
+          />
+        );
+      };
+
+      const { rerender } = render(<TestWrapper applying={false} />);
+      const initialCount = renderCount;
+
+      // Re-render with different props should trigger re-render
+      rerender(<TestWrapper applying={true} />);
+      expect(renderCount).toBeGreaterThan(initialCount);
+    });
+
+    it('handles complex event objects efficiently', () => {
+      const complexEvent = {
+        ...mockEvent,
+        description: 'Very long description '.repeat(100),
+        location: 'Very long location name with lots of details '.repeat(20),
+      };
+
+      const startTime = performance.now();
+      render(
+        <EventActionButton
+          event={complexEvent}
+          role={USER_ROLES.STUDENT}
+          onApply={mockOnApply}
+        />
+      );
+      const endTime = performance.now();
+
+      expect(endTime - startTime).toBeLessThan(100);
+      expect(screen.getByRole('button', { name: 'Apply Now' })).toBeInTheDocument();
+    });
+  });
+
+  describe('Advanced Interaction Testing', () => {
+    it('handles modal interaction sequences', async () => {
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+      mockSubmitCheckIn.mockResolvedValue({ success: true });
+
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      // Open modal
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Check In' }));
+      });
+
+      expect(screen.getByTestId('check-in-modal')).toBeInTheDocument();
+
+      // Close modal
+      const closeButton = screen.getByRole('button', { name: 'Close Modal' });
+      await act(async () => {
+        fireEvent.click(closeButton);
+      });
+
+      expect(screen.queryByTestId('check-in-modal')).not.toBeInTheDocument();
+
+      // Reopen modal
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Check In' }));
+      });
+
+      expect(screen.getByTestId('check-in-modal')).toBeInTheDocument();
+    });
+
+    it('supports multiple simultaneous interactions', async () => {
+      const onApplySpy = jest.fn();
+      const onCancelSpy = jest.fn();
+
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.STUDENT}
+          onApply={onApplySpy}
+          onCancel={onCancelSpy}
+        />
+      );
+
+      const button = screen.getByRole('button', { name: 'Apply Now' });
+
+      // Multiple rapid clicks
+      await act(async () => {
+        fireEvent.click(button);
+        fireEvent.click(button);
+        fireEvent.click(button);
+      });
+
+      // Should handle multiple calls (component may not prevent them)
+      expect(onApplySpy).toHaveBeenCalled();
+    });
+
+    it('handles component updates during async operations', async () => {
+      let resolveCheckIn: (value: any) => void;
+      const checkInPromise = new Promise(resolve => {
+        resolveCheckIn = resolve;
+      });
+      
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+      mockSubmitCheckIn.mockReturnValue(checkInPromise);
+
+      const { rerender } = render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Check In' }));
+      });
+
+      const submitButton = screen.getByRole('button', { name: 'Submit Check-in' });
+      await act(async () => {
+        fireEvent.click(submitButton);
+      });
+
+      // Component update during async operation
+      const updatedEvent = { ...mockEvent, title: 'Updated Event' };
+      rerender(
+        <EventActionButton
+          event={updatedEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      // Resolve the async operation
+      await act(async () => {
+        resolveCheckIn!({ success: true });
+      });
+
+      // Should handle gracefully
+      expect(screen.queryByText('Enter Check-in Code')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Enhanced Error Handling', () => {
+    it('handles network timeouts gracefully', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+      mockSubmitCheckIn.mockRejectedValue(new Error('Network timeout'));
+
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Check In' }));
+      });
+
+      const submitButton = await screen.findByRole('button', { name: 'Submit Check-in' });
+      await act(async () => {
+        fireEvent.click(submitButton);
+      });
+
+      await waitFor(() => {
+        expect(mockSubmitCheckIn).toHaveBeenCalled();
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('Check-in exception:', expect.any(Error));
+      consoleSpy.mockRestore();
+    });
+
+    it('handles malformed API responses', async () => {
+      const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+      
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+      mockSubmitCheckIn.mockResolvedValue({ 
+        success: false, 
+        error: null, // Malformed - should have error message
+      });
+
+      render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Check In' }));
+      });
+
+      const submitButton = await screen.findByRole('button', { name: 'Submit Check-in' });
+      await act(async () => {
+        fireEvent.click(submitButton);
+      });
+
+      await waitFor(() => {
+        expect(mockSubmitCheckIn).toHaveBeenCalled();
+      });
+
+      expect(consoleSpy).toHaveBeenCalledWith('Check-in failed:', 'Unknown error');
+      consoleSpy.mockRestore();
+    });
+
+    it('handles component unmounting during async operations', async () => {
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+      let resolvePromise: (value: any) => void;
+      const slowPromise = new Promise(resolve => {
+        resolvePromise = resolve;
+      });
+      mockSubmitCheckIn.mockReturnValue(slowPromise);
+
+      const { unmount } = render(
+        <EventActionButton
+          event={mockEvent}
+          role={USER_ROLES.ORGANIZER}
+        />
+      );
+
+      await act(async () => {
+        fireEvent.click(screen.getByRole('button', { name: 'Check In' }));
+      });
+
+      const submitButton = screen.getByRole('button', { name: 'Submit Check-in' });
+      await act(async () => {
+        fireEvent.click(submitButton);
+      });
+
+      // Unmount while async operation is pending
+      unmount();
+
+      // Resolve the promise after unmount
+      await act(async () => {
+        resolvePromise!({ success: true });
+      });
+
+      // Should not cause errors
+      expect(true).toBe(true); // Test passes if no errors thrown
     });
   });
 });

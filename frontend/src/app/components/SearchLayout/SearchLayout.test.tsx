@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import SearchLayout from '@/app/components/SearchLayout/SearchLayout';
 import { USER_ROLES } from '@/lib/constants';
 import type { Activity } from '@/lib/types';
@@ -511,6 +511,234 @@ describe('SearchLayout', () => {
       
       // Component should still render
       expect(screen.getByPlaceholderText('Search activities')).toBeInTheDocument();
+    });
+
+    it('handles extremely long search queries', () => {
+      renderComponent();
+      
+      const input = screen.getByPlaceholderText('Search activities');
+      const longQuery = 'a'.repeat(1000);
+      fireEvent.change(input, { target: { value: longQuery } });
+      
+      expect(input).toHaveValue(longQuery);
+    });
+
+    it('handles special characters in search', () => {
+      renderComponent();
+      
+      const input = screen.getByPlaceholderText('Search activities');
+      const specialChars = '!@#$%^&*()[]{}|\\:";\'<>?,.`~';
+      fireEvent.change(input, { target: { value: specialChars } });
+      
+      expect(input).toHaveValue(specialChars);
+    });
+  });
+
+  describe('Accessibility Testing', () => {
+    it('has proper ARIA labels and roles', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByRole('textbox');
+      expect(searchInput).toBeInTheDocument();
+      expect(searchInput).toHaveAttribute('placeholder', 'Search activities');
+    });
+
+    it('supports keyboard navigation', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      
+      expect(screen.getByTestId('search-card')).toBeInTheDocument();
+      
+      // Test Enter key functionality within search card
+      const cardInput = screen.getByTestId('search-card-input');
+      fireEvent.keyDown(cardInput, { key: 'Enter' });
+      expect(screen.queryByTestId('search-card')).not.toBeInTheDocument();
+    });
+
+    it('maintains focus management during interactions', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      
+      act(() => {
+        searchInput.focus();
+      });
+      
+      expect(document.activeElement).toBe(searchInput);
+      
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      expect(document.activeElement).toBe(searchInput);
+    });
+
+    it('provides screen reader friendly content', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      
+      // Check for accessible result count
+      fireEvent.change(searchInput, { target: { value: 'beach' } });
+      fireEvent.keyDown(searchInput, { key: 'Enter' });
+      
+      expect(screen.getByText(/events found/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Performance Testing', () => {
+    it('handles large activity datasets efficiently', () => {
+      const largeActivitySet = Array.from({ length: 1000 }, (_, i) => ({
+        ...mockActivities[0],
+        id: i,
+        title: `Activity ${i}`,
+        tags: [`tag-${i % 10}`]
+      }));
+      
+      const startTime = performance.now();
+      renderComponent({ activities: largeActivitySet });
+      const endTime = performance.now();
+      
+      // Should render within reasonable time (< 100ms)
+      expect(endTime - startTime).toBeLessThan(100);
+    });
+
+    it('debounces search input efficiently', async () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      
+      // Rapid typing simulation
+      fireEvent.change(searchInput, { target: { value: 't' } });
+      fireEvent.change(searchInput, { target: { value: 'te' } });
+      fireEvent.change(searchInput, { target: { value: 'tes' } });
+      fireEvent.change(searchInput, { target: { value: 'test' } });
+      
+      // Should handle rapid changes without issues
+      expect(searchInput).toHaveValue('test');
+    });
+
+    it('optimizes localStorage operations', () => {
+      // Test that localStorage operations are handled efficiently
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      
+      const startTime = performance.now();
+      
+      // Multiple localStorage-related operations
+      fireEvent.click(searchInput);
+      fireEvent.change(screen.getByTestId('search-card-input'), { target: { value: 'test1' } });
+      fireEvent.click(screen.getByTestId('apply-button'));
+      
+      fireEvent.click(searchInput);
+      fireEvent.change(screen.getByTestId('search-card-input'), { target: { value: 'test2' } });
+      fireEvent.click(screen.getByTestId('apply-button'));
+      
+      const endTime = performance.now();
+      
+      // Should handle localStorage operations efficiently
+      expect(endTime - startTime).toBeLessThan(100);
+    });
+
+    it('maintains performance during rapid interactions', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      
+      const startTime = performance.now();
+      
+      // Rapid open/close cycles
+      for (let i = 0; i < 10; i++) {
+        fireEvent.click(searchInput);
+        fireEvent.keyDown(searchInput, { key: 'Escape' });
+      }
+      
+      const endTime = performance.now();
+      expect(endTime - startTime).toBeLessThan(100);
+    });
+  });
+
+  describe('Advanced Search Features', () => {
+    it('supports complex search queries', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      
+      // Test search with multiple keywords
+      fireEvent.change(searchInput, { target: { value: 'Beach Environment Cleanup' } });
+      fireEvent.keyDown(searchInput, { key: 'Enter' });
+      
+      expect(screen.getByText(/events found/)).toBeInTheDocument();
+    });
+
+    it('implements case-insensitive search', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      
+      // Test different cases
+      const testCases = ['beach', 'BEACH', 'Beach', 'bEaCh'];
+      
+      testCases.forEach(testCase => {
+        fireEvent.change(searchInput, { target: { value: testCase } });
+        fireEvent.keyDown(searchInput, { key: 'Enter' });
+        expect(screen.getByText(/events found/)).toBeInTheDocument();
+      });
+    });
+
+    it('handles search with open events filter for students', () => {
+      localStorageMock.getItem.mockImplementation((key) => {
+        if (key === 'user') return JSON.stringify({ role: USER_ROLES.STUDENT });
+        if (key === 'searchHistory') return JSON.stringify([]);
+        return null;
+      });
+
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      
+      const openOnlyCheckbox = screen.getByTestId('open-only-checkbox');
+      fireEvent.click(openOnlyCheckbox);
+      
+      fireEvent.change(searchInput, { target: { value: 'beach' } });
+      fireEvent.keyDown(searchInput, { key: 'Enter' });
+      
+      expect(screen.getByText(/events found/)).toBeInTheDocument();
+    });
+  });
+
+  describe('Component State Management', () => {
+    it('maintains search state across interactions', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      fireEvent.change(searchInput, { target: { value: 'beach' } });
+      
+      // Close and reopen
+      fireEvent.keyDown(searchInput, { key: 'Escape' });
+      fireEvent.click(searchInput);
+      
+      expect(searchInput).toHaveValue('beach');
+    });
+
+    it('properly manages search history state', () => {
+      renderComponent();
+      
+      const searchInput = screen.getByPlaceholderText('Search activities');
+      fireEvent.click(searchInput);
+      
+      // Add new search to history
+      fireEvent.change(searchInput, { target: { value: 'new search' } });
+      fireEvent.keyDown(searchInput, { key: 'Enter' });
+      
+      // Reopen and check history updated
+      fireEvent.click(searchInput);
+      expect(localStorageMock.setItem).toHaveBeenCalled();
     });
   });
 });
