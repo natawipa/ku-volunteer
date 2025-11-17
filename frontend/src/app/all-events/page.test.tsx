@@ -35,7 +35,7 @@ jest.mock('@/app/components/EventCard/utils', () => ({
 
 jest.mock('@/app/components/Header', () => ({
   __esModule: true,
-  default: jest.fn(({ showSearch, activities, setIsSearchActive, searchInputRef }: any) => (
+  default: jest.fn(({ showSearch }: { showSearch: boolean }) => (
     <div data-testid="header">
       Header - Search: {showSearch ? 'enabled' : 'disabled'}
     </div>
@@ -44,7 +44,7 @@ jest.mock('@/app/components/Header', () => ({
 
 jest.mock('@/app/components/Navbar', () => ({
   __esModule: true,
-  default: jest.fn(({ isAuthenticated, userRole }: any) => (
+  default: jest.fn(({ isAuthenticated, userRole }: { isAuthenticated: boolean; userRole: string | null }) => (
     <div data-testid="navbar">
       Navbar - Auth: {isAuthenticated ? 'yes' : 'no'}, Role: {userRole}
     </div>
@@ -58,7 +58,7 @@ jest.mock('@/app/components/HeroImage', () => ({
 
 jest.mock('@/app/components/EventCard/EventCardHorizontal', () => ({
   __esModule: true,
-  default: jest.fn(({ event, showBadge }: any) => (
+  default: jest.fn(({ event, showBadge }: { event: Activity; showBadge: boolean }) => (
     <div data-testid={`event-card-${event.id}`}>
       {event.title} - {event.status} - Badge: {showBadge ? 'yes' : 'no'}
     </div>
@@ -176,7 +176,12 @@ const mockCurrentUser = {
 };
 
 // Mock event transformation functions
-const { getMyEvents, getAllEvents } = require('@/app/components/EventCard/utils');
+jest.mock('@/app/components/EventCard/utils', () => ({
+  getMyEvents: jest.fn(),
+  getAllEvents: jest.fn(),
+}));
+
+import { getMyEvents, getAllEvents } from '@/app/components/EventCard/utils';
 
 describe('AllEventsPage', () => {
   const mockGetActivities = activitiesApi.getActivities as jest.Mock;
@@ -184,11 +189,13 @@ describe('AllEventsPage', () => {
   const mockGetCurrentUser = apiService.getCurrentUser as jest.Mock;
   const mockIsAuthenticated = auth.isAuthenticated as jest.Mock;
   const mockGetUserRole = auth.getUserRole as jest.Mock;
+  const mockGetMyEvents = getMyEvents as jest.Mock;
+  const mockGetAllEvents = getAllEvents as jest.Mock;
 
   beforeEach(() => {
     jest.clearAllMocks();
-    getAllEvents.mockReturnValue([]);
-    getMyEvents.mockReturnValue([]);
+    mockGetAllEvents.mockReturnValue([]);
+    mockGetMyEvents.mockReturnValue([]);
     
     // Default mocks
     mockGetActivities.mockResolvedValue({
@@ -292,7 +299,7 @@ describe('AllEventsPage', () => {
       mockGetUserRole.mockReturnValue(null);
 
       // Delay the response to test loading state
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: unknown) => void;
       const promise = new Promise(resolve => {
         resolvePromise = resolve;
       });
@@ -352,7 +359,7 @@ describe('AllEventsPage', () => {
         { id: 2, title: 'Tech Workshop', status: 'closed', category: ['Education'] },
       ];
       
-      getAllEvents.mockReturnValue(mockTransformedEvents);
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
 
       await act(async () => {
         render(<AllEventsPage />);
@@ -377,7 +384,7 @@ describe('AllEventsPage', () => {
         { id: 1, title: 'Beach Cleanup', status: 'open', category: ['Environment'] },
       ];
       
-      getMyEvents.mockReturnValue(mockTransformedEvents);
+      mockGetMyEvents.mockReturnValue(mockTransformedEvents);
 
       await act(async () => {
         render(<AllEventsPage />);
@@ -407,7 +414,7 @@ describe('AllEventsPage', () => {
         },
       ];
       
-      getAllEvents.mockReturnValue(mockTransformedEvents);
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
 
       await act(async () => {
         render(<AllEventsPage />);
@@ -442,7 +449,7 @@ describe('AllEventsPage', () => {
         },
       ];
       
-      getAllEvents.mockReturnValue(mockTransformedEvents);
+      mockGetAllEvents.mockReturnValue(mockTransformedEvents);
 
       await act(async () => {
         render(<AllEventsPage />);
@@ -547,7 +554,7 @@ describe('AllEventsPage', () => {
         { id: 1, title: 'Valid Event' }, // Missing required fields
         null, // Null item
         undefined, // Undefined item
-      ] as any;
+      ] as (Partial<Activity> | null | undefined)[];
       
       mockGetActivities.mockResolvedValue({ success: true, data: malformedActivities });
 
@@ -564,7 +571,7 @@ describe('AllEventsPage', () => {
     it('handles empty transformed events', async () => {
       mockIsAuthenticated.mockReturnValue(false);
       mockGetUserRole.mockReturnValue(null);
-      getAllEvents.mockReturnValue([]);
+      mockGetAllEvents.mockReturnValue([]);
 
       await act(async () => {
         render(<AllEventsPage />);

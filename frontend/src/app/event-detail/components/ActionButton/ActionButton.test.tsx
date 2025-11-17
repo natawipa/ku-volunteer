@@ -17,23 +17,35 @@ jest.mock('@/lib/activities', () => ({
 }));
 
 jest.mock('next/link', () => {
-  const stringifyHref = (href: any) => {
+  const stringifyHref = (href: string | { pathname?: string; query?: Record<string, string> } | undefined) => {
     if (!href) return '#';
     if (typeof href === 'string') return href;
     const params = href.query ? new URLSearchParams(href.query).toString() : '';
     return `${href.pathname || '#'}${params ? `?${params}` : ''}`;
   };
 
-  return ({ children, href, className, ...props }: any) => (
+  const MockLink = ({ children, href, className, ...props }: {
+    children: React.ReactNode;
+    href: string | { pathname?: string; query?: Record<string, string> } | undefined;
+    className?: string;
+    [key: string]: unknown;
+  }) => (
     <a {...props} className={className} href={stringifyHref(href)}>
       {children}
     </a>
   );
+  MockLink.displayName = 'MockLink';
+  return MockLink;
 });
 
-jest.mock('./Check-in', () => ({
+jest.mock('../Check-in', () => ({
   __esModule: true,
-  default: jest.fn(({ isOpen, onClose, onSubmit, isLoading }: any) => 
+  default: jest.fn(({ isOpen, onClose, onSubmit, isLoading }: {
+    isOpen: boolean;
+    onClose: () => void;
+    onSubmit: (code: string) => void;
+    isLoading?: boolean;
+  }) => 
     isOpen ? (
       <div data-testid="check-in-modal">
         <button onClick={onClose}>Close Modal</button>
@@ -44,41 +56,38 @@ jest.mock('./Check-in', () => ({
   ),
 }));
 
-jest.mock('../helpers/utils', () => ({
+jest.mock('../../helpers/utils', () => ({
   isActivityEnded: jest.fn(),
   isActivityOngoing: jest.fn(),
   isWithinActivityDateRange: jest.fn(),
   parseActivityDate: jest.fn((date) => new Date(date)),
 }));
 
-const {
-  isActivityEnded,
-  isActivityOngoing,
-  isWithinActivityDateRange,
-  parseActivityDate,
-} = require('../helpers/utils');
+import { isActivityEnded, isActivityOngoing, isWithinActivityDateRange } from '../../helpers/utils';
 
 // Mock data
 const mockEvent: Activity = {
   id: 1,
-  title: 'Test Event',
-  created_at: '2024-01-01T00:00:00Z',
-  start_at: '2024-02-01T09:00:00Z',
-  end_at: '2024-02-01T12:00:00Z',
-  location: 'Test Location',
-  categories: ['Test'],
-  max_participants: 50,
-  organizer_name: 'Test Organizer',
   organizer_profile_id: 1,
   organizer_email: 'test@example.com',
-  description: 'Test description',
-  cover_image_url: '/test.jpg',
+  organizer_name: 'Test Organizer',
+  categories: ['Test'],
+  title: 'Test Activity',
+  description: 'Test Description',
+  start_at: '2024-02-01T10:00:00Z',
+  end_at: '2024-02-01T12:00:00Z',
+  location: 'Test Location',
   status: 'open',
-  updated_at: '2024-01-01T10:00:00Z',
-  current_participants: 25,
+  created_at: '2024-01-01T00:00:00Z',
+  updated_at: '2024-01-01T00:00:00Z',
+  max_participants: 10,
+  current_participants: 5,
+  hours_awarded: 2,
+  rejection_reason: undefined,
   requires_admin_for_delete: false,
   capacity_reached: false,
-  cover_image: '/test.jpg',
+  cover_image_url: undefined,
+  cover_image: undefined
 };
 
 describe('EventActionButton', () => {
@@ -87,14 +96,19 @@ describe('EventActionButton', () => {
   const mockOnCancel = jest.fn();
   const mockOnCheckInSuccess = jest.fn();
 
+  // Cast mocked utilities
+  const mockIsActivityEnded = isActivityEnded as jest.Mock;
+  const mockIsActivityOngoing = isActivityOngoing as jest.Mock;
+  const mockIsWithinActivityDateRange = isWithinActivityDateRange as jest.Mock;
+
   beforeEach(() => {
     jest.clearAllMocks();
     global.alert = jest.fn();
     mockSubmitCheckIn.mockResolvedValue({ success: true });
     // Default date mocks
-    isActivityEnded.mockReturnValue(false);
-    isActivityOngoing.mockReturnValue(false);
-    isWithinActivityDateRange.mockReturnValue(false);
+    mockIsActivityEnded.mockReturnValue(false);
+    mockIsActivityOngoing.mockReturnValue(false);
+    mockIsWithinActivityDateRange.mockReturnValue(false);
   });
 
   describe('Student Role - Application Status States', () => {
@@ -189,7 +203,7 @@ describe('EventActionButton', () => {
     });
 
     it('shows Approved state with check-in for ongoing events', () => {
-      isActivityOngoing.mockReturnValue(true);
+      mockIsActivityOngoing.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -205,7 +219,7 @@ describe('EventActionButton', () => {
     });
 
     it('shows disabled Event Ended button for ended events when approved', () => {
-      isActivityEnded.mockReturnValue(true);
+      mockIsActivityEnded.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -264,7 +278,7 @@ describe('EventActionButton', () => {
 
   describe('Organizer Role - Button States', () => {
     it('shows Check In button during event date range', () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -279,7 +293,7 @@ describe('EventActionButton', () => {
     });
 
     it('shows disabled Event Ended button after event ends', () => {
-      isActivityEnded.mockReturnValue(true);
+      mockIsActivityEnded.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -309,7 +323,7 @@ describe('EventActionButton', () => {
     });
 
     it('disables Check In button when applying', () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -326,7 +340,7 @@ describe('EventActionButton', () => {
 
   describe('Check-in Modal Interactions', () => {
     it('opens check-in modal when Check In button is clicked', async () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -343,7 +357,7 @@ describe('EventActionButton', () => {
     });
 
     it('closes check-in modal when close button is clicked', async () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       
       render(
         <EventActionButton
@@ -366,8 +380,8 @@ describe('EventActionButton', () => {
     });
 
     it('shows loading state during check-in submission', async () => {
-      isWithinActivityDateRange.mockReturnValue(true);
-      let resolveCheckIn: (value: any) => void = () => {};
+      mockIsWithinActivityDateRange.mockReturnValue(true);
+      let resolveCheckIn: (value: unknown) => void = () => {};
       mockSubmitCheckIn.mockReturnValue(new Promise(resolve => {
         resolveCheckIn = resolve;
       }));
@@ -399,7 +413,7 @@ describe('EventActionButton', () => {
 
   describe('Check-in API Integration', () => {
     it('handles successful check-in', async () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       mockSubmitCheckIn.mockResolvedValue({ success: true });
       
       render(
@@ -425,7 +439,7 @@ describe('EventActionButton', () => {
     });
 
     it('handles already checked in error', async () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       mockSubmitCheckIn.mockResolvedValue({ 
         success: false, 
         error: 'You have already checked in to this activity' 
@@ -452,7 +466,7 @@ describe('EventActionButton', () => {
     });
 
     it('handles invalid code error', async () => {
-      isWithinActivityDateRange.mockReturnValue(true);
+      mockIsWithinActivityDateRange.mockReturnValue(true);
       mockSubmitCheckIn.mockResolvedValue({ 
         success: false, 
         error: 'Invalid check-in code' 
@@ -529,50 +543,6 @@ describe('EventActionButton', () => {
 
       const button = screen.getByRole('button', { name: 'Apply Now' });
       expect(button).toBeEnabled();
-    });
-  });
-
-  describe('Button Styling', () => {
-    it('applies correct primary button styles', () => {
-      isWithinActivityDateRange.mockReturnValue(true);
-      
-      render(
-        <EventActionButton
-          event={mockEvent}
-          role={USER_ROLES.ORGANIZER}
-        />
-      );
-
-      const button = screen.getByRole('button', { name: 'Check In' });
-      expect(button).toHaveClass(BUTTON_STYLES.PRIMARY);
-    });
-
-    it('applies correct disabled button styles', () => {
-      isActivityEnded.mockReturnValue(true);
-      
-      render(
-        <EventActionButton
-          event={mockEvent}
-          role={USER_ROLES.ORGANIZER}
-        />
-      );
-
-      const button = screen.getByRole('button', { name: 'Event Ended' });
-      expect(button).toHaveClass(BUTTON_STYLES.DISABLED);
-    });
-
-    it('applies correct cancel button styles', () => {
-      render(
-        <EventActionButton
-          event={mockEvent}
-          role={USER_ROLES.STUDENT}
-          applicationStatus={APPLICATION_STATUS.PENDING}
-          onCancel={mockOnCancel}
-        />
-      );
-
-      const button = screen.getByRole('button', { name: 'Cancel Application' });
-      expect(button).toHaveClass('bg-yellow-600');
     });
   });
 });

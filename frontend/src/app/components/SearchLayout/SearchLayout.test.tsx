@@ -1,21 +1,29 @@
 import React from 'react';
-import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
+import { render, screen, waitFor, fireEvent } from '@testing-library/react';
 import SearchLayout from '@/app/components/SearchLayout/SearchLayout';
-import { USER_ROLES, STORAGE_KEYS } from '@/lib/constants';
+import { USER_ROLES } from '@/lib/constants';
 import type { Activity } from '@/lib/types';
 
 // Mock the child components
 jest.mock('@/app/components/SearchCard', () => ({
   __esModule: true,
-  default: jest.fn(({ 
-    query, 
-    setQuery, 
-    onApply, 
+  default: jest.fn(({
+    query,
+    setQuery,
+    onApply,
     onKeyDown,
     showOpenEventCheckbox,
     OpenEventChecked,
-    setOpenEventChecked 
-  }: any) => (
+    setOpenEventChecked
+  }: {
+    query: string;
+    setQuery: (query: string) => void;
+    onApply: () => void;
+    onKeyDown: (e: React.KeyboardEvent) => void;
+    showOpenEventCheckbox?: boolean;
+    OpenEventChecked?: boolean;
+    setOpenEventChecked?: (checked: boolean) => void;
+  }) => (
     <div data-testid="search-card">
       <input 
         data-testid="search-card-input"
@@ -31,8 +39,8 @@ jest.mock('@/app/components/SearchCard', () => ({
           <input
             type="checkbox"
             data-testid="open-only-checkbox"
-            checked={OpenEventChecked}
-            onChange={(e) => setOpenEventChecked(e.target.checked)}
+            checked={OpenEventChecked || false}
+            onChange={(e) => setOpenEventChecked?.(e.target.checked)}
           />
           Open events only
         </label>
@@ -43,11 +51,14 @@ jest.mock('@/app/components/SearchCard', () => ({
 
 jest.mock('@/app/components/SearchResults', () => ({
   __esModule: true,
-  default: jest.fn(({ events, onBack }: any) => (
+  default: jest.fn(({ events, onBack }: {
+    events: { id: string | number; title: string; status?: string }[];
+    onBack: () => void;
+  }) => (
     <div data-testid="search-results">
       <button data-testid="back-button" onClick={onBack}>Back</button>
       <div data-testid="results-count">{events.length} events found</div>
-      {events.map((event: any) => (
+      {events.map((event: { id: string | number; title: string; status?: string }) => (
         <div key={event.id} data-testid={`event-${event.id}`}>
           {event.title} - {event.status}
         </div>
@@ -477,7 +488,7 @@ describe('SearchLayout', () => {
         { id: 1, title: 'Valid Event' }, // Missing many required fields
         null, // Null activity
         undefined, // Undefined activity
-      ] as any;
+      ] as (Partial<Activity> | null | undefined)[];
       
       renderComponent({ activities: malformedActivities });
       

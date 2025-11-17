@@ -13,7 +13,7 @@ jest.mock('@/lib/activities', () => ({
 
 jest.mock('../../components/AdminEventPreviewCard', () => ({
   __esModule: true,
-  default: jest.fn(({ activity }: any) => (
+  default: jest.fn(({ activity }: { activity: Activity }) => (
     <div data-testid={`admin-event-preview-${activity.id}`}>
       {activity.title} - {activity.status}
     </div>
@@ -22,7 +22,7 @@ jest.mock('../../components/AdminEventPreviewCard', () => ({
 
 jest.mock('../../components/AdminLayout', () => ({
   __esModule: true,
-  default: jest.fn(({ children, title, hideTitle }: any) => (
+  default: jest.fn(({ children, title, hideTitle }: { children: React.ReactNode; title?: string; hideTitle?: boolean }) => (
     <div data-testid="admin-layout">
       {!hideTitle && <h1 data-testid="layout-title">{title}</h1>}
       {children}
@@ -176,7 +176,7 @@ describe('ApprovedEventsPage', () => {
     });
 
     it('shows loading state while fetching data', async () => {
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: { success: boolean; data: Activity[] }) => void;
       const promise = new Promise(resolve => {
         resolvePromise = resolve;
       });
@@ -191,7 +191,7 @@ describe('ApprovedEventsPage', () => {
 
       // Resolve the promise
       await act(async () => {
-        resolvePromise!({ success: true, data: [] });
+        resolvePromise({ success: true, data: [] });
       });
     });
 
@@ -456,7 +456,7 @@ describe('ApprovedEventsPage', () => {
         null, // Null activity
         undefined, // Undefined activity
         { id: 2, title: 'Another Valid', status: 'approved' }, // Minimal valid
-      ] as any;
+      ] as (Partial<Activity> | null | undefined)[];
 
       mockGetActivities.mockResolvedValue({
         success: true,
@@ -522,8 +522,8 @@ describe('ApprovedEventsPage', () => {
 
     it('handles case sensitivity in status filtering', async () => {
       const caseVariations = [
-        { ...mockActivities[0], status: 'OPEN' as any }, // uppercase
-        { ...mockActivities[1], status: 'Approved' as any }, // capitalized
+        { ...mockActivities[0], status: 'OPEN' as string }, // uppercase
+        { ...mockActivities[1], status: 'Approved' as string }, // capitalized
         { ...mockActivities[2], status: 'open' as const }, // correct
       ];
 

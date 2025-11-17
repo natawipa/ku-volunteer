@@ -13,7 +13,7 @@ jest.mock('@/lib/activities', () => ({
 
 jest.mock('../../components/AdminEventPreviewCard', () => ({
   __esModule: true,
-  default: jest.fn(({ activity }: any) => (
+  default: jest.fn(({ activity }: { activity: Activity }) => (
     <div data-testid={`admin-event-preview-${activity.id}`}>
       {activity.title} - {activity.status} - Rejection: {activity.rejection_reason || 'No reason'}
     </div>
@@ -22,7 +22,7 @@ jest.mock('../../components/AdminEventPreviewCard', () => ({
 
 jest.mock('../../components/AdminLayout', () => ({
   __esModule: true,
-  default: jest.fn(({ children, title, hideTitle }: any) => (
+  default: jest.fn(({ children, title, hideTitle }: { children: React.ReactNode; title?: string; hideTitle?: boolean }) => (
     <div data-testid="admin-layout">
       {!hideTitle && <h1 data-testid="layout-title">{title}</h1>}
       {children}
@@ -195,7 +195,7 @@ describe('RejectedEventsPage', () => {
     });
 
     it('shows loading state while fetching data', async () => {
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: { success: boolean; data: Activity[] }) => void;
       const promise = new Promise(resolve => {
         resolvePromise = resolve;
       });
@@ -495,7 +495,7 @@ describe('RejectedEventsPage', () => {
         null, // Null activity
         undefined, // Undefined activity
         { id: 2, title: 'Another Valid', status: 'rejected' }, // Minimal valid
-      ] as any;
+      ] as (Partial<Activity> | null | undefined)[];
 
       mockGetActivities.mockResolvedValue({
         success: true,
@@ -595,6 +595,412 @@ describe('RejectedEventsPage', () => {
       // Should show default empty message when no search
       await waitFor(() => {
         expect(screen.getByText('No rejected events.')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('has proper accessibility structure', async () => {
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Check for proper heading structure
+        expect(screen.getByRole('heading', { name: 'Rejected Events' })).toBeInTheDocument();
+        
+        // Check for proper landmark regions (via AdminLayout)
+        expect(screen.getByTestId('admin-layout')).toBeInTheDocument();
+      });
+    });
+
+    it('provides meaningful content for screen readers', async () => {
+      // Use specific mock data for this accessibility test
+      const accessibilityTestEvents = [
+        { ...mockActivities[0], id: 1, status: 'rejected' as const, title: 'Accessible Event 1' },
+        { ...mockActivities[1], id: 2, status: 'rejected' as const, title: 'Accessible Event 2' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: accessibilityTestEvents,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Check that event count is accessible
+        const eventCount = screen.getByText(/\d+ events?/);
+        expect(eventCount).toBeInTheDocument();
+        
+        // Check that each rejected event has identifiable content
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains focus management during state changes', async () => {
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Ensure the main container is focusable for screen readers
+        const mainContent = screen.getByTestId('admin-layout');
+        expect(mainContent).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Performance and Large Datasets', () => {
+    it('handles large numbers of rejected events efficiently', async () => {
+      // Create 100 rejected events to test performance
+      const largeDataset = Array.from({ length: 100 }, (_, index) => ({
+        id: index + 1,
+        title: `Rejected Event ${index + 1}`,
+        created_at: '2024-01-01T00:00:00Z',
+        start_at: '2024-02-01T09:00:00Z',
+        end_at: '2024-02-01T12:00:00Z',
+        location: `Location ${index + 1}`,
+        categories: ['Test'],
+        max_participants: 50,
+        organizer_name: `Organizer ${index + 1}`,
+        organizer_profile_id: index + 1,
+        organizer_email: `organizer${index + 1}@test.com`,
+        description: `Description ${index + 1}`,
+        cover_image_url: '/test.jpg',
+        status: 'rejected' as const,
+        updated_at: '2024-01-01T10:00:00Z',
+        current_participants: 25,
+        requires_admin_for_delete: false,
+        capacity_reached: false,
+        cover_image: '/test.jpg',
+        rejection_reason: `Rejection reason ${index + 1}`,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: largeDataset,
+      });
+
+      const startTime = performance.now();
+      
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('100 events')).toBeInTheDocument();
+      });
+
+      const endTime = performance.now();
+      const renderTime = endTime - startTime;
+      
+      // Should render within reasonable time (less than 2 seconds)
+      expect(renderTime).toBeLessThan(2000);
+    });
+
+    it('handles empty large dataset gracefully', async () => {
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [], // Empty large dataset
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('0 events')).toBeInTheDocument();
+        expect(screen.getByText('No rejected events.')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains performance during search operations', async () => {
+      const searchableDataset = Array.from({ length: 50 }, (_, index) => ({
+        id: index + 1,
+        title: index % 2 === 0 ? `Searchable Event ${index + 1}` : `Other Event ${index + 1}`,
+        created_at: '2024-01-01T00:00:00Z',
+        start_at: '2024-02-01T09:00:00Z',
+        end_at: '2024-02-01T12:00:00Z',
+        location: `Location ${index + 1}`,
+        categories: ['Test'],
+        max_participants: 50,
+        organizer_name: `Organizer ${index + 1}`,
+        organizer_profile_id: index + 1,
+        organizer_email: `organizer${index + 1}@test.com`,
+        description: `Description ${index + 1}`,
+        cover_image_url: '/test.jpg',
+        status: 'rejected' as const,
+        updated_at: '2024-01-01T10:00:00Z',
+        current_participants: 25,
+        requires_admin_for_delete: false,
+        capacity_reached: false,
+        cover_image: '/test.jpg',
+        rejection_reason: `Rejection reason ${index + 1}`,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: searchableDataset,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('50 events')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Rejection Reason Handling', () => {
+    it('displays various rejection reason formats correctly', async () => {
+      const eventsWithDifferentReasons = [
+        { 
+          ...mockActivities[0], 
+          id: 1,
+          status: 'rejected' as const, 
+          rejection_reason: 'Event cancelled due to weather conditions and safety concerns'
+        },
+        { 
+          ...mockActivities[0], 
+          id: 2,
+          status: 'rejected' as const, 
+          rejection_reason: 'Low registration numbers'
+        },
+        { 
+          ...mockActivities[0], 
+          id: 3,
+          status: 'rejected' as const, 
+          rejection_reason: '' // Empty reason
+        },
+        { 
+          ...mockActivities[0], 
+          id: 4,
+          status: 'rejected' as const, 
+          rejection_reason: undefined // Missing reason
+        },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: eventsWithDifferentReasons,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-3')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-4')).toBeInTheDocument();
+      });
+    });
+
+    it('handles very long rejection reasons gracefully', async () => {
+      const eventWithLongReason = {
+        ...mockActivities[0],
+        id: 1,
+        status: 'rejected' as const,
+        rejection_reason: 'This is a very long rejection reason that might cause layout issues if not handled properly. '.repeat(10)
+      };
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [eventWithLongReason],
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+      });
+    });
+
+    it('handles special characters in rejection reasons', async () => {
+      const eventWithSpecialChars = {
+        ...mockActivities[0],
+        id: 1,
+        status: 'rejected' as const,
+        rejection_reason: 'Rejected due to "budget constraints" & venue unavailability (50% capacity issues)'
+      };
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [eventWithSpecialChars],
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Data Ordering and Display Logic', () => {
+    it('displays events in consistent order', async () => {
+      const unorderedEvents = [
+        { 
+          ...mockActivities[0], 
+          id: 3,
+          status: 'rejected' as const,
+          created_at: '2024-01-03T00:00:00Z',
+          title: 'Third Event'
+        },
+        { 
+          ...mockActivities[0], 
+          id: 1,
+          status: 'rejected' as const,
+          created_at: '2024-01-01T00:00:00Z',
+          title: 'First Event'
+        },
+        { 
+          ...mockActivities[0], 
+          id: 2,
+          status: 'rejected' as const,
+          created_at: '2024-01-02T00:00:00Z',
+          title: 'Second Event'
+        },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: unorderedEvents,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-3')).toBeInTheDocument();
+        expect(screen.getByText('3 events')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains data integrity during filtering operations', async () => {
+      const eventsForFiltering = [
+        { 
+          ...mockActivities[0], 
+          id: 1,
+          status: 'rejected' as const,
+          title: 'Environment Cleanup',
+          categories: ['Environment'],
+          rejection_reason: 'Budget constraints'
+        },
+        { 
+          ...mockActivities[0], 
+          id: 2,
+          status: 'rejected' as const,
+          title: 'Tech Workshop',
+          categories: ['Technology'],
+          rejection_reason: 'Venue issues'
+        },
+        { 
+          ...mockActivities[0], 
+          id: 3,
+          status: 'rejected' as const,
+          title: 'Social Event',
+          categories: ['Social Impact'],
+          rejection_reason: 'Low registration'
+        },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: eventsForFiltering,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-3')).toBeInTheDocument();
+        expect(screen.getByText('3 events')).toBeInTheDocument();
+      });
+    });
+
+    it('handles mixed status filtering correctly', async () => {
+      const mixedStatusEvents = [
+        { ...mockActivities[0], id: 1, status: 'rejected' as const, title: 'Rejected Event' },
+        { ...mockActivities[0], id: 2, status: 'open' as const, title: 'Open Event' },
+        { ...mockActivities[0], id: 3, status: 'pending' as const, title: 'Pending Event' },
+        { ...mockActivities[0], id: 4, status: 'rejected' as const, title: 'Another Rejected Event' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mixedStatusEvents,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Should only show rejected events
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-4')).toBeInTheDocument();
+        expect(screen.queryByTestId('admin-event-preview-2')).not.toBeInTheDocument();
+        expect(screen.queryByTestId('admin-event-preview-3')).not.toBeInTheDocument();
+        expect(screen.getByText('2 events')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Component State Management', () => {
+    it('maintains consistent state during rapid operations', async () => {
+      const rapidChangeEvents = [
+        { ...mockActivities[0], id: 1, status: 'rejected' as const, title: 'First Event' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: rapidChangeEvents,
+      });
+
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByText('1 event')).toBeInTheDocument();
+      });
+    });
+
+    it('handles component remounting gracefully', async () => {
+      const { unmount } = render(<RejectedEventsPage />);
+      
+      await waitFor(() => {
+        expect(screen.getByText('Rejected Events')).toBeInTheDocument();
+      });
+
+      unmount();
+
+      // Remount component
+      await act(async () => {
+        render(<RejectedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Rejected Events')).toBeInTheDocument();
       });
     });
   });

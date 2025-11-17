@@ -13,16 +13,14 @@ jest.mock('@/lib/activities', () => ({
 
 jest.mock('../../components/AdminEventPreviewCard', () => ({
   __esModule: true,
-  default: jest.fn(({ activity, hrefOverride }: any) => (
+  default: jest.fn(({ activity }: { activity: Activity }) => (
     <div data-testid={`admin-event-preview-${activity.id}`}>
-      {`${activity.title} - ${activity.status} - Link: ${hrefOverride}`}
+      {activity.title} - {activity.status}
     </div>
   )),
-}));
-
-jest.mock('../../components/AdminLayout', () => ({
+}));jest.mock('../../components/AdminLayout', () => ({
   __esModule: true,
-  default: jest.fn(({ children, title, hideTitle }: any) => (
+  default: jest.fn(({ children, title, hideTitle }: { children: React.ReactNode; title?: string; hideTitle?: boolean }) => (
     <div data-testid="admin-layout">
       {!hideTitle && <h1 data-testid="layout-title">{title}</h1>}
       {children}
@@ -175,7 +173,7 @@ describe('PendingEventsPage', () => {
     });
 
     it('shows loading state while fetching data', async () => {
-      let resolvePromise: (value: any) => void;
+      let resolvePromise: (value: { success: boolean; data: Activity[] }) => void;
       const promise = new Promise(resolve => {
         resolvePromise = resolve;
       });
@@ -412,7 +410,7 @@ describe('PendingEventsPage', () => {
     });
 
     it('uses yellow theme for pending events', async () => {
-      let resolveActivities: (value: any) => void;
+      let resolveActivities: (value: { success: boolean; data: Activity[] }) => void;
       const loadingPromise = new Promise(resolve => {
         resolveActivities = resolve;
       });
@@ -483,7 +481,7 @@ describe('PendingEventsPage', () => {
         null, // Null activity
         undefined, // Undefined activity
         { id: 2, title: 'Another Valid', status: 'pending' }, // Minimal valid
-      ] as any;
+      ] as (Partial<Activity> | null | undefined)[];
 
       mockGetActivities.mockResolvedValue({
         success: true,
