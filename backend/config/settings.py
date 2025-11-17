@@ -258,6 +258,7 @@ logging_integration = LoggingIntegration(
 )
 
 sentry_sdk.init(
+    debug=False,
     dsn=os.getenv('SENTRY_DSN'),
     integrations=[
         DjangoIntegration(
@@ -274,5 +275,5 @@ sentry_sdk.init(
     profiles_sample_rate=float(os.getenv('SENTRY_PROFILES_SAMPLE_RATE', '1.0' if DEBUG else '0.1')),
     environment=os.getenv('SENTRY_ENVIRONMENT', 'development' if DEBUG else 'production'),
     release=os.getenv('SENTRY_RELEASE'),
-    debug=DEBUG,  # Enable debug mode in development
+    debug=False,
 )

@@ -13,6 +13,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'read'>('all');
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for timestamps
   const router = useRouter();
   const userRole = auth.getUserRole();
 
@@ -31,6 +32,13 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Update timestamps every 30 seconds
+    const timeInterval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000);
+    
+    return () => clearInterval(timeInterval);
   }, []);
 
   const handleNotificationClick = (notification: Notification) => {

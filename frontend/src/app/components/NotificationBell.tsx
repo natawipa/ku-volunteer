@@ -18,6 +18,7 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for timestamps
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -43,10 +44,18 @@ export default function NotificationBell() {
   useEffect(() => {
     fetchNotifications();
     
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchNotifications, 60000);
+    // Refresh notifications every 60 seconds
+    const notifInterval = setInterval(fetchNotifications, 60000);
     
-    return () => clearInterval(interval);
+    // Update timestamps every 30 seconds
+    const timeInterval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000);
+    
+    return () => {
+      clearInterval(notifInterval);
+      clearInterval(timeInterval);
+    };
   }, []);
 
   // Close dropdown when clicking outside
