@@ -774,8 +774,8 @@ describe('EventActionButton', () => {
     });
 
     it('handles component updates during async operations', async () => {
-      let resolveCheckIn: (value: any) => void;
-      const checkInPromise = new Promise(resolve => {
+      let resolveCheckIn: (value: { success: boolean }) => void;
+      const checkInPromise = new Promise<{ success: boolean }>(resolve => {
         resolveCheckIn = resolve;
       });
       
@@ -883,8 +883,8 @@ describe('EventActionButton', () => {
 
     it('handles component unmounting during async operations', async () => {
       mockIsWithinActivityDateRange.mockReturnValue(true);
-      let resolvePromise: (value: any) => void;
-      const slowPromise = new Promise(resolve => {
+      let resolvePromise: (value: { success: boolean }) => void;
+      const slowPromise = new Promise<{ success: boolean }>(resolve => {
         resolvePromise = resolve;
       });
       mockSubmitCheckIn.mockReturnValue(slowPromise);

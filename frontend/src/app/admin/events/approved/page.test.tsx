@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import ApprovedEventsPage from '@/app/admin/events/approved/page';
 import { activitiesApi } from '@/lib/activities';
 import type { Activity } from '@/lib/types';
@@ -902,9 +902,9 @@ describe('ApprovedEventsPage', () => {
     it('maintains filter accuracy with edge case data', async () => {
       const edgeCaseData = [
         { ...mockActivities[0], status: 'open' as const, title: 'Valid Open' },
-        { ...mockActivities[1], status: '' as any, title: 'Empty Status' },
-        { ...mockActivities[2], status: null as any, title: 'Null Status' },
-        { ...mockActivities[3], status: undefined as any, title: 'Undefined Status' },
+        { ...mockActivities[1], status: '' as unknown as 'open', title: 'Empty Status' },
+        { ...mockActivities[2], status: null as unknown as 'open', title: 'Null Status' },
+        { ...mockActivities[3], status: undefined as unknown as 'open', title: 'Undefined Status' },
         { ...mockActivities[0], id: 100, status: 'approved' as const, title: 'Valid Approved' },
       ];
 
@@ -933,7 +933,7 @@ describe('ApprovedEventsPage', () => {
     it('handles data consistency during filtering operations', async () => {
       const inconsistentData = [
         { ...mockActivities[0], status: 'open' as const },
-        { id: 'string-id' as any, title: 'Invalid ID', status: 'approved' },
+        { id: 'string-id' as unknown as number, title: 'Invalid ID', status: 'approved' },
         { ...mockActivities[1], status: 'approved' as const },
         { ...mockActivities[2] }, // Missing required fields
       ];
@@ -959,7 +959,7 @@ describe('ApprovedEventsPage', () => {
         ...mockActivities[i % mockActivities.length],
         id: i + 1,
         title: `Complex Event ${i + 1}`,
-        status: (['open', 'approved', 'pending', 'rejected'][i % 4]) as any,
+        status: (['open', 'approved', 'pending', 'rejected'][i % 4]) as 'open' | 'approved',
         categories: [`Category${i % 10}`],
       }));
 
