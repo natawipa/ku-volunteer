@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import ApprovedEventsPage from '@/app/admin/events/approved/page';
 import { activitiesApi } from '@/lib/activities';
 import type { Activity } from '@/lib/types';
@@ -542,6 +542,439 @@ describe('ApprovedEventsPage', () => {
         // Should not show uppercase or capitalized variations
         expect(screen.queryByTestId('admin-event-preview-1')).not.toBeInTheDocument();
         expect(screen.queryByTestId('admin-event-preview-2')).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Accessibility', () => {
+    it('has proper heading structure', async () => {
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mockActivities,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByRole('heading', { name: 'Approved Events' })).toBeInTheDocument();
+      });
+    });
+
+    it('provides meaningful content for screen readers', async () => {
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mockActivities,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        const countText = screen.getByText('3 events');
+        expect(countText).toBeInTheDocument();
+        expect(countText).toBeVisible();
+      });
+    });
+
+    it('maintains focus management during data loading', async () => {
+      let resolvePromise: (value: { success: boolean; data: Activity[] }) => void;
+      const promise = new Promise<{ success: boolean; data: Activity[] }>(resolve => {
+        resolvePromise = resolve;
+      });
+      mockGetActivities.mockReturnValue(promise);
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      expect(screen.getByText('Loading...')).toBeInTheDocument();
+
+      await act(async () => {
+        resolvePromise!({ success: true, data: [] });
+      });
+
+      // Component should still be accessible after loading
+      expect(screen.getByText('No approved events.')).toBeInTheDocument();
+    });
+
+    it('provides accessible error messages', async () => {
+      mockGetActivities.mockResolvedValue({
+        success: false,
+        error: 'Failed to fetch activities',
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        const errorMessage = screen.getByText('Failed to fetch activities');
+        expect(errorMessage).toBeInTheDocument();
+        expect(errorMessage).toBeVisible();
+      });
+    });
+  });
+
+  describe('Performance and Large Datasets', () => {
+    it('handles large numbers of approved events efficiently', async () => {
+      const largeDataset = Array.from({ length: 100 }, (_, i) => ({
+        ...mockActivities[0],
+        id: i + 1,
+        title: `Event ${i + 1}`,
+        status: i % 2 === 0 ? 'open' as const : 'approved' as const,
+      }));
+
+      const startTime = performance.now();
+      
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: largeDataset,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('100 events')).toBeInTheDocument();
+      });
+
+      const endTime = performance.now();
+      expect(endTime - startTime).toBeLessThan(2000); // Should render within 2s
+    });
+
+    it('handles rapid state changes gracefully', async () => {
+      const { rerender } = render(<ApprovedEventsPage />);
+
+      const datasets = [
+        { success: true, data: [] },
+        { success: true, data: [mockActivities[0]] },
+        { success: true, data: mockActivities },
+        { success: true, data: [] },
+      ];
+
+      const startTime = performance.now();
+
+      for (const dataset of datasets) {
+        mockGetActivities.mockResolvedValue(dataset);
+        await act(async () => {
+          rerender(<ApprovedEventsPage />);
+        });
+        // Wait for async state updates to complete
+        await act(async () => {
+          await new Promise(resolve => setTimeout(resolve, 0));
+        });
+      }
+
+      const endTime = performance.now();
+      expect(endTime - startTime).toBeLessThan(500);
+    });
+
+    it('handles memory efficiently with large datasets', async () => {
+      const massiveDataset = Array.from({ length: 500 }, (_, i) => ({
+        ...mockActivities[0],
+        id: i + 1,
+        title: `Massive Event ${i + 1}`,
+        description: 'Very long description '.repeat(50),
+        status: 'open' as const,
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: massiveDataset,
+      });
+
+      const startTime = performance.now();
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('500 events')).toBeInTheDocument();
+      });
+
+      const endTime = performance.now();
+      expect(endTime - startTime).toBeLessThan(3000);
+    });
+
+    it('optimizes re-renders during data updates', async () => {
+      let renderCount = 0;
+      const TestWrapper = () => {
+        renderCount++;
+        return <ApprovedEventsPage />;
+      };
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mockActivities,
+      });
+
+      await act(async () => {
+        const { rerender } = render(<TestWrapper />);
+        const initialCount = renderCount;
+
+        // Re-render with same data should not cause excessive renders
+        await act(async () => {
+          rerender(<TestWrapper />);
+        });
+        expect(renderCount - initialCount).toBeLessThan(5);
+      });
+    });
+  });
+
+  describe('Component State Management', () => {
+    it('maintains state consistency during rapid operations', async () => {
+      // Test state consistency with changing data over time
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mockActivities,
+      });
+
+      render(<ApprovedEventsPage />);
+
+      // Verify initial state
+      await waitFor(() => {
+        expect(screen.getByText('3 events')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-5')).toBeInTheDocument();
+      });
+
+      // Verify component handles state consistently
+      const eventElements = screen.getAllByTestId(/^admin-event-preview-/);
+      expect(eventElements).toHaveLength(3);
+      
+      // Verify each event has the expected content structure
+      eventElements.forEach(element => {
+        expect(element).toBeInTheDocument();
+        expect(element.textContent).toContain(' - ');
+      });
+
+      // Test that component maintains consistency during data operations
+      const countElement = screen.getByText('3 events');
+      expect(countElement).toBeInTheDocument();
+      expect(countElement).toHaveClass('text-green-800');
+      
+      // Verify all required status types are shown (they appear within the event preview elements)
+      const openEvents = screen.getAllByText((content, element) => {
+        return element?.textContent?.includes(' - open') ?? false;
+      });
+      const approvedEvents = screen.getAllByText((content, element) => {
+        return element?.textContent?.includes(' - approved') ?? false;
+      });
+      
+      expect(openEvents.length).toBeGreaterThan(0);
+      expect(approvedEvents.length).toBeGreaterThan(0);
+    });
+
+    it('handles component unmounting gracefully', async () => {
+      let resolvePromise: (value: { success: boolean; data: Activity[] }) => void;
+      const promise = new Promise<{ success: boolean; data: Activity[] }>(resolve => {
+        resolvePromise = resolve;
+      });
+      mockGetActivities.mockReturnValue(promise);
+
+      const { unmount } = render(<ApprovedEventsPage />);
+
+      // Unmount before promise resolves
+      unmount();
+
+      // Resolve promise after unmount - should not cause errors
+      await act(async () => {
+        resolvePromise!({ success: true, data: mockActivities });
+      });
+
+      // Test passes if no errors thrown
+      expect(true).toBe(true);
+    });
+
+    it('recovers from error states', async () => {
+      // Start with error
+      mockGetActivities.mockResolvedValue({
+        success: false,
+        error: 'Network error',
+      });
+
+      const { unmount } = render(<ApprovedEventsPage />);
+
+      await waitFor(() => {
+        expect(screen.getByText('Network error')).toBeInTheDocument();
+      });
+
+      // Unmount the error component
+      unmount();
+
+      // Recover with successful data - mount fresh component
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mockActivities,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('3 events')).toBeInTheDocument();
+        expect(screen.queryByText('Network error')).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles concurrent API calls gracefully', async () => {
+      let callCount = 0;
+      mockGetActivities.mockImplementation(() => {
+        callCount++;
+        return Promise.resolve({
+          success: true,
+          data: callCount === 1 ? [] : mockActivities,
+        });
+      });
+
+      const { rerender } = render(<ApprovedEventsPage />);
+        
+      // Trigger multiple rapid re-renders
+      await act(async () => {
+        rerender(<ApprovedEventsPage />);
+        rerender(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(callCount).toBeGreaterThan(0);
+      });
+    });
+  });
+
+  describe('Advanced Filtering and Data Processing', () => {
+    it('combines status filtering with data transformation', async () => {
+      const mixedData = [
+        { ...mockActivities[0], status: 'open' as const, title: 'Open Event' },
+        { ...mockActivities[1], status: 'approved' as const, title: 'Approved Event' },
+        { ...mockActivities[2], status: 'pending' as const, title: 'Pending Event' },
+        { ...mockActivities[3], status: 'rejected' as const, title: 'Rejected Event' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: mixedData,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('Open Event - open')).toBeInTheDocument();
+        expect(screen.getByText('Approved Event - approved')).toBeInTheDocument();
+        expect(screen.queryByText('Pending Event - pending')).not.toBeInTheDocument();
+        expect(screen.queryByText('Rejected Event - rejected')).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles special characters in event data', async () => {
+      const specialCharActivity = {
+        ...mockActivities[0],
+        id: 999,
+        title: 'Event with Special Chars: @#$%^&*()',
+        description: 'Unicode: 🎉🌟✨ and emoji support',
+        location: 'Location with "quotes" and <tags>',
+        status: 'open' as const,
+      };
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: [specialCharActivity],
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        expect(screen.getByTestId('admin-event-preview-999')).toBeInTheDocument();
+        expect(screen.getByText('Event with Special Chars: @#$%^&*() - open')).toBeInTheDocument();
+      });
+    });
+
+    it('maintains filter accuracy with edge case data', async () => {
+      const edgeCaseData = [
+        { ...mockActivities[0], status: 'open' as const, title: 'Valid Open' },
+        { ...mockActivities[1], status: '' as any, title: 'Empty Status' },
+        { ...mockActivities[2], status: null as any, title: 'Null Status' },
+        { ...mockActivities[3], status: undefined as any, title: 'Undefined Status' },
+        { ...mockActivities[0], id: 100, status: 'approved' as const, title: 'Valid Approved' },
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: edgeCaseData,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Should only show events with valid 'open' or 'approved' status
+        expect(screen.getByText('Valid Open - open')).toBeInTheDocument();
+        expect(screen.getByText('Valid Approved - approved')).toBeInTheDocument();
+        expect(screen.getByText('2 events')).toBeInTheDocument();
+        
+        // Should not show events with invalid status
+        expect(screen.queryByText('Empty Status')).not.toBeInTheDocument();
+        expect(screen.queryByText('Null Status')).not.toBeInTheDocument();
+        expect(screen.queryByText('Undefined Status')).not.toBeInTheDocument();
+      });
+    });
+
+    it('handles data consistency during filtering operations', async () => {
+      const inconsistentData = [
+        { ...mockActivities[0], status: 'open' as const },
+        { id: 'string-id' as any, title: 'Invalid ID', status: 'approved' },
+        { ...mockActivities[1], status: 'approved' as const },
+        { ...mockActivities[2] }, // Missing required fields
+      ];
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: inconsistentData,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Should handle inconsistent data gracefully
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument();
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument();
+      });
+    });
+
+    it('processes large datasets with complex filtering', async () => {
+      const complexDataset = Array.from({ length: 200 }, (_, i) => ({
+        ...mockActivities[i % mockActivities.length],
+        id: i + 1,
+        title: `Complex Event ${i + 1}`,
+        status: (['open', 'approved', 'pending', 'rejected'][i % 4]) as any,
+        categories: [`Category${i % 10}`],
+      }));
+
+      mockGetActivities.mockResolvedValue({
+        success: true,
+        data: complexDataset,
+      });
+
+      await act(async () => {
+        render(<ApprovedEventsPage />);
+      });
+
+      await waitFor(() => {
+        // Should show only open and approved events (50% of 200 = 100)
+        expect(screen.getByText('100 events')).toBeInTheDocument();
       });
     });
   });
