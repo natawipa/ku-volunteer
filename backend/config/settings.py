@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import logging
 from datetime import timedelta
 from pathlib import Path
 
@@ -38,20 +39,25 @@ ALLOWED_HOSTS = [
     '127.0.0.1',
 ]
 
+# Add backend hostname for Docker network access (development/monitoring only)
+if DEBUG:
+    ALLOWED_HOSTS.append('backend')
+
 
 # Application definition
 INSTALLED_APPS = [
-    'django.contrib.admin',
+    'django_prometheus',
     'django.contrib.auth',
     'django.contrib.contenttypes',
+    'users', 
+    'django.contrib.admin',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'config',  # Add config app to enable management commands
-    'users',
+    'config',
     'social_django',
     'activities',
 ]
@@ -120,6 +126,7 @@ SOCIAL_AUTH_PIPELINE = (
 )
 
 MIDDLEWARE = [
+    'django_prometheus.middleware.PrometheusBeforeMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -129,6 +136,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'social_django.middleware.SocialAuthExceptionMiddleware',
+    'django_prometheus.middleware.PrometheusAfterMiddleware',
 ]
 
 ROOT_URLCONF = 'config.urls'
@@ -157,7 +165,7 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.postgresql',
+        'ENGINE': 'django_prometheus.db.backends.postgresql',
         'NAME': os.getenv('DB_NAME', 'ku_volunteer_db'),
         'USER': os.getenv('DB_USER', 'ku_user'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'ku_password'),
@@ -237,3 +245,34 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@ku-volunteer.com')
 
 # Password reset settings
 PASSWORD_RESET_TIMEOUT = 3600  # 1 hour in seconds
+
+# Sentry Configuration
+import sentry_sdk
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+
+# Set up logging integration
+logging_integration = LoggingIntegration(
+    level=logging.INFO,        # Capture info and above as breadcrumbs
+    event_level=logging.ERROR  # Send errors as events
+)
+
+sentry_sdk.init(
+    dsn=os.getenv('SENTRY_DSN'),
+    integrations=[
+        DjangoIntegration(
+            transaction_style='url',
+        ),
+        logging_integration,
+    ],
+    # Add data like request headers and IP for users;
+    # see https://docs.sentry.io/platforms/python/data-management/data-collected/ for more info
+    send_default_pii=True,
+    # Set traces_sample_rate based on environment
+    traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '1.0' if DEBUG else '0.2')),
+    # Set profiles_sample_rate based on environment
+    profiles_sample_rate=float(os.getenv('SENTRY_PROFILES_SAMPLE_RATE', '1.0' if DEBUG else '0.1')),
+    environment=os.getenv('SENTRY_ENVIRONMENT', 'development' if DEBUG else 'production'),
+    release=os.getenv('SENTRY_RELEASE'),
+    debug=DEBUG,  # Enable debug mode in development
+)

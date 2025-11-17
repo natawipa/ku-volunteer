@@ -3,7 +3,7 @@ import Image from 'next/image';
 import { APPLICATION_STATUS, CHECK_IN_STYLES } from '../../lib/constants';
 import type { ActivityApplication, CheckInRecord } from '../../lib/types';
 import { determineCheckInStatus } from './hooks/useCheckInStatus';
-import { isActivityEnded, formatEventDate } from './helpers/utils';
+import { isActivityEnded, isActivityNotStarted, formatEventDate } from './helpers/utils';
 
 // Interfaces
 interface TransformedEvent {
@@ -35,6 +35,7 @@ interface ApprovedListProps {
   applications: ActivityApplication[];
   loading: boolean;
   eventEndDate?: string;
+  eventStartDate?: string;
 }
 
 interface EventDetailsProps {
@@ -160,7 +161,7 @@ export function ApplicantsList({
   );
 }
 
-export function ApprovedList({ applications, loading, eventEndDate }: ApprovedListProps) {
+export function ApprovedList({ applications, loading, eventEndDate, eventStartDate }: ApprovedListProps) {
   const [checkInRecords, setCheckInRecords] = React.useState<CheckInRecord[]>([]);
   const [loadingCheckIn, setLoadingCheckIn] = React.useState(false);
   const activityId = applications[0]?.activity_id || applications[0]?.activity;
@@ -184,13 +185,13 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
 
     const studentId = application.student ?? application.studentid;
     
-    console.log('Look up student with ID:', { studentId, totalRecords: checkInRecords.length, eventEndDate });
+    console.log('Look up student with ID:', { studentId, totalRecords: checkInRecords.length, eventEndDate, eventStartDate });
     
     const checkInRecord = getStudentCheckInRecord(studentId);
     console.log('Check-in record result:', checkInRecord);
     
-    return determineCheckInStatus(checkInRecord, eventEndDate);
-  }, [checkInRecords, getStudentCheckInRecord, eventEndDate]);
+    return determineCheckInStatus(checkInRecord, eventEndDate, eventStartDate);
+  }, [checkInRecords, getStudentCheckInRecord, eventEndDate, eventStartDate]);
 
   // Fetch check-in records for activity
   React.useEffect(() => {
@@ -230,6 +231,7 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
     };
 
     const activityEnded = isActivityEnded(eventEndDate);
+    const activityNotStarted = isActivityNotStarted(eventStartDate);
 
     if (activityEnded) {
       console.log('Activity has ended - fetching check-in records once');
@@ -237,14 +239,17 @@ export function ApprovedList({ applications, loading, eventEndDate }: ApprovedLi
       return; // Stop auto-refresh when activity ended
     }
 
-    // Fetch immediately if activity is ongoing
-    fetchCheckInRecords();
-    
-    // auto-refresh every 10 seconds
-    const interval = setInterval(() => {fetchCheckInRecords();}, 10000);
-    
-    return () => clearInterval(interval);
-  }, [activityId, applications.length, eventEndDate]);
+    if (!activityNotStarted) {
+      console.log('Activity has started');
+      fetchCheckInRecords();
+      
+      // auto-refresh every 10 seconds
+      const interval = setInterval(() => {fetchCheckInRecords();}, 10000);
+      return () => clearInterval(interval);
+    }
+
+    console.log('Activity has not started yet');
+  }, [activityId, applications.length, eventEndDate, eventStartDate]);
   
   if (loading || loadingCheckIn) {
     return <div className="text-center py-8">Loading participants...</div>;

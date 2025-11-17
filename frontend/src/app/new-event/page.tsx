@@ -11,12 +11,12 @@ import { USER_ROLES, ENV } from "../../lib/constants";
 import type { Activity } from "../../lib/types";
 import HeroImage from "../components/HeroImage";
 import Navbar from "../components/Navbar";
+import { useModal } from "../components/Modal";
 
-
-// Move the main content to a separate component
 function ActivityFormContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { showModal, hideModal } = useModal();
   
   const [activityId, setActivityId] = useState<string | null>(null);
   const [title, setTitle] = useState("");
@@ -46,7 +46,6 @@ function ActivityFormContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-
   // Check authentication on component mount
   useEffect(() => {
     const checkAuth = () => {
@@ -60,13 +59,11 @@ function ActivityFormContent() {
         
         // Redirect if not authenticated or not organizer or admin
         if (!authenticated) {
-          alert("Please log in to create an activity");
           router.push('/login');
           return;
         }
         
-        if (role !== USER_ROLES.ORGANIZER && role!== USER_ROLES.ADMIN) {
-          alert("Only organizers or admin can create activities");
+        if (role !== USER_ROLES.ORGANIZER && role !== USER_ROLES.ADMIN) {
           router.push('/');
           return;
         }
@@ -158,7 +155,7 @@ function ActivityFormContent() {
         }
       } catch (error) {
         console.error('Error parsing activity data:', error);
-        alert('Error loading activity data for editing');
+        setTimeout(() => showModal("Error loading activity data for editing"), 100);
       }
     }
     // If edit mode requested but no activityData param provided, fetch from API
@@ -224,14 +221,15 @@ function ActivityFormContent() {
             })();
           } else {
             console.warn('Failed to fetch activity for edit', resp.error);
-            alert('Unable to load activity for editing');
+            setTimeout(() => showModal("Unable to load activity for editing"), 200);
           }
         } catch (error) {
           console.error('Error fetching activity:', error);
+          setTimeout(() => showModal("Unable to load activity for editing"), 200);
         }
       })();
     }
-  }, [searchParams]);
+  }, [searchParams, showModal]);
 
   function normalizeUrl(url: string | null | undefined) {
     if (!url) return url ?? null;
@@ -282,42 +280,42 @@ function ActivityFormContent() {
 
   const handleDeleteClick = async () => {
     if (!activityId) {
-      alert("Cannot delete an activity that hasn't been created yet");
+      showModal("Cannot delete an activity that hasn't been created yet");
       return;
     }
     
-    if (!confirm('Are you sure you want to delete this activity?')) {
-      return;
-    }
-    
+    showModal("Are you sure you want to delete this activity?", {
+      needDecision: true,
+      icon: "trash",
+      onConfirm: handleConfirmDeleteActivity,
+    });
+  };
+
+  const handleConfirmDeleteActivity = async () => {
+    // No need to call hideModal - it's automatic
     setIsDeleting(true);
     
     try {
-      // Try to delete the activity
-      const response = await activitiesApi.deleteActivity(activityId);
+      const response = await activitiesApi.deleteActivity(activityId!);
       
       if (response.success) {
-        // Successfully deleted (no participants)
-        alert('Activity deleted successfully');
-        router.push('/all-events');
+        showModal('Activity deleted successfully');
+        setTimeout(() => router.push('/all-events'), 2000);
       } else {
-        // Check if error message indicates participants exist
         const errorMsg = response.error || '';
         const requiresAdmin = errorMsg.includes('Participants exist') || 
                             errorMsg.includes('deletion requires admin') ||
                             response.data?.requires_admin_for_delete;
         
         if (requiresAdmin) {
-          // Has participants - show modal for deletion request
           setShowDeleteModal(true);
         } else {
-          // Other error
           throw new Error(response.error || 'Failed to delete activity');
         }
       }
     } catch (error) {
       console.error('Delete error:', error);
-      alert('Failed to delete activity: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showModal('Failed to delete activity');
     } finally {
       setIsDeleting(false);
     }
@@ -330,7 +328,7 @@ function ActivityFormContent() {
 
   const handleConfirmDelete = async () => {
     if (!deletionReason.trim()) {
-      alert('Please provide a reason for deletion');
+      showModal("Please provide a reason for deletion");
       return;
     }
 
@@ -342,7 +340,7 @@ function ActivityFormContent() {
       const deleteReqResponse = await activitiesApi.requestDeletion(parseInt(activityId), deletionReason.trim());
       
       if (deleteReqResponse.success) {
-        alert('Deletion request submitted successfully. An admin will review it.');
+        showModal("Deletion request submitted successfully. Admin will review it.");
         setShowDeleteModal(false);
         setDeletionReason("");
         router.push(`/event-detail/${activityId}`);
@@ -351,7 +349,7 @@ function ActivityFormContent() {
       }
     } catch (error) {
       console.error('Delete request error:', error);
-      alert('Failed to submit deletion request: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      showModal("Failed to submit deletion request");
     } finally {
       setIsDeleting(false);
     }
@@ -407,13 +405,13 @@ function ActivityFormContent() {
     if (!validate()) return;
   
     if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole != USER_ROLES.ADMIN) {
-      alert("You must be logged in as an organizer to manage activities");
+      showModal("You must be logged in as an organizer to manage activities");
       return;
     }
 
     // Prevent duplicate submissions
     if (activityCreated && !isEditMode) {
-      alert("Activity already created! Redirecting to homepage...");
+      showModal("Activity already created! Redirecting to homepage...");
       router.push('/');
       return;
     }
@@ -462,14 +460,11 @@ function ActivityFormContent() {
         if (result.success && result.data) {
           console.log('Activity updated successfully:', result.data);
           
-          // Show warning if there was a poster upload error
-          if (result.error) {
-            alert(`Activity updated!\n\nWarning: ${result.error}`);
-          } else {
-            alert('Activity updated successfully!');
-          }
-          
-          router.push(`/event-detail/${activityId}`);
+          // Navigate with success message in URL
+          const successMsg = result.error 
+            ? `Activity updated! Warning: ${result.error}`
+            : 'Activity updated successfully!';
+          router.push(`/event-detail/${activityId}?success=${encodeURIComponent(successMsg)}`);
         } else {
           throw new Error(result.error || 'Failed to update activity');
         }
@@ -491,14 +486,11 @@ function ActivityFormContent() {
             setActivityId(result.data.id.toString());
           }
           
-          // Show warning if there was a poster upload error
-          if (result.error) {
-            alert(`Activity created!\n\nWarning: ${result.error}`);
-          } else {
-            alert('Activity created successfully!');
-          }
-          
-          router.push('/');
+          // Navigate with success message in URL
+          const successMsg = result.error
+            ? `Activity created! Warning: ${result.error}`
+            : 'Activity created successfully!';
+          router.push(`/?success=${encodeURIComponent(successMsg)}`);
         } else {
           throw new Error(result.error || 'Failed to create activity');
         }
@@ -506,7 +498,7 @@ function ActivityFormContent() {
       
     } catch (error) {
       console.error('Failed to save activity:', error);
-      alert(`Failed to ${isEditMode ? 'update' : 'create'} activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      showModal(`Failed to ${isEditMode ? 'update' : 'create'} activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -514,39 +506,49 @@ function ActivityFormContent() {
 
   const handleDeleteExistingPoster = async (posterId: number | string) => {
     if (!activityId) {
-      alert('Cannot delete poster before activity is saved');
+      showModal('Cannot delete poster before activity is saved');
       return;
     }
-    if (!confirm('Delete this poster image?')) return;
+    showModal("Are you sure you want to delete this poster image?", {
+      needDecision: true,
+      icon: "trash",
+      onConfirm: () => handleConfirmDeletePoster(posterId),
+    });
+  };
+
+  const handleConfirmDeletePoster = async (posterId: number | string) => {
     try {
-      const resp = await activitiesApi.deletePosterImage(parseInt(activityId), posterId);
+      const resp = await activitiesApi.deletePosterImage(parseInt(activityId!), posterId);
       if (resp.success) {
-  setExistingPosters((prev: { id?: number | string; url: string }[]) => prev.filter((p) => String(p.id) !== String(posterId)));
-        alert('Poster deleted');
+        setExistingPosters((prev) => prev.filter((p) => String(p.id) !== String(posterId)));
+        showModal('Poster deleted');
       } else {
         throw new Error(resp.error || 'Failed to delete poster');
       }
     } catch (error) {
       console.error('Error deleting poster:', error);
-      alert('Failed to delete poster');
+      showModal('Failed to delete poster');
     }
+  };
+
+  const handleCancel = () => {
+    showModal("Are you sure you want to cancel? Any unsaved changes will be lost.", {
+      needDecision: true,
+      icon: "x",
+      onConfirm: () => {
+        hideModal();
+        if (isEditMode && activityId) {
+          router.push(`/event-detail/${activityId}`);
+        } else {
+          router.push('/');
+        }
+      },
+    });
   };
 
   const clearError = (field: string) => {
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  };
-
-  const handleCancel = () => {
-    if (window.confirm('Are you sure you want to cancel? Any unsaved changes will be lost.')) {
-      if (isEditMode && activityId) {
-        //back to the event detail page
-        router.push(`/event-detail/${activityId}`);
-      } else {
-        // back to home for new activities
-        router.push('/');
-      }
     }
   };
 
@@ -685,7 +687,7 @@ function ActivityFormContent() {
           </div>
       </div>
 
-      {/* Deletion Request Modal - Beautiful Popup */}
+      {/* Deletion Request Modal*/}
       {showDeleteModal && (
         <div 
           className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn"
