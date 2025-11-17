@@ -10,6 +10,14 @@ from users.views import google_login
 from django.conf import settings
 from django.conf.urls.static import static
 from django_prometheus import exports as prometheus_exports
+import sentry_sdk
+
+def trigger_error(request):
+    # Capture a message to test Sentry connection
+    sentry_sdk.capture_message("Sentry test triggered from Django", level="info")
+    
+    # Also trigger an actual exception
+    division_by_zero = 1 / 0
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -23,6 +31,8 @@ urlpatterns = [
     path('api/auth/google/callback/', social_complete, {"backend": "google-oauth2"}, name='google_callback'),
     # Prometheus metrics endpoint (without middleware to avoid recursion)
     path('metrics', prometheus_exports.ExportToDjangoView, name='prometheus-metrics'),
+    # Sentry test endpoint
+    path('sentry-debug/', trigger_error),
 ]
 
 if settings.DEBUG:
