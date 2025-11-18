@@ -1,0 +1,65 @@
+# Localhost configuration with automatic TLS
+localhost {
+    # Frontend - Next.js application
+    handle /* {
+        reverse_proxy frontend:3000 {
+            # Headers for proper forwarding
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+    
+    # Backend API - Django application
+    handle /api/* {
+        reverse_proxy backend:8000 {
+            # Headers
+            header_up Host {host}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+            header_up X-Forwarded-Host {host}
+        }
+    }
+    
+    # Django admin
+    handle /admin/* {
+        reverse_proxy backend:8000
+    }
+    
+    # Media files
+    handle /media/* {
+        reverse_proxy backend:8000
+    }
+    
+    # Static files
+    handle /static/* {
+        reverse_proxy backend:8000
+    }
+    
+    # Security headers
+    header {
+        # Enable HSTS (for HTTPS)
+        Strict-Transport-Security "max-age=31536000; includeSubDomains"
+        
+        # Prevent clickjacking
+        X-Frame-Options "SAMEORIGIN"
+        
+        # Prevent MIME type sniffing
+        X-Content-Type-Options "nosniff"
+        
+        # XSS Protection
+        X-XSS-Protection "1; mode=block"
+        
+        # Referrer Policy
+        Referrer-Policy "strict-origin-when-cross-origin"
+    }
+    
+    # Access logging
+    log {
+        output file /var/log/caddy/access.log
+        format json
+    }
+}

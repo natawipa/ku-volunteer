@@ -31,8 +31,8 @@ services:
     working_dir: /app
     volumes:
       - ./backend:/app
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     depends_on:
       db:
         condition: service_healthy
@@ -44,9 +44,26 @@ services:
   frontend:
     build: ./frontend
     working_dir: /app
-    ports:
-      - "3000:3000"
+    expose:
+      - "3000"
     depends_on:
+      - backend
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"       # HTTP (redirects to HTTPS)
+      - "443:443"     # HTTPS
+      - "443:443/udp" # HTTP/3
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - caddy_logs:/var/log/caddy
+    depends_on:
+      - frontend
       - backend
 
   prometheus:
@@ -94,3 +111,6 @@ volumes:
   db_data:
   prometheus_data:
   grafana_data:
+  caddy_data:
+  caddy_config:
+  caddy_logs:
