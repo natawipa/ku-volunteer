@@ -4,6 +4,7 @@ import { APPLICATION_STATUS, CHECK_IN_STYLES } from '../../lib/constants';
 import type { ActivityApplication, CheckInRecord } from '../../lib/types';
 import { determineCheckInStatus } from './hooks/useCheckInStatus';
 import { isActivityEnded, isActivityNotStarted, formatEventDate } from './helpers/utils';
+import { Download } from 'lucide-react';
 
 // Interfaces
 interface TransformedEvent {
@@ -36,6 +37,7 @@ interface ApprovedListProps {
   loading: boolean;
   eventEndDate?: string;
   eventStartDate?: string;
+  eventTitle?: string;
 }
 
 interface EventDetailsProps {
@@ -161,7 +163,7 @@ export function ApplicantsList({
   );
 }
 
-export function ApprovedList({ applications, loading, eventEndDate, eventStartDate }: ApprovedListProps) {
+export function ApprovedList({ applications, loading, eventEndDate, eventStartDate, eventTitle }: ApprovedListProps) {
   const [checkInRecords, setCheckInRecords] = React.useState<CheckInRecord[]>([]);
   const [loadingCheckIn, setLoadingCheckIn] = React.useState(false);
   const activityId = applications[0]?.activity_id || applications[0]?.activity;
@@ -268,6 +270,87 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
     return priorityA - priorityB;
   });
 
+  // CSV export function
+  const exportToCSV = () => {
+    const csvData: string[][] = [
+      ['Student ID', 'First Name', 'Last Name', 'Status', 'Checked In At']
+    ];
+
+    sortedApplications.forEach(application => {
+      const currentStatus = getApplicationStatus(application);
+      const badge = getStatusBadge(currentStatus);
+      
+      // Get student ID 
+      const studentId = String(
+        application.student_id_external || 
+        application.student || 
+        application.studentid || 
+        '-'
+      );
+      
+      // Parse student name
+      const fullName = application.student_name || '';
+      const nameParts = fullName.trim().split(/\s+/);
+      const firstName = nameParts[0] || '-';
+      const lastName = nameParts.slice(1).join(' ') || '-';
+      
+      // check-in record of this student
+      const studentCheckInId = application.student ?? application.studentid;
+      const checkInRecord = studentCheckInId ? getStudentCheckInRecord(studentCheckInId) : undefined;
+      
+      const checkedInAt = checkInRecord?.checked_in_at 
+        ? new Date(checkInRecord.checked_in_at).toLocaleString('en-GB', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          })
+        : '-';
+
+      csvData.push([
+        studentId,
+        firstName,
+        lastName,
+        badge.label,
+        checkedInAt
+      ]);
+    });
+
+    // convert to CSV string
+    const csvContent = csvData
+      .map(row => row.map(cell => `"${cell}"`).join(','))
+      .join('\n');
+
+    // blob and download
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    // filename with current date
+    const now = new Date();
+    const dateStr = now.toISOString().split('T')[0];
+    
+    // title for filename (remove special characters, limit length)
+    const TitleForCsv = (eventTitle || 'activity')
+      .replace(/[^a-zA-Z0-9\s-]/g, '')
+      .replace(/\s+/g, '_') 
+      .toLowerCase()
+      .substring(0, 50);
+    
+    const filename = `${TitleForCsv}_attendance_${dateStr}.csv`;
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', filename);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const activityEnded = isActivityEnded(eventEndDate);
+
   return (
     <div className="space-y-6">
       <h2 className="font-bold text-3xl mb-8">
@@ -342,18 +425,32 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
             })}
           </div>
 
-          {/* Footer with count */}
+          {/* Footer with count and download button */}
           <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
-            <p className="text-sm text-gray-600">
-              Total: <span className="font-semibold text-gray-900">{approvedApplications.length}</span> participants
-              {checkInRecords.length > 0 && (
-                <span className="ml-4">
-                  • <span className="font-semibold text-[#E169A1]">
-                    {checkInRecords.filter(r => r.attendance_status === 'present').length}
-                  </span> checked in
-                </span>
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-gray-600">
+                Total: <span className="font-semibold text-gray-900">{approvedApplications.length}</span> participants
+                {checkInRecords.length > 0 && (
+                  <span className="ml-4">
+                    • <span className="font-semibold text-[#E169A1]">
+                      {checkInRecords.filter(r => r.attendance_status === 'present').length}
+                    </span> checked in
+                  </span>
+                )}
+              </p>
+
+              {/* download CSV button, only show if activity ended */}
+              {activityEnded && (
+                <button
+                  onClick={exportToCSV}
+                  className="flex items-center gap-2 px-4 py-2 bg-[#D6E9D5] text-[#215700] rounded-lg hover:bg-[#9EBF9C] hover:text-[#1C4B00] transition-colors text-sm font-medium hover:shadow-md"
+                  title="Download attendance report as CSV">
+                  <Download size={16} />
+                  <span className="hidden sm:inline">Download CSV</span>
+                  <span className="sm:hidden">CSV</span>
+                </button>
               )}
-            </p>
+            </div>
           </div>
         </div>
       )}

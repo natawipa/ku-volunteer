@@ -334,6 +334,7 @@ export default function EventPage({ params }: PageProps) {
                 loading={loadingApplications} 
                 eventEndDate={event.end_at}
                 eventStartDate={event.start_at}
+                eventTitle={event.title}
               />
             )}
           </div>

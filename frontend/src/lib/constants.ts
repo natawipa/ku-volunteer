@@ -110,7 +110,7 @@ export const UI_CONSTANTS = {
 } as const;
 
 export const BUTTON_STYLES = {
-  PRIMARY: 'bg-[#96C693] text-white px-8 py-3 rounded-lg hover:bg-[#72A070] cursor-pointer transition-all text-center',
+  PRIMARY: 'bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all text-center',
   SECONDARY: 'bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-gray-200 cursor-pointer transition-all',
   DISABLED: 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium',
   DANGER: 'bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 cursor-pointer transition-all',

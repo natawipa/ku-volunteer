@@ -38,7 +38,7 @@ export default function EventActionButton({
 
   const handleCheckInSubmit = async (code: string) => {
     setIsCheckingIn(true);
-    console.log('📡 Submitting check-in code:', code);
+    console.log('Submitting check-in code:', code);
     
     try {
       const result = await activitiesApi.submitCheckIn(activityId || 0, code);
