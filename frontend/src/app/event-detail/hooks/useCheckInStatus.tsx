@@ -66,70 +66,45 @@ export function useCheckInStatus(
   return checkInStatus;
 }
 
-/**
- * Parse date string that can be either ISO format or DD/MM/YYYY format
- */
-function parseActivityDate(dateString: string): Date {
-  // Check if it's ISO format (contains 'T' or '-' in YYYY-MM-DD pattern)
-  if (dateString.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(dateString)) {
-    return new Date(dateString);
-  }
-  
-  // Parse DD/MM/YYYY format
-  const parts = dateString.split('/');
-  if (parts.length === 3) {
-    const [day, month, year] = parts;
-    // Month is 0-indexed in JavaScript Date
-    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day));
-  }
-  
-  // Fallback to default parsing
-  return new Date(dateString);
-}
-
 export function determineCheckInStatus(
   checkInRecord: CheckInRecord | undefined,
   eventEndDate: string | undefined,
-  eventStartDate?: string | undefined
-): string {
+  eventStartDate: string | undefined
+): string {  
   // if student has checked in
   if (checkInRecord?.attendance_status === 'present') {
-    return APPLICATION_STATUS.CHECKED_IN;
+    console.log('Student is CHECKED_IN (present)');
+    return 'checked_in';
   }
 
-  // if student is marked absent by organizer
-  if (checkInRecord?.attendance_status === 'absent' && checkInRecord?.marked_absent_at) {
-    return APPLICATION_STATUS.ABSENT;
+  // if student is marked absent by organizer or system
+  if (checkInRecord?.attendance_status === 'absent') {
+    console.log('Student is ABSENT (marked)');
+    return 'absent';
   }
-  
-  const now = new Date();
   
   // Check if activity has started
   if (eventStartDate) {
-    const startDate = parseActivityDate(eventStartDate);
-    // If activity hasn't started yet, show approved status
-    if (now < startDate) {
-      return APPLICATION_STATUS.APPROVED;
+    const now = new Date();
+    const startDate = new Date(eventStartDate);
+    
+    console.log('Checking if activity has started:', { now, startDate, hasStarted: now >= startDate });
+    
+    if (now >= startDate) {
+      // Activity has started and student hasn't checked in = absent
+      return 'absent';
     }
   }
   
+  
   // if activity has ended
   if (eventEndDate) {
-    const endDate = parseActivityDate(eventEndDate);
+    const now = new Date();
+    const endDate = new Date(eventEndDate);
     
     if (now > endDate) {
       // Activity has ended and student didn't check in = absent
-      if (!checkInRecord || checkInRecord.attendance_status as string!== 'present') {
-        return APPLICATION_STATUS.ABSENT;
-      }
-    }
-  }
-
-  // If activity has started (but not ended) and student hasn't checked in = absent
-  if (eventStartDate) {
-    const startDate = parseActivityDate(eventStartDate);
-    if (now >= startDate && (!checkInRecord || (checkInRecord.attendance_status as string) !== 'present')) {
-      return APPLICATION_STATUS.ABSENT;
+      return 'absent';
     }
   }
 

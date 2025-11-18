@@ -1,6 +1,7 @@
 import { PlusCircle, X } from "lucide-react";
 import Image from "next/image";
 import type { ChangeEvent } from 'react';
+import { useModal } from "../../components/Modal";
 
 interface PosterItem {
   id?: number | string;
@@ -31,6 +32,7 @@ export default function ImageUploadSection({
   const MAX_POSTERS = 4;
   const totalPosters = existingPosters.length + pictures.length;
   const canAddMore = totalPosters < MAX_POSTERS;
+  const { showModal } = useModal();
 
   return (
     <>
@@ -131,7 +133,7 @@ export default function ImageUploadSection({
                     const filesToAdd = newFiles.slice(0, availableSlots);
                     
                     if (newFiles.length > availableSlots) {
-                      alert(`Maximum ${MAX_POSTERS} posters allowed. Only ${availableSlots} image(s) will be added.`);
+                      showModal(`Maximum ${MAX_POSTERS} posters allowed. Only ${availableSlots} image(s) will be added.`);
                     }
                     
                     onPicturesChange([...pictures, ...filesToAdd]);
