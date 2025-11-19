@@ -156,6 +156,24 @@ const mockApplications = [
 ];
 
 describe('Profile Page', () => {
+  // Store original console methods
+  const originalError = console.error;
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+
+  // Suppress console warnings and errors for cleaner test output
+  beforeAll(() => {
+    console.error = jest.fn();
+    console.log = jest.fn();
+    console.warn = jest.fn();
+  });
+
+  afterAll(() => {
+    console.error = originalError;
+    console.log = originalLog;
+    console.warn = originalWarn;
+  });
+
   const mockRouter = { push: jest.fn(), back: jest.fn() };
 
   beforeEach(() => {

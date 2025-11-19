@@ -77,6 +77,11 @@ jest.mock('@/app/admin/components/RejectModal', () => {
 });
 
 describe('Admin Delete Approval Page', () => {
+  // Store original console methods
+  const originalError = console.error;
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+
   const mockActivity = {
     id: 1,
     title: 'Beach Cleanup',
@@ -122,6 +127,19 @@ describe('Admin Delete Approval Page', () => {
     push: jest.fn(), 
     back: jest.fn(),
   };
+
+  // Suppress console warnings and errors for cleaner test output
+  beforeAll(() => {
+    console.error = jest.fn();
+    console.log = jest.fn();
+    console.warn = jest.fn();
+  });
+
+  afterAll(() => {
+    console.error = originalError;
+    console.log = originalLog;
+    console.warn = originalWarn;
+  });
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -184,6 +202,7 @@ describe('Admin Delete Approval Page', () => {
   describe('Approve Deletion Flow', () => {
     it('allows selecting approve deletion option', async () => {
       const user = userEvent.setup();
+      
       render(<AdminDeleteApproval params={mockParams} />);
       
       await waitFor(() => {
@@ -198,6 +217,7 @@ describe('Admin Delete Approval Page', () => {
 
     it('successfully submits approval', async () => {
       const user = userEvent.setup();
+      
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         status: 200,
@@ -229,6 +249,7 @@ describe('Admin Delete Approval Page', () => {
 
     it('navigates away after successful approval', async () => {
       const user = userEvent.setup();
+      
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         status: 200,
@@ -263,6 +284,7 @@ describe('Admin Delete Approval Page', () => {
   describe('Reject Deletion Flow', () => {
     it('opens reject modal when reject is selected', async () => {
       const user = userEvent.setup();
+      
       render(<AdminDeleteApproval params={mockParams} />);
       
       await waitFor(() => {
@@ -277,6 +299,7 @@ describe('Admin Delete Approval Page', () => {
 
     it('successfully submits rejection with reason', async () => {
       const user = userEvent.setup();
+      
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: true,
         status: 200,
@@ -316,6 +339,7 @@ describe('Admin Delete Approval Page', () => {
   describe('Error Handling', () => {
     it('handles moderation API errors', async () => {
       const user = userEvent.setup();
+      
       (global.fetch as jest.Mock).mockResolvedValue({
         ok: false,
         status: 403,
@@ -357,6 +381,7 @@ describe('Admin Delete Approval Page', () => {
   describe('Navigation', () => {
     it('navigates back when cancel button is clicked', async () => {
       const user = userEvent.setup();
+      
       render(<AdminDeleteApproval params={mockParams} />);
       
       await waitFor(() => {
@@ -405,6 +430,7 @@ describe('Admin Delete Approval Page', () => {
 
     it('enables submit button when approve is selected', async () => {
       const user = userEvent.setup();
+      
       render(<AdminDeleteApproval params={mockParams} />);
       
       await waitFor(() => {
@@ -514,6 +540,7 @@ describe('Admin Delete Approval Page', () => {
 
     it('handles network errors gracefully', async () => {
       const user = userEvent.setup();
+      
       (global.fetch as jest.Mock).mockRejectedValue(new Error('Network error'));
 
       render(<AdminDeleteApproval params={mockParams} />);

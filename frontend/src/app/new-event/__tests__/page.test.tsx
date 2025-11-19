@@ -187,6 +187,24 @@ const mockReplace = jest.fn();
 const mockSearchParams = new Map<string, string>();
 
 describe('New Event Page (Integration)', () => {
+  // Store original console methods
+  const originalError = console.error;
+  const originalLog = console.log;
+  const originalWarn = console.warn;
+
+  // Suppress console warnings and errors for cleaner test output
+  beforeAll(() => {
+    console.error = jest.fn();
+    console.log = jest.fn();
+    console.warn = jest.fn();
+  });
+
+  afterAll(() => {
+    console.error = originalError;
+    console.log = originalLog;
+    console.warn = originalWarn;
+  });
+  
   beforeEach(() => {
     jest.clearAllMocks();
     mockSearchParams.clear();
