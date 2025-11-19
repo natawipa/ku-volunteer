@@ -4,7 +4,6 @@
 import { activitiesApi } from './activities';
 import { auth } from './utils';
 import type { Activity, ActivityApplication } from './types';
-
 const READ_NOTIFICATIONS_KEY = 'readNotifications';
 const PENDING_APPS_TRACKER_KEY = 'pendingAppsTracker'; // Track pending counts over time
 

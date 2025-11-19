@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { getNotifications, getUnreadCount, markNotificationAsRead, type Notification } from '@/lib/notifications';
 import { useRouter } from 'next/navigation';
-
+import { SquareCheck,SquareX,Trash,Megaphone,MapPinCheckInside,Pin,AlarmClock } from 'lucide-react';
 // Mark all notifications as read
 function markAllAsRead(notifications: Notification[]) {
   notifications.forEach(notif => {
@@ -127,21 +127,21 @@ export default function NotificationBell() {
       case 'application_approved':
       case 'activity_approved':
       case 'deletion_approved':
-        return '✅';
+        return <SquareCheck />;
       case 'application_rejected':
       case 'activity_rejected':
       case 'deletion_rejected':
-        return '❌';
+        return <SquareX />;
       case 'activity_deleted':
-        return '🗑️';
+        return <Trash />;
       case 'pending_applications_reminder':
-        return '⏰';
+        return <AlarmClock />;
       case 'activity_reminder':
-        return '🔔';
+        return <Pin />;
       case 'checkin_reminder':
-        return '📍';
+        return <MapPinCheckInside />;
       default:
-        return '📢';
+        return <Megaphone />;
     }
   };
 
