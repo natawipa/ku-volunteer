@@ -6,7 +6,6 @@ import { determineCheckInStatus } from './hooks/useCheckInStatus';
 import { isActivityEnded, isActivityNotStarted, formatEventDate } from './helpers/utils';
 import { Download } from 'lucide-react';
 
-// Interfaces
 interface TransformedEvent {
   title?: string;
   post: string;
@@ -49,7 +48,6 @@ interface CheckInResponse {
   results: CheckInRecord[];
 }
 
-// status badge logic
 const getStatusBadge = (status: string) => {
   switch (status) {
     case 'checked_in':
@@ -62,7 +60,6 @@ const getStatusBadge = (status: string) => {
   }
 };
 
-// ApplicantsList Component
 export function ApplicantsList({
   applications,
   loading,
@@ -86,7 +83,6 @@ export function ApplicantsList({
         <p className="text-gray-500 text-center py-12">No pending applications</p>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Table Header */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
             <div className="grid grid-cols-12 gap-4 font-semibold text-gray-700 text-sm">
               <div className="col-span-2">Student ID</div>
@@ -95,7 +91,6 @@ export function ApplicantsList({
             </div>
           </div>
 
-          {/* Table Body */}
           <div className="divide-y divide-gray-100">
             {pendingApplications.map((application, index) => {
               return (
@@ -106,21 +101,18 @@ export function ApplicantsList({
                   }`}
                 >
                   <div className="grid grid-cols-12 gap-8 items-center">
-                    {/* Student ID */}
                     <div className="col-span-2">
                       <p className="font-medium text-gray-900">
                         {application.student_id_external || (application.student ?? application.studentid) || '-'}
                       </p>
                     </div>
 
-                    {/* Name */}
                     <div className="col-span-5 ml-9">
                       <p className="font-medium text-gray-800">
                         {application.student_name || `Student ${application.student_id_external || (application.student ?? application.studentid)}`}
                       </p>
                     </div>
 
-                    {/* Actions */}
                     <div className="col-span-5 flex justify-center gap-3">
                       <button 
                         onClick={() => onApprove(application.id)}
@@ -151,7 +143,6 @@ export function ApplicantsList({
             })}
           </div>
 
-          {/* Footer with count */}
           <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
             <p className="text-sm text-gray-600">
               Total: <span className="font-semibold text-gray-900">{pendingApplications.length}</span> pending applications
@@ -168,45 +159,34 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
   const [loadingCheckIn, setLoadingCheckIn] = React.useState(false);
   const activityId = applications[0]?.activity_id || applications[0]?.activity;
 
-  // Find check-in record for a student by student ID
   const getStudentCheckInRecord = React.useCallback((studentId: number | null | undefined): CheckInRecord | undefined => {
     if (!studentId || !Array.isArray(checkInRecords)) {
       return undefined;
     }
     
     const record = checkInRecords.find((record: CheckInRecord) => record.student === studentId);
-    console.log('Found record for student', studentId, ':', record);
     return record;
   }, [checkInRecords]);
 
-   // Determine status for each application
   const getApplicationStatus = React.useCallback((application: ActivityApplication): string => {
     if (application.status !== APPLICATION_STATUS.APPROVED) {
       return application.status;
     }
 
     const studentId = application.student ?? application.studentid;
-    
-    console.log('Look up student with ID:', { studentId, totalRecords: checkInRecords.length, eventEndDate, eventStartDate });
-    
     const checkInRecord = getStudentCheckInRecord(studentId);
-    console.log('Check-in record result:', checkInRecord);
     
     return determineCheckInStatus(checkInRecord, eventEndDate, eventStartDate);
-  }, [checkInRecords, getStudentCheckInRecord, eventEndDate, eventStartDate]);
+  }, [getStudentCheckInRecord, eventEndDate, eventStartDate]);
 
-  // Fetch check-in records for activity
   React.useEffect(() => {
     const fetchCheckInRecords = async () => {
       if (!activityId || applications.length === 0) return;
       
-      console.log('Fetch check-in records for activity:', activityId);
       setLoadingCheckIn(true);
       try {
         const { activitiesApi } = await import('../../lib/activities');
         const result = await activitiesApi.getActivityCheckInRecords(activityId);
-        
-        console.log('Full api result:', result);
         
         if (result.success && result.data) {
           let records: CheckInRecord[] = [];
@@ -214,18 +194,14 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
           if (Array.isArray(result.data)) {
             records = result.data;
           } else if (result.data && typeof result.data === 'object' && 'results' in result.data) {
-            // Paginated response with { count, results }
             records = (result.data as CheckInResponse).results || [];
           }
           
-          console.log('Check-in records extracted:', records);
           setCheckInRecords(records);
         } else {
-          console.error('Failed to fetch check-in records:', result.error);
           setCheckInRecords([]);
         }
-      } catch (error) {
-        console.error('Error fetching check-in records:', error);
+      } catch {
         setCheckInRecords([]);
       } finally {
         setLoadingCheckIn(false);
@@ -236,21 +212,17 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
     const activityNotStarted = isActivityNotStarted(eventStartDate);
 
     if (activityEnded) {
-      console.log('Activity has ended - fetching check-in records once');
       fetchCheckInRecords();
-      return; // Stop auto-refresh when activity ended
+      return;
     }
 
     if (!activityNotStarted) {
-      console.log('Activity has started');
       fetchCheckInRecords();
       
-      // auto-refresh every 10 seconds
       const interval = setInterval(() => {fetchCheckInRecords();}, 10000);
       return () => clearInterval(interval);
     }
 
-    console.log('Activity has not started yet');
   }, [activityId, applications.length, eventEndDate, eventStartDate]);
   
   if (loading || loadingCheckIn) {
@@ -270,7 +242,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
     return priorityA - priorityB;
   });
 
-  // CSV export function
   const exportToCSV = () => {
     const csvData: string[][] = [
       ['Student ID', 'First Name', 'Last Name', 'Status', 'Checked In At']
@@ -280,7 +251,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
       const currentStatus = getApplicationStatus(application);
       const badge = getStatusBadge(currentStatus);
       
-      // Get student ID 
       const studentId = String(
         application.student_id_external || 
         application.student || 
@@ -288,13 +258,11 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
         '-'
       );
       
-      // Parse student name
       const fullName = application.student_name || '';
       const nameParts = fullName.trim().split(/\s+/);
       const firstName = nameParts[0] || '-';
       const lastName = nameParts.slice(1).join(' ') || '-';
       
-      // check-in record of this student
       const studentCheckInId = application.student ?? application.studentid;
       const checkInRecord = studentCheckInId ? getStudentCheckInRecord(studentCheckInId) : undefined;
       
@@ -318,21 +286,17 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
       ]);
     });
 
-    // convert to CSV string
     const csvContent = csvData
       .map(row => row.map(cell => `"${cell}"`).join(','))
       .join('\n');
 
-    // blob and download
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     const url = URL.createObjectURL(blob);
     
-    // filename with current date
     const now = new Date();
     const dateStr = now.toISOString().split('T')[0];
     
-    // title for filename (remove special characters, limit length)
     const TitleForCsv = (eventTitle || 'activity')
       .replace(/[^a-zA-Z0-9\s-]/g, '')
       .replace(/\s+/g, '_') 
@@ -361,7 +325,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
         <p className="text-gray-500 text-center py-12">No approved participants yet</p>
       ) : (
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-          {/* Table Header */}
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
             <div className="grid grid-cols-12 gap-4 font-semibold text-gray-700 text-sm">
               <div className="col-span-3">Student ID</div>
@@ -371,7 +334,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
             </div>
           </div>
 
-          {/* Table Body */}
           <div className="divide-y divide-gray-100">
             {sortedApplications.map((application, index) => {
               const currentStatus = getApplicationStatus(application);
@@ -392,28 +354,24 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
                   }`}
                 >
                   <div className="grid grid-cols-12 gap-4 items-center">
-                    {/* Student ID */}
                     <div className="col-span-3">
                       <p className="font-medium text-gray-900">
                         {application.student_id_external || (application.student ?? application.studentid) || '-'}
                       </p>
                     </div>
 
-                    {/* Name */}
                     <div className="col-span-4">
                       <p className="font-medium text-gray-800">
                         {application.student_name || `Student ${application.student_id_external || (application.student ?? application.studentid)}`}
                       </p>
                     </div>
 
-                    {/* Approve On */}
                     <div className="col-span-3">
                       <p className="text-gray-600 text-sm">
                         {approvedDate}
                       </p>
                     </div>
 
-                    {/* Status */}
                     <div className="col-span-2 flex justify-center">
                       <span className={`px-4 py-2 rounded-full text-sm font-semibold ${badge.bgColor} ${badge.textColor} whitespace-nowrap`}>
                         {badge.label}
@@ -425,7 +383,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
             })}
           </div>
 
-          {/* Footer with count and download button */}
           <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
             <div className="flex items-center justify-between">
               <p className="text-sm text-gray-600">
@@ -439,7 +396,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
                 )}
               </p>
 
-              {/* download CSV button, only show if activity ended */}
               {activityEnded && (
                 <button
                   onClick={exportToCSV}
@@ -458,7 +414,6 @@ export function ApprovedList({ applications, loading, eventEndDate, eventStartDa
   );
 }
 
-// EventDetails Component
 export function EventDetails({ event }: EventDetailsProps) {
   return (
     <>
@@ -472,7 +427,6 @@ export function EventDetails({ event }: EventDetailsProps) {
       />
 
       <div className="max-w-4xl mx-auto p-6 space-y-6">
-        {/* Top Info Card */}
         <div className="bg-green-50 rounded-lg p-6 shadow">
           <div className="mb-4">
             <p><strong>Post at:</strong> {event.post}</p>
@@ -486,7 +440,6 @@ export function EventDetails({ event }: EventDetailsProps) {
           </div>
         </div>
 
-        {/* Image carousel / gallery */}
         {event.additionalImages.length > 0 && (
           <div className="relative w-full">
             <div className="overflow-x-auto scrollbar-hide">
@@ -510,7 +463,6 @@ export function EventDetails({ event }: EventDetailsProps) {
           </div>
         )}
 
-        {/* Description */}
         <h2 className="text-lg font-semibold mb-2">Description</h2>
         <div className="bg-white rounded-lg shadow p-4 min-h-[200px] h-auto w-full">                
           <p className="text-gray-700 whitespace-pre-wrap">{event.description}</p>
@@ -520,7 +472,6 @@ export function EventDetails({ event }: EventDetailsProps) {
   );
 }
 
-// Default export
 const EventManagementExports = {
   ApplicantsList,
   ApprovedList,

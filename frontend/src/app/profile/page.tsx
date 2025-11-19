@@ -16,7 +16,6 @@ import { validateImageFile, validateProfileForm, YEAR_OPTIONS, ORGANIZATION_TYPE
 import Navbar from "../components/Navbar";
 import { useModal } from "../components/Modal";
 
-// Profile field configuration
 const profileFields = [
   {key : 'email', label: 'Email', type: 'email', roles: ['student', 'organizer'] },
   {key : 'title', label: 'Title', type: 'text', roles: ['student', 'organizer'] },
@@ -55,7 +54,6 @@ export default function Profile() {
   const [saveLoading, setSaveLoading] = useState(false);
   const { showModal } = useModal();
 
-  // Events state (for My Events section)
   const [activities, setActivities] = useState<Activity[]>([]);
   const [userApplications, setUserApplications] = useState<ActivityApplication[]>([]);
   const [myEvents, setMyEvents] = useState<EventCardData[]>([]);
@@ -63,7 +61,6 @@ export default function Profile() {
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Fetch current user
   useEffect(() => {
     async function fetchUser() {
       const res = await apiService.getCurrentUser();
@@ -93,7 +90,6 @@ export default function Profile() {
     fetchUser();
   }, []);
 
-  // Fetch activities and applications for My Events section
   useEffect(() => {
     const fetchEvents = async () => {
       setEventsLoading(true);
@@ -105,15 +101,11 @@ export default function Profile() {
           setActivities([]);
         }
 
-        // If authenticated student, fetch their applications
         if (auth.isAuthenticated()) {
           const appsRes = await activitiesApi.getUserApplications();
           if (appsRes.success && appsRes.data) setUserApplications(appsRes.data);
         }
-
-        // compute my events whenever we have activities and user info
-      } catch (err) {
-        console.error('Failed to fetch events for profile page', err);
+      } catch {
         setActivities([]);
         setUserApplications([]);
       } finally {
@@ -124,7 +116,6 @@ export default function Profile() {
     fetchEvents();
   }, []);
 
-  // Recompute myEvents when activities, user, or applications change
   useEffect(() => {
     const cfg: EventFilterConfig = {
       activities,
@@ -137,8 +128,7 @@ export default function Profile() {
     try {
       const computed = getMyEvents(cfg);
       setMyEvents(computed || []);
-    } catch (e) {
-      console.error('Failed to compute myEvents', e);
+    } catch {
       setMyEvents([]);
     }
   }, [activities, user, userApplications]);
@@ -157,7 +147,6 @@ export default function Profile() {
       return;
     }
 
-    // Preview image
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -174,7 +163,6 @@ export default function Profile() {
   };
 
   const handleChange = (field: string, value: string | number) => {
-    // clear field-specific error when user edits the field
     setFormErrors((prev) => {
       if (!prev || !prev[field]) return prev;
       const copy = { ...prev };
@@ -199,7 +187,6 @@ export default function Profile() {
         ...prev,
         profile: {
           student_id_external: prev.profile?.student_id_external,
-          // allow clearing the year (empty string) which will become undefined
           year: value === "" ? undefined : Number(value),
           faculty: prev.profile?.faculty,
           major: prev.profile?.major,
@@ -248,7 +235,6 @@ export default function Profile() {
 
   const handleSave = async () => {
     if (!user?.id) return;
-    // Validate before submitting
     const base = validateProfileForm({
       first_name: (formData.first_name as string) || "",
       last_name: (formData.last_name as string) || "",
@@ -257,7 +243,6 @@ export default function Profile() {
 
     const errors: Record<string, string> = { ...(base || {}) };
 
-    // Role-specific validations
     if (user?.role === 'student') {
       const pf = (formData.profile as StudentProfileUpdate) || {};
       if (!pf.student_id_external || String(pf.student_id_external).trim() === '') {
@@ -277,19 +262,14 @@ export default function Profile() {
 
     if (Object.keys(errors).length > 0) {
       setFormErrors(errors);
-      // scroll to first error (optional)
       const firstKey = Object.keys(errors)[0];
-      // try to focus corresponding input by name attribute if present
       const el = document.querySelector(`[name="${firstKey}"]`) as HTMLElement | null;
       if (el) el.focus();
       return;
     }
 
     setSaveLoading(true);
-    // Cast formData to Partial<User> for the API call
-    // Backend UserSerializer expects student profile fields (year, faculty, major)
-    // and organizer fields (organization_type, organization_name) as top-level
-    // write-only fields. Flatten nested objects accordingly before sending.
+
     type UpdatePayload = Partial<User> & {
       year?: number;
       faculty?: string;
@@ -307,8 +287,6 @@ export default function Profile() {
       if (pf.year !== undefined) payload.year = pf.year;
       if (pf.faculty !== undefined) payload.faculty = pf.faculty;
       if (pf.major !== undefined) payload.major = pf.major;
-      // student_id_external is intentionally read-only on update in the backend serializer,
-      // so we don't attempt to send it here (and the field is non-editable in the UI).
       delete payload.profile;
     }
 
@@ -361,7 +339,6 @@ export default function Profile() {
       <Navbar />
       <div className="h-[160px]" aria-hidden="true" />
 
-      {/* Back Button */}
       <div className="relative pt-6 px-4 -mt-25">
         <button
           onClick={() => router.back()}
@@ -372,12 +349,10 @@ export default function Profile() {
         </button>
       </div>
 
-      {/* Profile Info */}
       <div className="relative px-4">
         
         <div className="flex w-full items-center justify-between mb-8">
           <div className="flex items-center gap-6">
-            {/* Profile Image */}
             <div
               className="relative group cursor-pointer"
               onClick={handleImageClick}
@@ -395,14 +370,12 @@ export default function Profile() {
                 onError={() => setImageError(true)}
               />
 
-              {/* Hover camera icon when editing */}
               {isEditing && (
                 <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                   <Camera className="w-6 h-6 text-white" />
                 </div>
               )}
 
-              {/* Hidden file input */}
               <input
                 ref={fileInputRef}
                 type="file"
@@ -418,7 +391,6 @@ export default function Profile() {
             </div>
           </div>
 
-          {/* Edit / Save / Cancel Buttons */}
           {!isEditing ? (
             <button
               onClick={() => setIsEditing(true)}
@@ -447,11 +419,8 @@ export default function Profile() {
         </div>
       </div>
 
-      {/* Profile Details */}
       <div className="rounded-lg p-1 px-5 -mt-4">
-        {/* Gradient border wrapper - only show gradient border when NOT editing */}
         <div className={`rounded-md p-6 px-1 py-1 ${!isEditing ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen p-[2px]' : ''}`}>
-        {/* Inner panel filled with requested gradient */}
         <div className={`rounded-md p-6 px-3 ${
           isEditing 
             ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen' 
@@ -459,10 +428,8 @@ export default function Profile() {
           }`}>
       <div className="relative px-4">
         <div className="grid grid-cols-1 md:grid-cols-2 2xl:grid-cols-3 gap-4">
-          {/* title and email that only show in edit mode */}
           {isEditing && (
             <>
-              {/* Title */}
               <div>
                 <label className="block text-sm font-semibold text-gray-600 mb-1">
                   Title
@@ -483,7 +450,6 @@ export default function Profile() {
                 )}
               </div>
 
-              {/* Email */}
               <div>
                 <label className="block text-sm font-semibold text-gray-600 mb-1">
                   Email
@@ -516,7 +482,6 @@ export default function Profile() {
                     {field.label}
                   </label>
 
-                  {/* Render dropdown for year and organization type, or default input. Honor field.editable */}
                   {field.key === 'profile.year' ? (
                     <select
                       name={field.key}
@@ -573,7 +538,6 @@ export default function Profile() {
       </div>
       </div>
 
-      {/* My Events Section */}
       {auth.isAuthenticated() && (
         <div className="relative px-4 mt-8">
           <h3 className="text-xl font-bold text-gray-900 mb-6">My Event</h3>

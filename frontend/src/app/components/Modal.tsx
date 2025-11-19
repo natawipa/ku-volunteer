@@ -13,13 +13,11 @@ interface ModalConfig {
     width?: string;
 }
 
-// Context for managing modal state globally
 const ModalContext = createContext<{
     show: (config: ModalConfig) => void;
     hide: () => void;
 } | null>(null);
 
-// Provider component
 export function ModalProvider({ children }: { children: ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [config, setConfig] = useState<ModalConfig>({
@@ -44,13 +42,10 @@ export function ModalProvider({ children }: { children: ReactNode }) {
     );
 }
 
-// Hook to use modal
 export function useModal() {
     const context = useContext(ModalContext);
     
-    // Return no-op functions if not within provider (for backward compatibility)
     if (!context) {
-        console.warn('useModal is being used outside of ModalProvider. Modal will not work.');
         return {
             showModal: (text: string) => {
                 console.warn('Modal not available:', text);
@@ -73,18 +68,15 @@ export function useModal() {
     };
 }
 
-// modal content component
 function ModalContent({ 
     needDecision, 
     text, 
     onConfirm, 
     onCancel, 
     time = 4000, 
-    width = "500px", 
     icon,
     onClose 
 }: ModalConfig & { onClose: () => void }) {
-    // Auto-dismiss after specified time if no decision needed
     useEffect(() => {
         if (!needDecision) {
             const timer = setTimeout(() => {
@@ -111,7 +103,6 @@ function ModalContent({
         onClose();
     };
 
-    // Success/Info Modal
     if (!needDecision) {
         return (
             <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-slideDown px-4 w-full max-w-lg">
@@ -131,13 +122,11 @@ function ModalContent({
         );
     }
 
-    // Confirmation Modal (needs decision)
     return (
         <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
             <div 
                 className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-6 sm:px-10 py-8 sm:py-10 relative w-full max-w-md sm:max-w-lg"
             >
-                {/* Icon */}
                 <div className="flex justify-center mb-4">
                     {icon === "trash" && (
                         <div className="bg-[#c6dcc8] rounded-full p-3 sm:p-4">
@@ -179,7 +168,6 @@ function ModalContent({
     );
 }
 
-// default export for backward compatibility
 export default function Modal(props: ModalConfig) {
     return <ModalContent {...props} onClose={() => {}} />;
 }

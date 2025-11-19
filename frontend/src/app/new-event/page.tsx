@@ -42,11 +42,9 @@ function ActivityFormContent() {
   const [, setDebugInfo] = useState<string>("");
   const [isEditMode, setIsEditMode] = useState(false);
   
-  // Deletion modal states
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
-  // Check authentication on component mount
   useEffect(() => {
     const checkAuth = () => {
       try {
@@ -55,9 +53,6 @@ function ActivityFormContent() {
         setIsAuthenticated(authenticated);
         setUserRole(role);
         
-        console.log('New page auth check:', { authenticated, role });
-        
-        // Redirect if not authenticated or not organizer or admin
         if (!authenticated) {
           router.push('/login');
           return;
@@ -68,7 +63,6 @@ function ActivityFormContent() {
           return;
         }
       } catch (error) {
-        console.error('Auth check error:', error);
         setDebugInfo(`Auth error: ${error}`);
       } finally {
         setLoading(false);
@@ -84,20 +78,17 @@ function ActivityFormContent() {
     
     if (editParam && activityDataParam) {
       try {
-        console.log('Entering edit mode for activity:', editParam);
         const activityData = JSON.parse(decodeURIComponent(activityDataParam)) as Activity;
         
         setIsEditMode(true);
         setActivityId(editParam);
         
-        // Populate form with existing activity data
         setTitle(activityData.title || "");
         setLocation(activityData.location || "");
         setDescription(activityData.description || "");
         setCategories(activityData.categories || []);
         setMaxParticipants(activityData.max_participants || "");
         setHour(activityData.hours_awarded || "");
-        // set existing cover image URL if available (normalize relative urls)
         if (activityData.cover_image || activityData.cover_image_url) {
           const raw = activityData.cover_image || activityData.cover_image_url;
           setCoverUrl(normalizeUrl(raw));
@@ -105,7 +96,6 @@ function ActivityFormContent() {
           setCoverUrl(null);
         }
         
-        // Format dates for input fields
         if (activityData.start_at) {
           const startDate = new Date(activityData.start_at);
           const year = startDate.getFullYear();
@@ -130,19 +120,6 @@ function ActivityFormContent() {
           setTimeEnd(`${hours}:${minutes}`);
         }
         
-        console.log('Activity data loaded for editing:', activityData);
-        
-        // Debug log to verify times
-        console.log('Time debug:', {
-          start_at: activityData.start_at,
-          parsedStart: new Date(activityData.start_at),
-          displayTimeStart: `${String(new Date(activityData.start_at).getUTCHours()).padStart(2, '0')}:${String(new Date(activityData.start_at).getUTCMinutes()).padStart(2, '0')}`,
-          end_at: activityData.end_at,
-          parsedEnd: new Date(activityData.end_at),
-          displayTimeEnd: `${String(new Date(activityData.end_at).getUTCHours()).padStart(2, '0')}:${String(new Date(activityData.end_at).getUTCMinutes()).padStart(2, '0')}`
-        });
-        
-        // load existing poster images if present on activityData
         try {
           const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
           if (Array.isArray(posters) && posters.length > 0) {
@@ -153,16 +130,13 @@ function ActivityFormContent() {
         } catch {
           console.warn('Failed to parse poster images from activityData');
         }
-      } catch (error) {
-        console.error('Error parsing activity data:', error);
+      } catch {
         setTimeout(() => showModal("Error loading activity data for editing"), 100);
       }
     }
-    // If edit mode requested but no activityData param provided, fetch from API
     if (editParam && !activityDataParam) {
       (async () => {
         try {
-          console.log('Fetching activity data for edit:', editParam);
           const resp = await activitiesApi.getActivity(editParam);
           if (resp.success && resp.data) {
             const activityData = resp.data;
@@ -174,7 +148,6 @@ function ActivityFormContent() {
             setCategories(activityData.categories || []);
             setMaxParticipants(activityData.max_participants || "");
             setHour(activityData.hours_awarded || "");
-            // LOCAL time
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
               const year = startDate.getFullYear();
@@ -198,14 +171,11 @@ function ActivityFormContent() {
               setDateEnd(`${year}-${month}-${day}`);
               setTimeEnd(`${hours}:${minutes}`);
             }
-            // set coverUrl from backend image field (normalize relative urls)
             if (activityData.cover_image || activityData.cover_image_url) {
               setCoverUrl(normalizeUrl(activityData.cover_image || activityData.cover_image_url));
             } else {
               setCoverUrl(null);
             }
-            console.log('Loaded activity for edit:', activityData);
-            // if posters not present in initial payload, fetch from API to be safe
             (async () => {
               try {
                 if (activityData.id) {
@@ -220,16 +190,14 @@ function ActivityFormContent() {
               }
             })();
           } else {
-            console.warn('Failed to fetch activity for edit', resp.error);
             setTimeout(() => showModal("Unable to load activity for editing"), 200);
           }
-        } catch (error) {
-          console.error('Error fetching activity:', error);
+        } catch {
           setTimeout(() => showModal("Unable to load activity for editing"), 200);
         }
       })();
     }
-  }, []);
+  }, [searchParams, showModal]);
 
   function normalizeUrl(url: string | null | undefined) {
     if (!url) return url ?? null;
@@ -242,18 +210,12 @@ function ActivityFormContent() {
     }
   }
 
-  /**
-   * restore activity data when cancel delete confirmation
-   */
   useEffect(() => {
     try {
       const savedActivityData = searchParams.get('savedActivityData');
       if (savedActivityData) {
         const parsedData = JSON.parse(decodeURIComponent(savedActivityData));
-        
-        console.log("Restoring activity data from delete cancellation");
-        
-        // Restore all form data
+                
         setTitle(parsedData.title || "");
         setLocation(parsedData.location || "");
         setDateStart(parsedData.dateStart || "");
@@ -265,10 +227,8 @@ function ActivityFormContent() {
         setCategories(parsedData.categories || []);
         setDescription(parsedData.description || "");
         
-        // Clear errors
         setErrors({});
         
-        // Remove the URL parameter
         const url = new URL(window.location.href);
         url.searchParams.delete('savedActivityData');
         window.history.replaceState({}, '', url.toString());
@@ -292,7 +252,6 @@ function ActivityFormContent() {
   };
 
   const handleConfirmDeleteActivity = async () => {
-    // No need to call hideModal - it's automatic
     setIsDeleting(true);
     
     try {
@@ -313,8 +272,7 @@ function ActivityFormContent() {
           throw new Error(response.error || 'Failed to delete activity');
         }
       }
-    } catch (error) {
-      console.error('Delete error:', error);
+    } catch {
       showModal('Failed to delete activity');
     } finally {
       setIsDeleting(false);
@@ -347,8 +305,7 @@ function ActivityFormContent() {
       } else {
         throw new Error(deleteReqResponse.error || 'Failed to submit deletion request');
       }
-    } catch (error) {
-      console.error('Delete request error:', error);
+    } catch {
       showModal("Failed to submit deletion request");
     } finally {
       setIsDeleting(false);
@@ -370,17 +327,14 @@ function ActivityFormContent() {
       const startDateTime = new Date(`${dateStart}T${timeStart}`);
       const endDateTime = new Date(`${dateEnd}T${timeEnd}`);
 
-      // Check if end date is in the past
       if (endDateTime < now) {
         newErrors.dateEnd = "End date can not be in the past";
       } 
       
-      // Check if start date is in the past
       if (startDateTime < now) {
         newErrors.dateStart = "Start date can not be in the past";
       }
 
-      // Check if end datetime is before start datetime
       if (endDateTime < startDateTime) {
         newErrors.dateEnd = "End date and time must be after start date and time";
       }
@@ -409,7 +363,6 @@ function ActivityFormContent() {
       return;
     }
 
-    // Prevent duplicate submissions
     if (activityCreated && !isEditMode) {
       showModal("Activity already created! Redirecting to homepage...");
       router.push('/');
@@ -419,9 +372,7 @@ function ActivityFormContent() {
     setIsSubmitting(true);
   
     try {
-      // combine date and time
       const formatLocalDateTime = (dateStr: string, timeStr: string) => {
-        // If either part is missing, return an empty string.
         if (!dateStr || !timeStr) return '';
         const local = new Date(`${dateStr}T${timeStr}`);
         return local.toISOString();
@@ -439,26 +390,17 @@ function ActivityFormContent() {
         hours_awarded: Number(hour),
         categories: categories,
       };
-  
-      console.log('Sending activity data to backend:', activityData);
-      console.log('Mode:', isEditMode ? 'EDIT' : 'CREATE');
-      console.log('Pictures to upload:', pictures.length, 'file(s)');
-      console.log('Existing posters:', existingPosters.length, 'poster(s)');
 
       let result;
       
       if (isEditMode && activityId) {
-        // Update existing activity (include files when present)
-        console.log(`Updating activity ${activityId} with ${pictures.length} new poster(s)...`);
         result = await activitiesApi.updateActivity(parseInt(activityId), {
           ...activityData,
           cover,
           pictures,
         });
-        console.log('Backend update response:', result);
         
         if (result.success && result.data) {
-          console.log('Activity updated successfully:', result.data);
           
           const successMsg = result.error 
             ? `Updated "${title}" activity! Warning: ${result.error}`
@@ -469,24 +411,19 @@ function ActivityFormContent() {
           throw new Error(result.error || 'Failed to update activity');
         }
       } else {
-        // Create new activity (include files when present)
-        console.log(`Creating new activity with ${pictures.length} poster(s)...`);
         result = await activitiesApi.createActivity({
           ...activityData,
           cover,
           pictures,
         });
-        console.log('Backend create response:', result);
         
         if (result.success && result.data) {
-          console.log('Activity created successfully:', result.data);
           setActivityCreated(true);
           
           if (result.data.id) {
             setActivityId(result.data.id.toString());
           }
-          
-          // Navigate with success message in URL
+
           const successMsg = result.error
             ? `Activity created! Warning: ${result.error}`
             : 'Activity created successfully!';
@@ -497,7 +434,6 @@ function ActivityFormContent() {
       }
       
     } catch (error) {
-      console.error('Failed to save activity:', error);
       showModal(`Failed to ${isEditMode ? 'update' : 'create'} activity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
@@ -525,8 +461,7 @@ function ActivityFormContent() {
       } else {
         throw new Error(resp.error || 'Failed to delete poster');
       }
-    } catch (error) {
-      console.error('Error deleting poster:', error);
+    } catch {
       showModal('Failed to delete poster');
     }
   };
@@ -552,7 +487,6 @@ function ActivityFormContent() {
     }
   };
 
-  // Show loading while checking authentication
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -563,7 +497,6 @@ function ActivityFormContent() {
     );
   }
 
-  // Show error if not authorized
   if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole !== USER_ROLES.ADMIN) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -585,10 +518,8 @@ function ActivityFormContent() {
       <HeroImage containerHeight="100px" mountainHeight="120px" />
       <Navbar />
 
-      {/* Activity Form Container */}
         <div className="max-w-5xl mx-auto bg-white shadow space-y-2 rounded-xl p-6 py-7 mt-13">
           
-          {/* Status message*/}
           {searchParams.get('savedActivityData') && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <p className="text-green-700 text-sm">
@@ -597,7 +528,6 @@ function ActivityFormContent() {
             </div>
           )}
 
-          {/* Header with title and delete button */}
           <div className="flex items-center justify-between mb-6">
             <input
               type="text"
@@ -624,7 +554,6 @@ function ActivityFormContent() {
           </div>
           {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
-          {/* Image Upload Section - Optional for now */}
           <ImageUploadSection
             cover={cover}
             coverUrl={coverUrl}
@@ -632,7 +561,6 @@ function ActivityFormContent() {
             existingPosters={existingPosters}
             onCoverChange={(file) => {
               setCover(file);
-              // if user cleared file, also clear coverUrl
               if (!file) setCoverUrl(null);
             }}
             onPicturesChange={setPictures}
@@ -640,9 +568,7 @@ function ActivityFormContent() {
             coverError={errors.cover}
           />
 
-          {/* Form Fields Section */}
           <FormFields
-            // Form values
             title={title}
             location={location}
             dateStart={dateStart}
@@ -653,7 +579,6 @@ function ActivityFormContent() {
             maxParticipants={maxParticipants}
             categories={categories}
             description={description}
-            // Form handlers
             onTitleChange={(value) => { setTitle(value); clearError("title"); }}
             onLocationChange={(value) => { setLocation(value); clearError("location"); }}
             onDateStartChange={(value) => { setDateStart(value); clearError("dateStart"); }}
@@ -664,11 +589,9 @@ function ActivityFormContent() {
             onMaxParticipantsChange={(value) => { setMaxParticipants(value); clearError("maxParticipants"); }}
             onCategoriesChange={(value) => { setCategories(value); clearError("categories"); }}
             onDescriptionChange={(value) => { setDescription(value); clearError("description"); }}
-            // Errors
             errors={errors}
           />
 
-          {/* Action Buttons */}
           <div className="flex justify-between pt-4 border-t mt-6">
             <button 
               onClick={handleCancel}
@@ -687,7 +610,6 @@ function ActivityFormContent() {
           </div>
       </div>
 
-      {/* Deletion Request Modal*/}
       {showDeleteModal && (
         <div 
           className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn"
@@ -697,7 +619,6 @@ function ActivityFormContent() {
             className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full mx-4 transform transition-all duration-300 ease-out scale-100 animate-slideUp border border-gray-100"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header with Icon */}
             <div className="flex items-start gap-4 mb-6">
               <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -712,7 +633,6 @@ function ActivityFormContent() {
               </div>
             </div>
 
-            {/* Textarea */}
             <div className="mb-6">
               <label className="block text-sm font-semibold text-gray-700 mb-2">
                 Deletion Reason <span className="text-red-500">*</span>
@@ -730,7 +650,6 @@ function ActivityFormContent() {
               </p>
             </div>
 
-            {/* Action Buttons */}
             <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
               <button
                 onClick={handleCancelDelete}

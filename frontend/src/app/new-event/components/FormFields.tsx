@@ -3,7 +3,6 @@
 import CategorySelect from "./CategorySelect";
 
 interface FormFieldsProps {
-  // Form values
   title: string;
   location: string;
   dateStart: string;
@@ -15,7 +14,6 @@ interface FormFieldsProps {
   categories: string[];
   description: string;
   
-  // Form handlers
   onTitleChange: (value: string) => void;
   onLocationChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
@@ -27,7 +25,6 @@ interface FormFieldsProps {
   onCategoriesChange: (value: string[]) => void;
   onDescriptionChange: (value: string) => void;
   
-  // Errors
   errors: { [key: string]: string };
 }
 
@@ -54,9 +51,7 @@ export default function FormFields({
 }: FormFieldsProps) {
   return (
     <>
-      {/* Basic Info Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Location */}
         <div>
         <label className="block text-sm"> Location </label>
           <input
@@ -70,7 +65,6 @@ export default function FormFields({
         </div>
 
         <div className="grid grid-cols-4 gap-2">
-          {/* Start Date & Time */}
           <div>
             <label className="block text-sm">Start Date</label>
               <input
@@ -93,7 +87,6 @@ export default function FormFields({
             {errors.timeStart && <p className="text-red-600 text-sm">{errors.timeStart}</p>}
           </div>
 
-          {/* End Date & Time */}
           <div>
             <label className="block text-sm">End Date *</label>
             <input
@@ -118,7 +111,6 @@ export default function FormFields({
           </div>
         </div>
 
-        {/* Hour */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm">Hour Reward</label>
@@ -134,7 +126,6 @@ export default function FormFields({
           {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
         </div>
 
-        {/* Max Participants */}
         <div>
           <label className="block text-sm">Max Participants</label>
           <input
@@ -149,7 +140,6 @@ export default function FormFields({
           </div>
         </div>
 
-        {/* Category Select */}
         <div>
         <label className="block text-sm">Category</label>
           <CategorySelect
@@ -159,7 +149,6 @@ export default function FormFields({
           {errors.categories && <p className="text-red-600 text-sm">{errors.categories}</p>}
         </div>
 
-      {/* Description */}
       <div>
       <label className="block text-sm">Description</label>
         <textarea

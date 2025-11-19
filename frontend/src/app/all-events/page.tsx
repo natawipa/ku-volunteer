@@ -57,8 +57,8 @@ function AllEventsContent() {
               }
             }
           }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+        } catch {
+          console.error('Error fetching user data:');
         }
       }
     };
@@ -76,8 +76,7 @@ function AllEventsContent() {
         } else {
           setActivities([]);
         }
-      } catch (error) {
-        console.error('Error fetching activities:', error);
+      } catch {
         setActivities([]);
       } finally {
         setLoading(false);

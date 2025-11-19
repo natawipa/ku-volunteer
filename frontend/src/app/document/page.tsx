@@ -8,7 +8,6 @@ import documents from "./data";
 import { Download, FileTerminal } from "lucide-react";
 
 export default function DocumentPage() {
-  // Build a preview URL for supported file types. PDFs open directly; Office docs use Microsoft's viewer.
   const getPreviewUrl = (fileUrl?: string) => {
     if (!fileUrl) 
       return undefined;
@@ -28,7 +27,6 @@ export default function DocumentPage() {
     return fileUrl;
   };
 
-  // Render actions: View (open in new tab/viewer) and Download.
   const renderActions = (fileUrl?: string) =>
     fileUrl ? (
       <div className="flex flex-col sm:flex-col items-end gap-2">
@@ -64,7 +62,6 @@ export default function DocumentPage() {
         Documents for External Activities
       </h1>
 
-      {/* Document List */}
       <div className="mt-8">
         {documents.length > 0 ? (
           documents.map((doc) => (
@@ -74,7 +71,6 @@ export default function DocumentPage() {
             >
               <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4 sm:gap-6">
                 <div className="flex-1">
-                  {/* Title: clickable to view when fileUrl is present */}
                   {doc.fileUrl ? (
                     <a
                       href={getPreviewUrl(doc.fileUrl)}
@@ -92,7 +88,6 @@ export default function DocumentPage() {
                     </h2>
                   )}
 
-                  {/* Details */}
                   <div className="overflow-hidden max-h-0 opacity-0 transform translate-y-2 transition-all duration-500 group-hover:max-h-96 group-hover:opacity-100 group-hover:translate-y-0">
                     <div className="grid grid-cols-[110px_1fr] sm:grid-cols-[140px_1fr] gap-y-2 ml-3 text-sm mt-3 sm:mt-4">
                       <span className="font-medium text-gray-700">
@@ -126,7 +121,6 @@ export default function DocumentPage() {
                   </div>
                 </div>
 
-                {/* Actions (View / Download) */}
                 <div className="flex-shrink-0 self-end sm:self-auto">
                   {renderActions(doc.fileUrl)}
                 </div>

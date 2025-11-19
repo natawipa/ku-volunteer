@@ -11,26 +11,21 @@ import { EventCardData, formatDate, statusColors, categoryColors } from "./utils
 
 export interface EventCardSquareProps {
   event: EventCardData;
-  // Layout customization
-  gradientBgClass?: string; // e.g., "bg-gradient-to-r from-green-400 to-blue-500"
+  gradientBgClass?: string;
   showShadow?: boolean;
   imageWidth?: string;
   imageHeight?: string;
 
-  // Visibility toggles
   showStatus?: boolean;
   showDate?: boolean;
   showCategory?: boolean;
   showBadge?: boolean;
-
-  // Style customization
   cardPadding?: string;
   titleClassName?: string;
   infoTextClassName?: string;
   hoverScale?: boolean;
   hoverBgClass?: string;
 
-  // Behavior customization
   onClick?: (event: EventCardData) => void;
   requireAuth?: boolean;
 }
@@ -48,7 +43,6 @@ export default function EventCardSquare({
   const userRole = auth.getUserRole();
   const isOrganizer = userRole === USER_ROLES.ORGANIZER;
 
-  // Fetch pending applications count for organizers
   useEffect(() => {
     if (isOrganizer && showBadge && event.id) {
       const fetchPending = async () => {
@@ -82,7 +76,6 @@ export default function EventCardSquare({
       role="button"
       tabIndex={0}
     >
-      {/* Event Image */}
       <div className="rounded-lg overflow-hidden w-full h-[120px]">
         <Image
           src={event.imgSrc || "/default-event.jpg"}
@@ -94,7 +87,6 @@ export default function EventCardSquare({
         />
       </div>
 
-      {/* Status */}
       {event.status && (
         <span
           className={`absolute font-bold top-4 right-4 text-white text-sm px-2 py-1 rounded-tl-[5px] rounded-tr-[5px] rounded-bl-[20px] rounded-br-[5px] ${
@@ -105,19 +97,16 @@ export default function EventCardSquare({
         </span>
       )}
 
-      {/* Pending Applications Badge (for organizers) */}
       {isOrganizer && showBadge && pendingCount > 0 && (
         <span className="absolute top-2 left-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-[#DC143C] rounded-full shadow-md">
           {pendingCount}
         </span>
       )}
 
-      {/* Title */}
       <h3 className="font-semibold text-lg mt-2 line-clamp-2 min-h-[4.5rem]" title={event.title}>
         {event.title}
       </h3>
 
-      {/* Date */}
       <section className="flex items-center bg-[#BBF0D0] rounded-full px-2 py-1 w-full mt-1">
         <Calendar className="w-4 h-4" />
         <p className="text-sm ml-2">
@@ -125,7 +114,6 @@ export default function EventCardSquare({
         </p>
       </section>
 
-      {/* Category */}
       {event.category && (
         <div className="mt-2 flex flex-wrap gap-1 text-xs">
           {(Array.isArray(event.category) ? event.category : [event.category]).map((c, idx) => (
