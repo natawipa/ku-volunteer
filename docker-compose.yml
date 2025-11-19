@@ -13,6 +13,19 @@ services:
       timeout: 5s
       retries: 30
 
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    container_name: pgbouncer
+    ports:
+      - "6432:6432"
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
   backend:
     build: ./backend
     working_dir: /app
@@ -23,6 +36,8 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      pgbouncer:
+        condition: service_started
     env_file:
       - ./backend/.env
 
