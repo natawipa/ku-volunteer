@@ -1,9 +1,9 @@
 "use client";
 
+import React from "react";
 import CategorySelect from "./CategorySelect";
 
 interface FormFieldsProps {
-  title: string;
   location: string;
   dateStart: string;
   dateEnd: string;
@@ -14,7 +14,6 @@ interface FormFieldsProps {
   categories: string[];
   description: string;
   
-  onTitleChange: (value: string) => void;
   onLocationChange: (value: string) => void;
   onDateStartChange: (value: string) => void;
   onDateEndChange: (value: string) => void;
@@ -28,7 +27,7 @@ interface FormFieldsProps {
   errors: { [key: string]: string };
 }
 
-export default function FormFields({
+const FormFields = React.memo(function FormFields({
   location,
   dateStart,
   dateEnd,
@@ -53,12 +52,12 @@ export default function FormFields({
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-        <label className="block text-sm"> Location </label>
+          <label className="block text-sm">Location</label>
           <input
             type="text"
             className="w-full border border-gray-400 rounded px-2 py-1"
             placeholder="Enter location"
-            value={location}
+            value={location || ''}
             onChange={(e) => onLocationChange(e.target.value)}
           />
           {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
@@ -162,4 +161,6 @@ export default function FormFields({
       </div>
     </>
   );
-}
+});
+
+export default FormFields;

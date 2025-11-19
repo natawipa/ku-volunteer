@@ -32,12 +32,15 @@ export function ModalProvider({ children }: { children: ReactNode }) {
 
     const hide = () => {
         setIsOpen(false);
+        setTimeout(() => {
+            setConfig({ text: '', needDecision: false });
+        }, 300);
     };
 
     return (
         <ModalContext.Provider value={{ show, hide }}>
             {children}
-            {isOpen && <ModalContent {...config} onClose={hide} />}
+            {isOpen && config.text && <ModalContent {...config} onClose={hide} />}
         </ModalContext.Provider>
     );
 }

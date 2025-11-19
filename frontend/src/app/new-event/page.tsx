@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense} from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { Trash2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import FormFields from "./components/FormFields";
@@ -45,6 +45,8 @@ function ActivityFormContent() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState("");
   const [isDeleting, setIsDeleting] = useState(false);
+  const [hasLoadedData, setHasLoadedData] = useState(false);
+  
   useEffect(() => {
     const checkAuth = () => {
       try {
@@ -72,70 +74,62 @@ function ActivityFormContent() {
     checkAuth();
   }, [router]);
 
+  const showModalRef = useRef(showModal);
   useEffect(() => {
-    const editParam = searchParams.get('edit');
-    const activityDataParam = searchParams.get('activityData');
+    showModalRef.current = showModal;
+  }, [showModal]);
+
+  useEffect(() => {
+    if (hasLoadedData) return;
     
-    if (editParam && activityDataParam) {
-      try {
-        const activityData = JSON.parse(decodeURIComponent(activityDataParam)) as Activity;
-        
-        setIsEditMode(true);
-        setActivityId(editParam);
-        
-        setTitle(activityData.title || "");
-        setLocation(activityData.location || "");
-        setDescription(activityData.description || "");
-        setCategories(activityData.categories || []);
-        setMaxParticipants(activityData.max_participants || "");
-        setHour(activityData.hours_awarded || "");
-        if (activityData.cover_image || activityData.cover_image_url) {
-          const raw = activityData.cover_image || activityData.cover_image_url;
-          setCoverUrl(normalizeUrl(raw));
-        } else {
-          setCoverUrl(null);
-        }
-        
-        if (activityData.start_at) {
-          const startDate = new Date(activityData.start_at);
-          const year = startDate.getFullYear();
-          const month = String(startDate.getMonth() + 1).padStart(2, '0');
-          const day = String(startDate.getDate()).padStart(2, '0');
-          const hours = String(startDate.getHours()).padStart(2, '0');
-          const minutes = String(startDate.getMinutes()).padStart(2, '0');
-          
-          setDateStart(`${year}-${month}-${day}`);
-          setTimeStart(`${hours}:${minutes}`);
-        }
-        
-        if (activityData.end_at) {
-          const endDate = new Date(activityData.end_at);
-          const year = endDate.getFullYear();
-          const month = String(endDate.getMonth() + 1).padStart(2, '0');
-          const day = String(endDate.getDate()).padStart(2, '0');
-          const hours = String(endDate.getHours()).padStart(2, '0');
-          const minutes = String(endDate.getMinutes()).padStart(2, '0');
-          
-          setDateEnd(`${year}-${month}-${day}`);
-          setTimeEnd(`${hours}:${minutes}`);
-        }
-        
+    const loadActivityData = async () => {
+      const editParam = searchParams.get('edit');
+      const activityDataParam = searchParams.get('activityData');
+      const savedActivityData = searchParams.get('savedActivityData');
+      if (editParam && activityDataParam) {
         try {
-          const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
-          if (Array.isArray(posters) && posters.length > 0) {
-            setExistingPosters(posters.map(p => ({ id: p.id, url: normalizeUrl(p.image || '') || '' }))); 
-          } else {
-            setExistingPosters([]);
+          const activityData = JSON.parse(decodeURIComponent(activityDataParam)) as Activity;
+          setIsEditMode(true);
+          setActivityId(editParam);
+          setTitle(activityData.title || "");
+          setLocation(activityData.location || "");
+          setDescription(activityData.description || "");
+          setCategories(activityData.categories || []);
+          setMaxParticipants(activityData.max_participants || "");
+          setHour(activityData.hours_awarded || "");
+          
+          if (activityData.cover_image || activityData.cover_image_url) {
+            setCoverUrl(normalizeUrl(activityData.cover_image || activityData.cover_image_url));
           }
+          
+          if (activityData.start_at) {
+            const startDate = new Date(activityData.start_at);
+            setDateStart(`${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`);
+            setTimeStart(`${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`);
+          }
+          
+          if (activityData.end_at) {
+            const endDate = new Date(activityData.end_at);
+            setDateEnd(`${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`);
+            setTimeEnd(`${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`);
+          }
+          
+          try {
+            const posters = (activityData as unknown as { poster_images?: { id?: number; image?: string }[] })?.poster_images;
+            if (Array.isArray(posters) && posters.length > 0) {
+              setExistingPosters(posters.map(p => ({ id: p.id, url: normalizeUrl(p.image || '') || '' })));
+            }
+          } catch {
+            console.warn('Failed to parse poster images');
+          }
+          
+          setHasLoadedData(true);
         } catch {
-          console.warn('Failed to parse poster images from activityData');
+          setTimeout(() => showModalRef.current("Error loading activity data"), 100);
         }
-      } catch {
-        setTimeout(() => showModal("Error loading activity data for editing"), 100);
+        return;
       }
-    }
-    if (editParam && !activityDataParam) {
-      (async () => {
+      if (editParam && !activityDataParam) {
         try {
           const resp = await activitiesApi.getActivity(editParam);
           if (resp.success && resp.data) {
@@ -150,54 +144,61 @@ function ActivityFormContent() {
             setHour(activityData.hours_awarded || "");
             if (activityData.start_at) {
               const startDate = new Date(activityData.start_at);
-              const year = startDate.getFullYear();
-              const month = String(startDate.getMonth() + 1).padStart(2, '0');
-              const day = String(startDate.getDate()).padStart(2, '0');
-              const hours = String(startDate.getHours()).padStart(2, '0');
-              const minutes = String(startDate.getMinutes()).padStart(2, '0');
-              
-              setDateStart(`${year}-${month}-${day}`);
-              setTimeStart(`${hours}:${minutes}`);
+              setDateStart(`${startDate.getFullYear()}-${String(startDate.getMonth() + 1).padStart(2, '0')}-${String(startDate.getDate()).padStart(2, '0')}`);
+              setTimeStart(`${String(startDate.getHours()).padStart(2, '0')}:${String(startDate.getMinutes()).padStart(2, '0')}`);
             }
             
             if (activityData.end_at) {
               const endDate = new Date(activityData.end_at);
-              const year = endDate.getFullYear();
-              const month = String(endDate.getMonth() + 1).padStart(2, '0');
-              const day = String(endDate.getDate()).padStart(2, '0');
-              const hours = String(endDate.getHours()).padStart(2, '0');
-              const minutes = String(endDate.getMinutes()).padStart(2, '0');
-              
-              setDateEnd(`${year}-${month}-${day}`);
-              setTimeEnd(`${hours}:${minutes}`);
+              setDateEnd(`${endDate.getFullYear()}-${String(endDate.getMonth() + 1).padStart(2, '0')}-${String(endDate.getDate()).padStart(2, '0')}`);
+              setTimeEnd(`${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`);
             }
+            
             if (activityData.cover_image || activityData.cover_image_url) {
               setCoverUrl(normalizeUrl(activityData.cover_image || activityData.cover_image_url));
-            } else {
-              setCoverUrl(null);
             }
-            (async () => {
-              try {
-                if (activityData.id) {
-                  const resp = await activitiesApi.getPosterImages(activityData.id);
-                  if (resp.success && resp.data) {
-                    type PosterResp = { id?: number | string; image?: string };
-                    setExistingPosters((resp.data as PosterResp[]).map((p) => ({ id: p.id, url: normalizeUrl(p.image) as string })));
-                  }
-                }
-              } catch {
-                console.warn('Error fetching poster images for edit');
-              }
-            })();
-          } else {
-            setTimeout(() => showModal("Unable to load activity for editing"), 200);
+            
+            const posterResp = await activitiesApi.getPosterImages(activityData.id!);
+            if (posterResp.success && posterResp.data) {
+              type PosterResp = { id?: number | string; image?: string };
+              setExistingPosters((posterResp.data as PosterResp[]).map((p) => ({ id: p.id, url: normalizeUrl(p.image) as string })));
+            }
           }
+          setHasLoadedData(true);
         } catch {
-          setTimeout(() => showModal("Unable to load activity for editing"), 200);
+          setTimeout(() => showModalRef.current("Unable to load activity"), 200);
         }
-      })();
-    }
-  }, [searchParams, showModal]);
+        return;
+      }
+      
+      if (savedActivityData) {
+        try {
+          const parsedData = JSON.parse(decodeURIComponent(savedActivityData));
+          setTitle(parsedData.title || "");
+          setLocation(parsedData.location || "");
+          setDateStart(parsedData.dateStart || "");
+          setDateEnd(parsedData.dateEnd || "");
+          setTimeStart(parsedData.timeStart || "00:00");
+          setTimeEnd(parsedData.timeEnd || "00:00");
+          setHour(parsedData.hour || "");
+          setMaxParticipants(parsedData.maxParticipants || "");
+          setCategories(parsedData.categories || []);
+          setDescription(parsedData.description || "");
+          setErrors({});
+          
+          const url = new URL(window.location.href);
+          url.searchParams.delete('savedActivityData');
+          window.history.replaceState({}, '', url.toString());
+          
+          setHasLoadedData(true);
+        } catch (error) {
+          console.error("Error restoring activity data:", error);
+        }
+      }
+    };
+    
+    loadActivityData();
+  }, [searchParams, hasLoadedData]);
 
   function normalizeUrl(url: string | null | undefined) {
     if (!url) return url ?? null;
@@ -209,34 +210,6 @@ function ActivityFormContent() {
       return url as string;
     }
   }
-
-  useEffect(() => {
-    try {
-      const savedActivityData = searchParams.get('savedActivityData');
-      if (savedActivityData) {
-        const parsedData = JSON.parse(decodeURIComponent(savedActivityData));
-                
-        setTitle(parsedData.title || "");
-        setLocation(parsedData.location || "");
-        setDateStart(parsedData.dateStart || "");
-        setDateEnd(parsedData.dateEnd || "");
-        setTimeStart(parsedData.timeStart || "00:00");
-        setTimeEnd(parsedData.timeEnd || "00:00");
-        setHour(parsedData.hour || "");
-        setMaxParticipants(parsedData.maxParticipants || "");
-        setCategories(parsedData.categories || []);
-        setDescription(parsedData.description || "");
-        
-        setErrors({});
-        
-        const url = new URL(window.location.href);
-        url.searchParams.delete('savedActivityData');
-        window.history.replaceState({}, '', url.toString());
-      }
-    } catch (error) {
-      console.error("Error restoring activity data:", error);
-    }
-  }, [searchParams]);
 
   const handleDeleteClick = async () => {
     if (!activityId) {
@@ -481,11 +454,74 @@ function ActivityFormContent() {
     });
   };
 
-  const clearError = (field: string) => {
-    if (errors[field]) {
-      setErrors(prev => ({ ...prev, [field]: "" }));
-    }
-  };
+  const clearError = useCallback((field: string) => {
+    setErrors(prev => {
+      if (prev[field]) {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      }
+      return prev;
+    });
+  }, []);
+
+  const handleLocationChange = useCallback((value: string) => {
+    setLocation(value);
+    clearError("location");
+  }, [clearError]);
+
+  const handleDateStartChange = useCallback((value: string) => {
+    setDateStart(value);
+    clearError("dateStart");
+  }, [clearError]);
+
+  const handleDateEndChange = useCallback((value: string) => {
+    setDateEnd(value);
+    clearError("dateEnd");
+  }, [clearError]);
+
+  const handleTimeStartChange = useCallback((value: string) => {
+    setTimeStart(value);
+    clearError("timeStart");
+  }, [clearError]);
+
+  const handleTimeEndChange = useCallback((value: string) => {
+    setTimeEnd(value);
+    clearError("timeEnd");
+  }, [clearError]);
+
+  const handleHourChange = useCallback((value: number | "") => {
+    setHour(value);
+    clearError("hour");
+  }, [clearError]);
+
+  const handleMaxParticipantsChange = useCallback((value: number | "") => {
+    setMaxParticipants(value);
+    clearError("maxParticipants");
+  }, [clearError]);
+
+  const handleCategoriesChange = useCallback((value: string[]) => {
+    setCategories(value);
+    clearError("categories");
+  }, [clearError]);
+
+  const handleDescriptionChange = useCallback((value: string) => {
+    setDescription(value);
+    clearError("description");
+  }, [clearError]);
+
+  useEffect(() => {
+    const handleEscape = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        console.log('ESC pressed - forcing modal close');
+        setShowDeleteModal(false);
+        hideModal();
+      }
+    };
+    
+    window.addEventListener('keydown', handleEscape);
+    return () => window.removeEventListener('keydown', handleEscape);
+  }, [hideModal]);
 
   if (loading) {
     return (
@@ -540,17 +576,19 @@ function ActivityFormContent() {
               className="text-2xl font-semibold border-b focus:outline-none w-full mr-4"
             />
             
-            <button 
-              onClick={handleDeleteClick}
-              className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
-                     text-sm sm:text-base text-red-600 border border-red-600 
-                     rounded-lg hover:bg-red-50 focus:outline-none 
-                     focus:ring-2 focus:ring-red-300 cursor-pointer flex-shrink-0"
-              disabled={isSubmitting}
-            >
-              <Trash2 size={16} /> 
-              <span className="hidden sm:inline">Delete Activity</span>
-            </button>
+            {isEditMode && activityId && (
+              <button 
+                onClick={handleDeleteClick}
+                className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
+                       text-sm sm:text-base text-red-600 border border-red-600 
+                       rounded-lg hover:bg-red-50 focus:outline-none 
+                       focus:ring-2 focus:ring-red-300 cursor-pointer flex-shrink-0"
+                disabled={isSubmitting}
+              >
+                <Trash2 size={16} /> 
+                <span className="hidden sm:inline">Delete Activity</span>
+              </button>
+            )}
           </div>
           {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
 
@@ -569,7 +607,6 @@ function ActivityFormContent() {
           />
 
           <FormFields
-            title={title}
             location={location}
             dateStart={dateStart}
             dateEnd={dateEnd}
@@ -579,16 +616,15 @@ function ActivityFormContent() {
             maxParticipants={maxParticipants}
             categories={categories}
             description={description}
-            onTitleChange={(value) => { setTitle(value); clearError("title"); }}
-            onLocationChange={(value) => { setLocation(value); clearError("location"); }}
-            onDateStartChange={(value) => { setDateStart(value); clearError("dateStart"); }}
-            onDateEndChange={(value) => { setDateEnd(value); clearError("dateEnd"); }}
-            onTimeStartChange={(value) => { setTimeStart(value); clearError("timeStart"); }}
-            onTimeEndChange={(value) => { setTimeEnd(value); clearError("timeEnd"); }}
-            onHourChange={(value) => { setHour(value); clearError("hour"); }}
-            onMaxParticipantsChange={(value) => { setMaxParticipants(value); clearError("maxParticipants"); }}
-            onCategoriesChange={(value) => { setCategories(value); clearError("categories"); }}
-            onDescriptionChange={(value) => { setDescription(value); clearError("description"); }}
+            onLocationChange={handleLocationChange}
+            onDateStartChange={handleDateStartChange}
+            onDateEndChange={handleDateEndChange}
+            onTimeStartChange={handleTimeStartChange}
+            onTimeEndChange={handleTimeEndChange}
+            onHourChange={handleHourChange}
+            onMaxParticipantsChange={handleMaxParticipantsChange}
+            onCategoriesChange={handleCategoriesChange}
+            onDescriptionChange={handleDescriptionChange}
             errors={errors}
           />
 
