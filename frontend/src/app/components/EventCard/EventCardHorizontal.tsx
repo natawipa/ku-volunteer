@@ -151,7 +151,7 @@ export default function EventCardHorizontal({
       {/* Info */}
       <div className="relative z-10 flex-1 flex flex-col gap-2">
         <h3 className={titleClassName} title={event.title}>
-          {event.title}
+        {event.title.length > 100 ? `${event.title.substring(0, 100)}...` : event.title}
         </h3>
 
         {/* Category */}

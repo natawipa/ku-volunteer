@@ -113,7 +113,9 @@ export default function EventCardSquare({
       )}
 
       {/* Title */}
-      <h3 className="font-semibold text-lg mt-2">{event.title}</h3>
+      <h3 className="font-semibold text-lg mt-2 line-clamp-2 min-h-[4.5rem]" title={event.title}>
+        {event.title}
+      </h3>
 
       {/* Date */}
       <section className="flex items-center bg-[#BBF0D0] rounded-full px-2 py-1 w-full mt-1">

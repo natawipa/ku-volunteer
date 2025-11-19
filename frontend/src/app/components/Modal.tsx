@@ -114,12 +114,11 @@ function ModalContent({
     // Success/Info Modal
     if (!needDecision) {
         return (
-            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-slideDown">
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-slideDown px-4 w-full max-w-lg">
                 <div 
-                    className="bg-[#E8F5E9] rounded-lg shadow-lg px-6 py-4 border border-[#A5D6A7] relative flex items-center justify-between gap-4" 
-                    style={{ minWidth: width }}
+                    className="bg-[#E8F5E9] rounded-lg shadow-lg px-4 sm:px-6 py-3 sm:py-4 border border-[#A5D6A7] relative flex items-center justify-between gap-3 sm:gap-4 w-full"
                 >
-                    <p className="text-gray-900 font-medium text-base flex-1">{text}</p>
+                    <p className="text-gray-900 font-medium text-sm sm:text-base flex-1 break-words">{text}</p>
                     <button
                         onClick={handleClose}
                         className="text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
@@ -134,43 +133,42 @@ function ModalContent({
 
     // Confirmation Modal (needs decision)
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
             <div 
-                className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-10 py-10 relative" 
-                style={{ width: width }}
+                className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-6 sm:px-10 py-8 sm:py-10 relative w-full max-w-md sm:max-w-lg"
             >
                 {/* Icon */}
                 <div className="flex justify-center mb-4">
                     {icon === "trash" && (
-                        <div className="bg-[#c6dcc8] rounded-full p-4">
-                            <Trash2 size={36} className="text-[#2D5016]" strokeWidth={1.5} />
+                        <div className="bg-[#c6dcc8] rounded-full p-3 sm:p-4">
+                            <Trash2 size={32} className="sm:w-9 sm:h-9 text-[#2D5016]" strokeWidth={1.5} />
                         </div>
                     )}
                     {icon === "usercheck" && (
-                        <div className="bg-[#c6dcc8] rounded-full p-4">
-                            <UserRoundCheck size={36} className="text-[#2D5016]" strokeWidth={1.5} />
+                        <div className="bg-[#c6dcc8] rounded-full p-3 sm:p-4">
+                            <UserRoundCheck size={32} className="sm:w-9 sm:h-9 text-[#2D5016]" strokeWidth={1.5} />
                         </div>
                     )}
                     {icon === "x" && (
-                        <div className="bg-[#c6dcc8] rounded-full p-4">
-                            <X size={36} className="text-[#2D5016]" strokeWidth={1.5} />
+                        <div className="bg-[#c6dcc8] rounded-full p-3 sm:p-4">
+                            <X size={32} className="sm:w-9 sm:h-9 text-[#2D5016]" strokeWidth={1.5} />
                         </div>
                     )}
                 </div>
 
-                <p className="text-gray-900 font-medium text-xl text-center mb-4 mt-4 leading-relaxed">
+                <p className="text-gray-900 font-medium text-base sm:text-xl text-center mb-6 sm:mb-4 mt-4 leading-relaxed px-2">
                     {text}
                 </p>
 
-                <div className="flex justify-center gap-10">
+                <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-10">
                     <button
-                        className="px-6 py-3 bg-white text-gray-900 rounded-2xl font-medium hover:bg-gray-100 transition-colors border border-gray-200 text-base"
+                        className="w-full sm:w-auto px-6 py-3 bg-white text-gray-900 rounded-2xl font-medium hover:bg-gray-100 transition-colors border border-gray-200 text-base order-2 sm:order-1"
                         onClick={handleCancel}
                     >
                         Cancel
                     </button>
                     <button
-                        className="px-6 py-3 bg-[#2D5016] text-white rounded-2xl font-medium hover:bg-[#1f3a0f] transition-colors text-base"
+                        className="w-full sm:w-auto px-6 py-3 bg-[#2D5016] text-white rounded-2xl font-medium hover:bg-[#1f3a0f] transition-colors text-base order-1 sm:order-2"
                         onClick={handleConfirm}
                     >
                         Confirm

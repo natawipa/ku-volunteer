@@ -229,7 +229,7 @@ function ActivityFormContent() {
         }
       })();
     }
-  }, [searchParams, showModal]);
+  }, []);
 
   function normalizeUrl(url: string | null | undefined) {
     if (!url) return url ?? null;
@@ -460,11 +460,11 @@ function ActivityFormContent() {
         if (result.success && result.data) {
           console.log('Activity updated successfully:', result.data);
           
-          // Navigate with success message in URL
           const successMsg = result.error 
-            ? `Activity updated! Warning: ${result.error}`
-            : 'Activity updated successfully!';
-          router.push(`/event-detail/${activityId}?success=${encodeURIComponent(successMsg)}`);
+            ? `Updated "${title}" activity! Warning: ${result.error}`
+            : `Updated "${title}" activity successfully!`;
+          
+          router.push(`/all-events?success=${encodeURIComponent(successMsg)}`);
         } else {
           throw new Error(result.error || 'Failed to update activity');
         }

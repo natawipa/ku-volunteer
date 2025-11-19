@@ -293,7 +293,11 @@ export default function EventPage({ params }: PageProps) {
 
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
         <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold break-words px-2">
+            {transformedEvent.title.length > 120 
+              ? `${transformedEvent.title.substring(0, 120)}...`
+              : transformedEvent.title}
+          </h1>
           <EventStatusBadge 
             status={displayStatus} 
             onPleaseCheckInClick={isStudent ? scrollToCheckInButton : undefined}
