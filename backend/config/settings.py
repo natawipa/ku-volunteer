@@ -169,8 +169,12 @@ DATABASES = {
         'NAME': os.getenv('DB_NAME', 'ku_volunteer_db'),
         'USER': os.getenv('DB_USER', 'ku_user'),
         'PASSWORD': os.getenv('DB_PASSWORD', 'ku_password'),
-        'HOST': os.getenv('DB_HOST', 'db'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'HOST': os.getenv('DB_HOST', 'pgbouncer'),
+        'PORT': os.getenv('DB_PORT', '6432'), 
+        'CONN_MAX_AGE': 0, 
+        'OPTIONS': {
+            'connect_timeout': 10,
+        }
     }
 }
 
