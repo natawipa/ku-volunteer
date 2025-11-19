@@ -85,7 +85,7 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
         </nav>
       );
 
-    if (userRole === USER_ROLES.STUDENT)
+    if (userRole === USER_ROLES.STUDENT || userRole === USER_ROLES.ADMIN)
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
@@ -94,7 +94,7 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
         </nav>
       );
 
-    if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.ORGANIZER)
+    if (userRole === USER_ROLES.ORGANIZER)
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}

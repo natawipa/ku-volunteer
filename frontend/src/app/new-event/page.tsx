@@ -60,7 +60,7 @@ function ActivityFormContent() {
           return;
         }
         
-        if (role !== USER_ROLES.ORGANIZER && role !== USER_ROLES.ADMIN) {
+        if (role !== USER_ROLES.ORGANIZER) {
           router.push('/');
           return;
         }
@@ -331,7 +331,7 @@ function ActivityFormContent() {
   const handleSave = async () => {
     if (!validate()) return;
   
-    if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole != USER_ROLES.ADMIN) {
+    if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
       showModal("You must be logged in as an organizer to manage activities");
       return;
     }
@@ -533,7 +533,7 @@ function ActivityFormContent() {
     );
   }
 
-  if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER && userRole !== USER_ROLES.ADMIN) {
+  if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
