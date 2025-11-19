@@ -242,11 +242,6 @@ async function getStudentNotifications(): Promise<Notification[]> {
         const hasEnded = now > endDate;
         const isHappeningNow = hasStarted && !hasEnded;
         
-        const isHappeningToday = (
-          (startDate.toDateString() === today.toDateString()) ||
-          (startDate <= now && endDate >= now)
-        );
-        
         const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
         const startsWithin24Hours = hoursUntilStart > 0 && hoursUntilStart <= 24;
         
@@ -311,7 +306,7 @@ async function getStudentNotifications(): Promise<Notification[]> {
                 isNew: true,
               });
             }
-          } catch (checkInError) {
+          } catch {
             // If check-in status check fails, show notification to be safe
             notifications.push({
               id: notificationId,
