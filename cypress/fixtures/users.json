@@ -1,0 +1,42 @@
+{
+  "student": {
+    "title": "Mr.",
+    "email": "student.test@ku.ac.th",
+    "password": "TestPassword-123",
+    "role": "student",
+    "first_name": "John",
+    "last_name": "Student",
+    "student_id_external": "6610000001",
+    "year": 3,
+    "faculty": "Engineering",
+    "major": "Computer Engineering"
+  },
+  "organizer": {
+    "title": "Ms.",
+    "email": "organizer.test@ku.ac.th", 
+    "password": "TestPassword-123",
+    "role": "organizer",
+    "first_name": "Jane",
+    "last_name": "Organizer",
+    "organization": "Kasetsart University",
+    "organization_name": "Computer Engineering Department"
+  },
+  "admin": {
+    "title": "Mr.",
+    "email": "admin.test@ku.ac.th",
+    "password": "AdminPassword-123",
+    "role": "admin",
+    "first_name": "Admin",
+    "last_name": "User"
+  },
+  "externalOrganizer": {
+    "title": "Dr.",
+    "email": "external.test@redcross.org",
+    "password": "TestPassword-123", 
+    "role": "organizer",
+    "first_name": "External",
+    "last_name": "Organizer",
+    "organization": "Red Cross Thailand",
+    "organization_name": "Bangkok Chapter"
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "validActivity": {
+    "title": "Community Clean Up Day",
+    "description": "Join us for a community service day to clean up the local park. Bring gloves and water bottle!",
+    "location": "Chatuchak Park, Bangkok",
+    "start_at": "2025-12-01T09:00:00.000Z",
+    "end_at": "2025-12-01T16:00:00.000Z", 
+    "max_participants": 25,
+    "hours_awarded": 6,
+    "categories": ["environment", "community"]
+  },
+  "shortActivity": {
+    "title": "Blood Donation Drive",
+    "description": "Help save lives by donating blood at our monthly drive.",
+    "location": "KU Medical Center",
+    "start_at": "2025-11-25T08:00:00.000Z",
+    "end_at": "2025-11-25T12:00:00.000Z",
+    "max_participants": 50,
+    "hours_awarded": 2,
+    "categories": ["health", "community"]
+  },
+  "educationActivity": {
+    "title": "Math Tutoring for Kids",
+    "description": "Volunteer to teach basic math to underprivileged children in the community.",
+    "location": "Baan Khru Noi School",
+    "start_at": "2025-12-15T13:00:00.000Z", 
+    "end_at": "2025-12-15T17:00:00.000Z",
+    "max_participants": 8,
+    "hours_awarded": 4,
+    "categories": ["education", "children"]
+  },
+  "multiDayActivity": {
+    "title": "Rural Development Camp",
+    "description": "3-day volunteer camp to help build infrastructure in rural communities.",
+    "location": "Nakhon Nayok Province",
+    "start_at": "2025-12-20T08:00:00.000Z",
+    "end_at": "2025-12-22T18:00:00.000Z", 
+    "max_participants": 15,
+    "hours_awarded": 24,
+    "categories": ["rural", "infrastructure", "community"]
+  }
+}

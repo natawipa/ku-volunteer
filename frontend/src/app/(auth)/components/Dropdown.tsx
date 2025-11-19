@@ -9,6 +9,7 @@ interface DropdownProps<T extends string> {
   label?: string;
   error?: string;
   className?: string;
+  'data-testid'?: string;
 }
 
 export function Dropdown<T extends string>({
@@ -19,6 +20,7 @@ export function Dropdown<T extends string>({
   label,
   error,
   className = '',
+  'data-testid': dataTestId,
 }: DropdownProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -38,6 +40,7 @@ export function Dropdown<T extends string>({
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
+          data-testid={dataTestId}
           className="w-full px-4 py-2 border border-gray-200 rounded-lg bg-white flex items-center justify-between text-sm text-gray-700"
         >
           <span className={value ? "text-gray-900" : "text-gray-400"}>
@@ -47,11 +50,15 @@ export function Dropdown<T extends string>({
         </button>
 
         {isOpen && (
-          <div className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-20">
+          <div
+            className="absolute mt-2 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto z-20"
+            data-testid={dataTestId ? `${dataTestId}-options` : undefined}
+          >
             {options.map((option) => (
               <button
                 key={option}
                 type="button"
+                data-testid={dataTestId ? `${dataTestId}-option-${option}` : undefined}
                 onClick={() => handleSelect(option)}
                 className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
               >

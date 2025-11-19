@@ -6,6 +6,7 @@ interface FormFieldProps extends React.InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   register?: UseFormRegisterReturn;
   className?: string;
+  'data-testid'?: string;
 }
 
 export function FormField({ label, error, register, className = '', ...props }: FormFieldProps) {
@@ -19,7 +20,7 @@ export function FormField({ label, error, register, className = '', ...props }: 
         {...register}
         {...props}
       />
-      {error && <p className="text-red-400 text-sm mt-1">{error}</p>}
+      {error && <p className="text-red-400 text-sm mt-1" data-testid={props['data-testid'] ? `${props['data-testid']}-error` : undefined}>{error}</p>}
     </div>
   );
 }

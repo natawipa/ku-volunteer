@@ -87,7 +87,7 @@ const LoginPage: React.FC = () => {
       
       <Card title="Log in">
         {apiError && (
-          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded" role="alert">
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded" role="alert" data-testid="error-message">
             {apiError}
           </div>
         )}
@@ -100,6 +100,7 @@ const LoginPage: React.FC = () => {
             <input
               id="email"
               type="email"
+              data-testid="email-input"
               value={formData.email}
               onChange={handleInputChange('email')}
               placeholder="username@gmail.com"
@@ -110,7 +111,7 @@ const LoginPage: React.FC = () => {
               aria-describedby={errors.email ? 'email-error' : undefined}
             />
             {errors.email && (
-              <p id="email-error" className="mt-1 text-sm text-red-600" role="alert">
+              <p id="email-error" className="mt-1 text-sm text-red-600" role="alert" data-testid="email-error">
                 {errors.email}
               </p>
             )}
@@ -123,6 +124,7 @@ const LoginPage: React.FC = () => {
             <input
               id="password"
               type="password"
+              data-testid="password-input"
               value={formData.password}
               onChange={handleInputChange('password')}
               placeholder="Password"
@@ -133,7 +135,7 @@ const LoginPage: React.FC = () => {
               aria-describedby={errors.password ? 'password-error' : undefined}
             />
             {errors.password && (
-              <p id="password-error" className="mt-1 text-sm text-red-600" role="alert">
+              <p id="password-error" className="mt-1 text-sm text-red-600" role="alert" data-testid="password-error">
                 {errors.password}
               </p>
             )}
@@ -148,6 +150,7 @@ const LoginPage: React.FC = () => {
           <button
             type="submit"
             disabled={loading}
+            data-testid="login-button"
             className="w-full bg-green-700 text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors duration-200 focus:ring-4 focus:ring-green-200 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
             aria-label={loading ? 'Signing in...' : 'Sign in'}
           >
@@ -163,6 +166,7 @@ const LoginPage: React.FC = () => {
           <button
             type="button"
             onClick={handleGoogleSignIn}
+            data-testid="google-login-button"
             className="w-full border border-gray-200 py-3 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors duration-200 focus:ring-4 focus:ring-gray-100 focus:outline-none"
             aria-label="Sign in with Google"
           >

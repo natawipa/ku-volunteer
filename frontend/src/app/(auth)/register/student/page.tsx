@@ -37,7 +37,7 @@ const StudentRegisterContent: React.FC = () => {
           </div>
         )}
         {submitSuccess && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-lg" data-testid="success-message">
             <p className="text-green-600 text-sm">Registration successful! Redirecting to login page...</p>
           </div>
         )}
@@ -47,6 +47,7 @@ const StudentRegisterContent: React.FC = () => {
             label="Student ID"
             type="text"
             placeholder="e.x. 6610xxxxxx"
+            data-testid="student-id-input"
             register={register("studentID")}
             error={errors.studentID?.message}
           />
@@ -58,6 +59,7 @@ const StudentRegisterContent: React.FC = () => {
               options={TITLE_OPTIONS}
               placeholder="Select Title"
               label="Select Title"
+              data-testid="select-title"
               error={errors.title?.message}
             />
             <input type="hidden" {...register('title')} />
@@ -69,6 +71,7 @@ const StudentRegisterContent: React.FC = () => {
               label="First Name"
               type="text"
               placeholder="First Name"
+              data-testid="first-name-input"
               register={register("firstName")}
               error={errors.firstName?.message}
             />
@@ -77,6 +80,7 @@ const StudentRegisterContent: React.FC = () => {
               label="Last Name"
               type="text"
               placeholder="Last Name"
+              data-testid="last-name-input"
               register={register("lastName")}
               error={errors.lastName?.message}
             />
@@ -88,6 +92,7 @@ const StudentRegisterContent: React.FC = () => {
               label="Faculty"
               type="text"
               placeholder="e.g. Engineering"
+              data-testid="faculty-input"
               register={register("faculty")}
               error={errors.faculty?.message}
             />
@@ -96,6 +101,7 @@ const StudentRegisterContent: React.FC = () => {
               label="Major"
               type="text"
               placeholder="e.g. Computer Engineering"
+              data-testid="major-input"
               register={register("major")}
               error={errors.major?.message}
             />
@@ -109,6 +115,7 @@ const StudentRegisterContent: React.FC = () => {
               placeholder="Year"
               min="1"
               max="6"
+              data-testid="year-select"
               register={register("year", { valueAsNumber: true })}
               error={errors.year?.message}
             />
@@ -120,6 +127,7 @@ const StudentRegisterContent: React.FC = () => {
             type="email"
             placeholder="username@gmail.com"
             required
+            data-testid="email-input"
             register={register("email")}
             error={errors.email?.message}
           />
@@ -130,6 +138,7 @@ const StudentRegisterContent: React.FC = () => {
             type="password"
             placeholder="Password"
             required
+            data-testid="password-input"
             register={register("password")}
             error={errors.password?.message}
           />
@@ -140,6 +149,7 @@ const StudentRegisterContent: React.FC = () => {
             type="password"
             placeholder="Confirm Password"
             required
+            data-testid="confirm-password-input"
             register={register("confirm")}
             error={errors.confirm?.message}
           />
@@ -157,6 +167,7 @@ const StudentRegisterContent: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
+              data-testid="register-button"
               className="w-30 justify-end bg-green-700 text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors duration-200 focus:ring-4 focus:ring-green-200 focus:outline-none disabled:opacity-50"
             >
               {isSubmitting ? 'Submitting...' : 'Submit'}
