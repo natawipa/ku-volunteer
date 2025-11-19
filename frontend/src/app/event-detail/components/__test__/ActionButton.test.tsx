@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
-import EventActionButton from '@/app/event-detail/components/ActionButton/ActionButton';
+import EventActionButton from '@/app/event-detail/components/ActionButton';
 import { activitiesApi } from '@/lib/activities';
 import { 
   APPLICATION_STATUS, 

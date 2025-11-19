@@ -1,10 +1,10 @@
 import { useRef, useState, useEffect, useMemo } from "react";
-import { USER_ROLES, STORAGE_KEYS } from "../../../lib/constants";
+import { USER_ROLES, STORAGE_KEYS } from "../../lib/constants";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { ChevronDownIcon } from "@heroicons/react/20/solid";
-import SearchCard from "../SearchCard";
-import SearchResults from "../SearchResults";
-import type { Activity } from "../../../lib/types";
+import SearchCard from "./SearchCard";
+import SearchResults from "./SearchResults";
+import type { Activity } from "../../lib/types";
 // Define Event type for transformed activities
 type Event = {
 	id: number;

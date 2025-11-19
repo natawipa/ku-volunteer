@@ -3,7 +3,7 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import DeletionRequestListPage from '@/app/admin/events/request-delete/page';
 import { activitiesApi } from '@/lib/activities';
 import type { Activity } from '@/lib/types';
-import type { DeletionRequestEvent } from '../components/AdminDeletionRequestCard';
+import type { DeletionRequestEvent } from '../../components/AdminDeletionRequestCard';
 
 // Mock dependencies
 jest.mock('@/lib/activities', () => ({
@@ -13,7 +13,7 @@ jest.mock('@/lib/activities', () => ({
   },
 }));
 
-jest.mock('../../components/AdminLayout', () => ({
+jest.mock('../../../components/AdminLayout', () => ({
   __esModule: true,
   default: jest.fn(({ children, title, hideTitle }: { children: React.ReactNode; title?: string; hideTitle?: boolean }) => (
     <div data-testid="admin-layout">
@@ -23,7 +23,7 @@ jest.mock('../../components/AdminLayout', () => ({
   )),
 }));
 
-jest.mock('../components/AdminDeletionRequestCard', () => ({
+jest.mock('../../components/AdminDeletionRequestCard', () => ({
   __esModule: true,
   default: jest.fn(({ event }: { event: DeletionRequestEvent }) => (
     <div data-testid={`deletion-request-${event.id}`}>

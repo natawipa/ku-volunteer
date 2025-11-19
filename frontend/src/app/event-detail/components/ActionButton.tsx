@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
-import { APPLICATION_STATUS, ACTIVITY_STATUS, USER_ROLES, BUTTON_STYLES } from '../../../../lib/constants';
-import type { Activity } from '../../../../lib/types';
-import { activitiesApi } from '../../../../lib/activities';
+import { APPLICATION_STATUS, ACTIVITY_STATUS, USER_ROLES, BUTTON_STYLES } from '../../../lib/constants';
+import type { Activity } from '../../../lib/types';
+import { activitiesApi } from '../../../lib/activities';
 import Link from 'next/link';
-import CheckIn from '../Check-in';
-import { isActivityEnded, isActivityOngoing, isWithinActivityDateRange, parseActivityDate } from '../../helpers/utils';
-import { useModal } from '../../../components/Modal';
+import CheckIn from './Check-in';
+import { isActivityEnded, isActivityOngoing, isWithinActivityDateRange, parseActivityDate } from '../helpers/utils';
+import { useModal } from '../../components/Modal';
 
 interface EventActionButtonProps {
   applicationStatus?: string | null;

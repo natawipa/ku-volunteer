@@ -1,6 +1,6 @@
 import React from 'react';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
-import SearchLayout from '@/app/components/SearchLayout/SearchLayout';
+import SearchLayout from '@/app/components/SearchLayout';
 import { USER_ROLES } from '@/lib/constants';
 import type { Activity } from '@/lib/types';
 

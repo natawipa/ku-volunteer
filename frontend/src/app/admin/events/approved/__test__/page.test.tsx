@@ -11,7 +11,7 @@ jest.mock('@/lib/activities', () => ({
   },
 }));
 
-jest.mock('../../components/AdminEventPreviewCard', () => ({
+jest.mock('../../../components/AdminEventPreviewCard', () => ({
   __esModule: true,
   default: jest.fn(({ activity }: { activity: Activity }) => (
     <div data-testid={`admin-event-preview-${activity.id}`}>
@@ -20,7 +20,7 @@ jest.mock('../../components/AdminEventPreviewCard', () => ({
   )),
 }));
 
-jest.mock('../../components/AdminLayout', () => ({
+jest.mock('../../../components/AdminLayout', () => ({
   __esModule: true,
   default: jest.fn(({ children, title, hideTitle }: { children: React.ReactNode; title?: string; hideTitle?: boolean }) => (
     <div data-testid="admin-layout">
