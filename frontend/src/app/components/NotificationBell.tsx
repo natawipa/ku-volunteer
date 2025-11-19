@@ -136,6 +136,10 @@ export default function NotificationBell() {
         return '🗑️';
       case 'pending_applications_reminder':
         return '⏰';
+      case 'activity_reminder':
+        return '🔔';
+      case 'checkin_reminder':
+        return '📍';
       default:
         return '📢';
     }

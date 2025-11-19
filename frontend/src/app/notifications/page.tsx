@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { auth } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/constants';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-
+import { SquareCheck,SquareX,Trash,Megaphone,MapPinCheckInside,Pin,AlarmClock } from 'lucide-react';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -62,17 +62,21 @@ export default function NotificationsPage() {
       case 'application_approved':
       case 'activity_approved':
       case 'deletion_approved':
-        return '✅';
+        return <SquareCheck />;
       case 'application_rejected':
       case 'activity_rejected':
       case 'deletion_rejected':
-        return '❌';
+        return <SquareX />;
       case 'activity_deleted':
-        return '🗑️';
+        return <Trash />;
       case 'pending_applications_reminder':
-        return '⏰';
+        return <AlarmClock />;
+      case 'activity_reminder':
+        return <Pin />;
+      case 'checkin_reminder':
+        return <MapPinCheckInside />;
       default:
-        return '📢';
+        return <Megaphone />;
     }
   };
 
