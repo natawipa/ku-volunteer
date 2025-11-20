@@ -8,11 +8,13 @@ import Image from 'next/image';
 import { auth } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/constants';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-
+import { SquareCheck,SquareX,Trash,Megaphone,MapPinCheckInside,Pin,AlarmClock,Bell} from 'lucide-react';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'new' | 'read'>('all');
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for timestamps
+  void refreshKey; // Used to force re-renders via state change
   const router = useRouter();
   const userRole = auth.getUserRole();
 
@@ -31,6 +33,13 @@ export default function NotificationsPage() {
 
   useEffect(() => {
     fetchNotifications();
+    
+    // Update timestamps every 30 seconds
+    const timeInterval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000);
+    
+    return () => clearInterval(timeInterval);
   }, []);
 
   const handleNotificationClick = (notification: Notification) => {
@@ -53,17 +62,21 @@ export default function NotificationsPage() {
       case 'application_approved':
       case 'activity_approved':
       case 'deletion_approved':
-        return '✅';
+        return <SquareCheck />;
       case 'application_rejected':
       case 'activity_rejected':
       case 'deletion_rejected':
-        return '❌';
+        return <SquareX />;
       case 'activity_deleted':
-        return '🗑️';
+        return <Trash />;
       case 'pending_applications_reminder':
-        return '⏰';
+        return <AlarmClock />;
+      case 'activity_reminder':
+        return <Pin />;
+      case 'checkin_reminder':
+        return <MapPinCheckInside />;
       default:
-        return '📢';
+        return <Megaphone />;
     }
   };
 
@@ -88,7 +101,7 @@ export default function NotificationsPage() {
   };
 
   const getLogo = () => {
-    return userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg";
+    return userRole === USER_ROLES.ORGANIZER ? "/logo_plain.svg": "/logo_plain.svg";
   };
 
   // Filter notifications
@@ -109,7 +122,7 @@ export default function NotificationsPage() {
             <Link href="/" className="p-2 hover:bg-white/50 rounded-lg transition-colors">
               <ArrowLeftIcon className="w-6 h-6 text-gray-700" />
             </Link>
-            <Image src={getLogo()} alt="Logo" width={48} height={48} className="object-cover" />
+            <Image src={getLogo()} alt="Logo" width={70} height={75} className="object-cover" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
           <div className="w-14"></div> {/* Spacer for centering */}
@@ -157,7 +170,7 @@ export default function NotificationsPage() {
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <div className="text-6xl mb-4">🔔</div>
+              <div className="text-10xl mb-4 flex justify-center"><Bell /></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
                 {filter === 'all' ? 'No notifications yet' : `No ${filter} notifications`}
               </h2>

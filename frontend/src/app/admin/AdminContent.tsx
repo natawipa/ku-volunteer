@@ -55,7 +55,7 @@ export default function AdminContent() {
       const res = await activitiesApi.getActivities();
       if (res.success && Array.isArray(res.data)) {
         setPendingCount(res.data.filter(a => a.status === 'pending').length);
-        setApprovedCount(res.data.filter(a => a.status === 'open').length);
+        setApprovedCount(res.data.filter(a => a.status !== 'pending' && a.status !== 'rejected').length);
         setRejectedCount(res.data.filter(a => a.status === 'rejected').length);
       } else {
         setError(res.error || 'Failed to load activities');
