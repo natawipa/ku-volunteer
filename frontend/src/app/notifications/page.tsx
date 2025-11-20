@@ -8,7 +8,7 @@ import Image from 'next/image';
 import { auth } from '@/lib/utils';
 import { USER_ROLES } from '@/lib/constants';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { SquareCheck,SquareX,Trash,Megaphone,MapPinCheckInside,Pin,AlarmClock } from 'lucide-react';
+import { SquareCheck,SquareX,Trash,Megaphone,MapPinCheckInside,Pin,AlarmClock,Bell} from 'lucide-react';
 export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -170,7 +170,7 @@ export default function NotificationsPage() {
             </div>
           ) : filteredNotifications.length === 0 ? (
             <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-              <div className="text-6xl mb-4">🔔</div>
+              <div className="text-10xl mb-4 flex justify-center"><Bell /></div>
               <h2 className="text-xl font-semibold text-gray-800 mb-2">
                 {filter === 'all' ? 'No notifications yet' : `No ${filter} notifications`}
               </h2>
