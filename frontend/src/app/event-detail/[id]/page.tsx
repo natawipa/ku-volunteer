@@ -33,18 +33,15 @@ export default function EventPage({ params }: PageProps) {
   const actionButtonRef = React.useRef<HTMLDivElement>(null);
   const { showModal } = useModal();
   
-  // Organizer state
   const [applications, setApplications] = useState<ActivityApplication[]>([]);
   const [loadingApplications, setLoadingApplications] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [hasPendingDeletion, setHasPendingDeletion] = useState(false);
 
-  // Rejection modal state
   const [isRejectModalOpen, setIsRejectModalOpen] = useState(false);
   const [selectedApplicationId, setSelectedApplicationId] = useState<number | null>(null);
   const [rejectionReason, setRejectionReason] = useState('');
 
-  // Custom hooks
   const { event, loading, error } = useEventData(eventId);
   const { 
     applicationStatus, 
@@ -61,7 +58,6 @@ export default function EventPage({ params }: PageProps) {
     userRole === USER_ROLES.STUDENT
   );
 
-  // Extract event ID from params
   useEffect(() => {
     let active = true;
     Promise.resolve(params).then(p => { 
@@ -70,54 +66,41 @@ export default function EventPage({ params }: PageProps) {
     return () => { active = false; };
   }, [params]);
 
-  // Check authentication
   useEffect(() => {
     setIsAuthenticated(auth.isAuthenticated());
     setUserRole(auth.getUserRole());
   }, []);
 
-  // Fetch applications for organizers
   const fetchApplications = useCallback(async () => {
     if (eventId == null || Number.isNaN(eventId) || userRole !== USER_ROLES.ORGANIZER) return;
     try {
       setLoadingApplications(true);
       const response = await activitiesApi.getActivityApplications(eventId);
       if (response.success && response.data) setApplications(response.data);
-    } catch (err) {
-      console.error('Network error fetching applications:', err);
+    } catch {
     } finally {
       setLoadingApplications(false);
     }
   } , [eventId, userRole]);
 
-  // Check for pending deletion request
   const checkDeletionRequest = useCallback(async () => {
     if (eventId == null || Number.isNaN(eventId) || userRole !== USER_ROLES.ORGANIZER) return;
     
     try {
-      console.log('Checking deletion requests for activity:', eventId);
       const response = await activitiesApi.getDeletionRequests();
-      console.log('Deletion requests response:', response);
       
       if (response.success && response.data) {
-        console.log('All deletion requests:', response.data);
         
-        // Find deletion request for this activity
         const pendingRequest = response.data.find((req) => {
           const reqActivityId = Number(req.activity);
           const matches = reqActivityId === eventId && (!req.status || req.status === 'pending');
-          console.log(`Checking request ID ${req.id}: activity=${reqActivityId}, eventId=${eventId}, 
-                        status=${req.status}, matches=${matches}`);
           return matches;
         });
-        console.log('Pending deletion request found:', pendingRequest);
         setHasPendingDeletion(!!pendingRequest);
       } else {
-        console.log('Failed to fetch deletion requests:', response.error);
         setHasPendingDeletion(false);
       }
-    } catch (error) {
-      console.error('Error checking deletion request:', error);
+    } catch{
       setHasPendingDeletion(false);
     }
   }, [eventId, userRole]);
@@ -136,18 +119,15 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [eventId, isAuthenticated, userRole, checkUserApplication]);
 
-  // Check deletion status for organizers
   useEffect(() => {
     if (userRole === USER_ROLES.ORGANIZER && eventId) {
       checkDeletionRequest();
       
-      // Refresh deletion status every 30 seconds
       const interval = setInterval(checkDeletionRequest, 30000);
       return () => clearInterval(interval);
     }
   }, [userRole, eventId, checkDeletionRequest]);
 
-  // Organizer handlers
   const handleApprove = async (applicationId: number) => {
     showModal("Are you sure you want to approve this application?", {
       needDecision: true,
@@ -166,8 +146,7 @@ export default function EventPage({ params }: PageProps) {
       } else {
         showModal('Failed to approve application.');
       }
-    } catch (error) {
-      console.error('Error approving:', error);
+    } catch {
       showModal('Failed to approve application.');
     } finally {
       setIsProcessing(false);
@@ -200,15 +179,13 @@ export default function EventPage({ params }: PageProps) {
       } else {
         showModal("Failed to reject application.");
       }
-    } catch (error) {
-      console.error('Error rejecting application:', error);
+    } catch {
       showModal("An error occurred while rejecting the application.");
     } finally {
       setIsProcessing(false);
     }
   };
 
-  // Handle check-in success - refresh application status
   const handleCheckInSuccess = useCallback(async () => {
     if (userRole === USER_ROLES.STUDENT) {
       await checkUserApplication();
@@ -217,7 +194,6 @@ export default function EventPage({ params }: PageProps) {
     }
   }, [userRole, checkUserApplication, fetchApplications]);
 
-  // Scroll to check-in button
   const scrollToCheckInButton = useCallback(() => {
     if (actionButtonRef.current) {
       actionButtonRef.current.scrollIntoView({ 
@@ -227,21 +203,18 @@ export default function EventPage({ params }: PageProps) {
     }
   }, []);
 
-  // Check for success message in URL
   useEffect(() => {
     const urlParams = new URLSearchParams(window.location.search);
     const successParam = urlParams.get('success');
     if (successParam) {
       showModal(decodeURIComponent(successParam));
       
-      // Clean up URL
       const url = new URL(window.location.href);
       url.searchParams.delete('success');
       window.history.replaceState({}, '', url.toString());
     }
   }, [showModal]);
 
-  // Loading & Error states
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -274,11 +247,10 @@ export default function EventPage({ params }: PageProps) {
   const isStudent = userRole === USER_ROLES.STUDENT;
   const showOrganizerContent = isOrganizer && activeSection !== 'details';
 
-  // Determine display status for badge
   const displayStatus = isOrganizer 
     ? hasPendingDeletion 
       ? 'deletion_pending' 
-      : event.status // Show deletion pending or normal activity status
+      : event.status
     : isStudent && studentCheckInStatus 
       ? studentCheckInStatus 
       : applicationStatus;
@@ -293,7 +265,11 @@ export default function EventPage({ params }: PageProps) {
 
       <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
         <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold">{transformedEvent.title}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold break-words px-2">
+            {transformedEvent.title.length > 120 
+              ? `${transformedEvent.title.substring(0, 120)}...`
+              : transformedEvent.title}
+          </h1>
           <EventStatusBadge 
             status={displayStatus} 
             onPleaseCheckInClick={isStudent ? scrollToCheckInButton : undefined}
@@ -309,14 +285,12 @@ export default function EventPage({ params }: PageProps) {
           />
         )}
 
-        {/* show capacity warning*/}
         {!isOrganizer && !applicationStatus && event.capacity_reached && event.status === ACTIVITY_STATUS.OPEN && (
           <div className="bg-red-100 border border-red-300 text-red-700 px-4 py-3 rounded-lg mb-4">
             This event has reached maximum capacity
           </div>
         )}
 
-        {/* Main Content */}
         {showOrganizerContent ? (
           <div>
             {activeSection === 'applicants' && (
@@ -334,6 +308,7 @@ export default function EventPage({ params }: PageProps) {
                 loading={loadingApplications} 
                 eventEndDate={event.end_at}
                 eventStartDate={event.start_at}
+                eventTitle={event.title}
               />
             )}
           </div>
@@ -341,7 +316,6 @@ export default function EventPage({ params }: PageProps) {
           <EventDetails event={transformedEvent} />
         )}
 
-        {/* Action Buttons */}
         <div className="flex justify-between items-center pt-4 mt-7 transition-all duration-300 rounded-lg"
           ref={actionButtonRef}
         >

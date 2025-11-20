@@ -1,12 +1,9 @@
-/* check activity status */
-
 export enum ActivityTimeStatus {
   NOT_STARTED = 'not_started',
   ONGOING = 'ongoing',
   ENDED = 'ended'
 }
 
-/* get the current status of an activity */
 export function getActivityTimeStatus(
   startAt: string | Date | null | undefined,
   endAt: string | Date | null | undefined
@@ -51,7 +48,6 @@ export function isActivityNotStarted(
   return new Date() < new Date(startAt);
 }
 
-/* check if current date is within activity date range (for organizers) */
 export function isWithinActivityDateRange(
   startAt: string | Date | null | undefined,
   endAt: string | Date | null | undefined
@@ -106,7 +102,6 @@ export function parseActivityDate(dateString: string | undefined) {
     return new Date(dateString);
 }
 
-/* Format date for display */
 export function formatEventDate(startDate: string, endDate: string, timeStart: string, timeEnd: string): string {
   if (startDate === endDate) {
     return `${startDate} at ${timeStart} - ${timeEnd}`;
@@ -114,17 +109,14 @@ export function formatEventDate(startDate: string, endDate: string, timeStart: s
   return `${startDate} ${timeStart} - ${endDate} ${timeEnd}`;
 }
 
-/* Validate check-in code character */
 export function isValidCheckInChar(char: string): boolean {
   return /^[A-Za-z0-9]$/.test(char);
 }
 
-/* Sanitize check-in code input */
 export function sanitizeCheckInCode(value: string): string {
   return value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
 }
 
-/* Clean error messages from api */
 export function cleanErrorMessage(error: string): string {
   if (error.includes('already ended')) {
     return 'This activity has already ended.';
@@ -132,7 +124,6 @@ export function cleanErrorMessage(error: string): string {
   if (error.includes('not started yet') || error.includes('not started')) {
     return 'This activity has not started yet.';
   }
-  // Remove brackets from error messages
   if (error.startsWith('[') && error.endsWith(']')) {
     try {
       const parsed = JSON.parse(error);
@@ -145,7 +136,6 @@ export function cleanErrorMessage(error: string): string {
   return error;
 }
 
-/* check if error is related to activity status */
 export function isActivityStatusError(error: string): boolean {
   return error.includes('already ended') || 
          error.includes('not started yet') ||

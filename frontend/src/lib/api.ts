@@ -1,7 +1,5 @@
-// API service functions for the application
 const API_BASE_URL = 'http://localhost:8000/api';
 
-// Types for user profile data
 export interface StudentProfile {
   student_id_external: string;
   year: number;
@@ -10,7 +8,7 @@ export interface StudentProfile {
 }
 
 export interface OrganizerProfile {
-  id?: number; // Add the organizer profile ID from backend
+  id?: number;
   organization_type: string;
   organization_name: string;
 }
@@ -54,7 +52,6 @@ export interface UserUpdate {
 }
 
 class ApiService {
-  // Fetch all users (admin only). Returns ApiResponse<User[]> or paginated results.
   public async getUserList(): Promise<ApiResponse<User[]>> {
     try {
       const response = await fetch(`${API_BASE_URL}/users/list/`, {
@@ -62,7 +59,6 @@ class ApiService {
       });
       if (response.ok) {
         const data = await response.json();
-        // Support both paginated and non-paginated responses
         const users = Array.isArray(data) ? data : (data.results || []);
         return { success: true, data: users };
       } else {
@@ -92,7 +88,6 @@ class ApiService {
 
       if (response.ok) {
         const data = await response.json();
-        // Store tokens in localStorage
         if (data.access) localStorage.setItem('access_token', data.access);
         if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
         return { success: true, data };
@@ -100,8 +95,7 @@ class ApiService {
         const errorData = await response.json();
         return { success: false, error: errorData.error || 'Login failed' };
       }
-    } catch (error) {
-      console.error('Login error:', error);
+    } catch {
       return { success: false, error: 'Network error' };
     }
   }
@@ -117,7 +111,6 @@ class ApiService {
           body: JSON.stringify({ refresh: refreshToken }),
         });
 
-        // clear local storage even logout fail
         if (!response.ok) {
           console.warn('Logout failed, but clearing local storage anyway');
         }
@@ -126,8 +119,7 @@ class ApiService {
       this.clearAuthTokens();
       
       return { success: true, data: null };
-    } catch (error) {
-      console.error('Logout error:', error);
+    } catch {
       this.clearAuthTokens();
       return { success: true, data: null };
     }
@@ -149,12 +141,10 @@ class ApiService {
     first_name: string;
     last_name: string;
     role: 'student' | 'organizer';
-    // Student fields
     student_id_external?: string;
     year?: number;
     faculty?: string;
     major?: string;
-    // Organizer fields
     organize?: string;
     organization_name?: string;
   }): Promise<ApiResponse<User>> {
@@ -166,8 +156,7 @@ class ApiService {
       });
 
       return await this.handleResponse<User>(response);
-    } catch (error) {
-      console.error('Register error:', error);
+    } catch {
       return { success: false, error: 'Network error' };
     }
   }
@@ -178,13 +167,10 @@ class ApiService {
         const data = await response.json();
         return { success: true, data };
       } else if (response.status === 401) {
-        // Try to refresh token
         const refreshed = await this.refreshToken();
         if (refreshed) {
-          // Retry the request with new token
           throw new Error('TOKEN_REFRESHED');
         } else {
-          // Redirect to login if refresh failed
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
           window.location.href = '/login';
@@ -232,7 +218,6 @@ class ApiService {
     }
 
     try {
-      // Decode the JWT token to get user ID
       const payload = JSON.parse(atob(token.split('.')[1]));
       const userId = payload.user_id;
 
@@ -243,7 +228,6 @@ class ApiService {
       return await this.handleResponse<User>(response);
     } catch (error) {
       if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
-        // Retry with refreshed token
         return this.getCurrentUser();
       }
       return { success: false, error: 'Failed to get user profile' };
@@ -251,33 +235,19 @@ class ApiService {
   }
 
   async updateUser(userId: number, userData: Partial<User>): Promise<ApiResponse<User>> {
-    try {
-      console.log('updateUser called with:', { userId, userData });
-      
-      const url = `${API_BASE_URL}/users/${userId}/update/`;
-      console.log('Making request to:', url);
-      
-      const headers = this.getAuthHeaders();
-      console.log('Headers:', headers);
-      
+    try {      
+      const url = `${API_BASE_URL}/users/${userId}/update/`;      
+      const headers = this.getAuthHeaders();      
       const response = await fetch(url, {
         method: 'PATCH',
         headers: headers,
         body: JSON.stringify(userData),
       });
-  
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-  
-      const responseText = await response.text();
-      console.log('Raw response:', responseText);
-  
+      const responseText = await response.text();  
       let responseData;
       try {
         responseData = responseText ? JSON.parse(responseText) : {};
       } catch {
-        console.error(' Failed to parse response as JSON:', responseText);
-
         return { 
           success: false, 
           error: `Server returned invalid JSON: ${responseText}` 
@@ -285,10 +255,8 @@ class ApiService {
       }
   
       if (response.ok) {
-        console.log('Update successful!');
         return { success: true, data: responseData };
       } else {
-        console.error('Update failed:', responseData);
         
         let errorMessage = 'Request failed';
         if (responseData.detail) {
@@ -304,10 +272,6 @@ class ApiService {
         return { success: false, error: errorMessage };
       }
     } catch (error) {
-      console.error('NETWORK ERROR in updateUser:', error);
-      console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
-      
       if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
         return this.updateUser(userId, userData);
       }
@@ -318,9 +282,6 @@ class ApiService {
     }
   }
 
-  /**
-   * Upload profile image for a user
-   */
   async uploadProfileImage(userId: number, imageFile: File): Promise<ApiResponse<User>> {
     try {
       const formData = new FormData();
@@ -342,77 +303,53 @@ class ApiService {
         const errorData = await response.json();
         return { success: false, error: errorData.detail || 'Failed to upload profile image' };
       }
-    } catch (error) {
-      console.error('Upload profile image error:', error);
+    } catch {
       return { success: false, error: 'Network error' };
     }
   }
 
-  /**
-   * Get full URL for profile image
-   */
   getProfileImageUrl(profileImage?: string | null): string {
     if (!profileImage) {
       return '/avatar.jpg';
     }
     
-    // If it's already a full URL, return it
     if (profileImage.startsWith('http://') || profileImage.startsWith('https://')) {
       return profileImage;
     }
     
-    // If it starts with /media/, construct full URL
     if (profileImage.startsWith('/media/')) {
       return `http://localhost:8000${profileImage}`;
     }
     
-    // If it's a relative path without /media/, add it
     if (profileImage.startsWith('users/')) {
       return `http://localhost:8000/media/${profileImage}`;
     }
     
-    // Default case: assume it's a path that needs /media/ prefix
     return `http://localhost:8000/media/${profileImage}`;
   }
 
   async deleteUser(userId: number): Promise<ApiResponse<null>> {
-    try {
-      console.log('deleteUser called with userId:', userId);
-      
-      const url = `${API_BASE_URL}/users/delete/${userId}/`;
-      console.log('Making DELETE request to:', url);
-      
-      const headers = this.getAuthHeaders();
-      console.log('Headers:', headers);
-      
+    try {      
+      const url = `${API_BASE_URL}/users/delete/${userId}/`;      
+      const headers = this.getAuthHeaders();      
       const response = await fetch(url, {
         method: 'DELETE',
         headers: headers,
       });
-  
-      console.log('Response status:', response.status);
-      console.log('Response ok:', response.ok);
-  
       if (response.ok) {
-        console.log('Delete successful!');
         return { success: true, data: null };
       } else {
-        const responseText = await response.text();
-        console.log('Raw response:', responseText);
-        
+        const responseText = await response.text();        
         let responseData;
         try {
           responseData = responseText ? JSON.parse(responseText) : {};
         } catch {
-          console.error('Failed to parse response as JSON:', responseText);
           return { 
             success: false, 
             error: `Server returned invalid JSON: ${responseText}` 
           };
         }
-        
-        console.error('Delete failed:', responseData);
-        
+
         let errorMessage = 'Delete failed';
         if (responseData.detail) {
           errorMessage = responseData.detail;
@@ -427,9 +364,6 @@ class ApiService {
         return { success: false, error: errorMessage };
       }
     } catch (error) {
-      console.error('NETWORK ERROR in deleteUser:', error);
-      console.error('Error name:', error instanceof Error ? error.name : 'Unknown');
-      console.error('Error message:', error instanceof Error ? error.message : 'Unknown');
       
       if (error instanceof Error && error.message === 'TOKEN_REFRESHED') {
         return this.deleteUser(userId);
@@ -456,8 +390,7 @@ class ApiService {
       } else {
         return { success: false, error: data.error || 'Failed to send reset email' };
       }
-    } catch (error) {
-      console.error('Forgot password error:', error);
+    } catch {
       return { success: false, error: 'Network error' };
     }
   }
@@ -477,8 +410,7 @@ class ApiService {
       } else {
         return { success: false, error: data.error || 'Failed to reset password' };
       }
-    } catch (error) {
-      console.error('Reset password error:', error);
+    } catch {
       return { success: false, error: 'Network error' };
     }
   }

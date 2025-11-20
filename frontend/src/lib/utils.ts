@@ -1,7 +1,6 @@
 import { API_ENDPOINTS, ENV, ERROR_MESSAGES, STORAGE_KEYS } from './constants';
 import type { ApiError, ApiResponse, LoginResponse, Activity } from './types';
 
-// HTTP client class for API requests
 class HttpClient {
   private baseURL: string;
 
@@ -15,9 +14,7 @@ class HttpClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAccessToken();
-  
-    // Build headers but if body is FormData do not set Content-Type so the
-    // browser can generate the correct multipart boundary.
+
     const isFormData = options.body instanceof FormData;
     const defaultHeaders: Record<string, string> = {
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -32,53 +29,25 @@ class HttpClient {
       ...options,
     };
   
-    console.log('🌐 Making request to:', url);
-    try {
-      const bodyPreview = (() => {
-        if (!config.body) return 'No body';
-        if (config.body instanceof FormData) return 'FormData (files/binary)';
-        try {
-          return JSON.parse(config.body as string);
-        } catch {
-          return config.body;
-        }
-      })();
-      console.log('🔧 Request config:', {
-        method: config.method,
-        headers: config.headers,
-        body: bodyPreview,
-      });
-    } catch (e) {
-      console.log('Unable to log request body preview', e);
-    }
-  
     try {
       const response = await fetch(url, config);
-      console.log('📄 Response status:', response.status);
-      console.log('📄 Response ok:', response.ok);
-  
       const responseText = await response.text();
-      console.log('📄 Raw response:', responseText);
   
       let data;
       try {
         data = responseText ? JSON.parse(responseText) : null;
-      } catch (parseError) {
-        console.error('❌ Failed to parse JSON:', parseError);
+      } catch {
         data = null;
       }
   
       if (!response.ok) {
-        console.error('❌ API Error Response:', data);
         const nonField = Array.isArray(data?.non_field_errors) ? data.non_field_errors[0] : undefined;
         const message = data?.detail || data?.message || data?.error || nonField || ERROR_MESSAGES.SERVER_ERROR;
         throw new Error(message);
       }
   
-      console.log('✅ API Success Response:', data);
       return { data, success: true };
     } catch (error) {
-      console.error('❌ API Request Error:', error);
       return {
         error: error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR,
         success: false,
@@ -91,7 +60,6 @@ class HttpClient {
     return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   }
 
-  // HTTP methods
   async get<T = unknown>(endpoint: string): Promise<ApiResponse<T>> {
     return this.request<T>(endpoint, { method: 'GET' });
   }
@@ -122,31 +90,25 @@ class HttpClient {
   }
 }
 
-// Create HTTP client instance
 export const httpClient = new HttpClient(ENV.API_BASE_URL);
 
-// Authentication utilities
 export const auth = {
-  // Store tokens in localStorage
   setTokens(access: string, refresh: string): void {
     if (typeof window === 'undefined') return;
     localStorage.setItem(STORAGE_KEYS.ACCESS_TOKEN, access);
     localStorage.setItem(STORAGE_KEYS.REFRESH_TOKEN, refresh);
   },
 
-  // Get access token
   getAccessToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem(STORAGE_KEYS.ACCESS_TOKEN);
   },
 
-  // Get refresh token
   getRefreshToken(): string | null {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem(STORAGE_KEYS.REFRESH_TOKEN);
   },
 
-  // Clear all tokens
   clearTokens(): void {
     if (typeof window === 'undefined') return;
     localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -154,27 +116,22 @@ export const auth = {
     localStorage.removeItem(STORAGE_KEYS.USER_DATA);
   },
 
-  // Check if user is authenticated
   isAuthenticated(): boolean {
     return !!this.getAccessToken();
   },
 
-  // Get user data from localStorage
   getUserData(): { id?: string | number; email?: string; first_name?: string; last_name?: string; role?: string; is_active?: boolean; created_at?: string; updated_at?: string } | null {
     if (typeof window === 'undefined') return null;
     const userData = localStorage.getItem(STORAGE_KEYS.USER_DATA);
     return userData ? JSON.parse(userData) : null;
   },
 
-  // Get user role
   getUserRole(): string | null {
     const userData = this.getUserData();
     return userData?.role || null;
   },
 
-  // Login user
   async login(email: string, password: string): Promise<ApiResponse<LoginResponse>> {
-    // Make direct fetch request without Authorization header for login
     const url = `${ENV.API_BASE_URL}${API_ENDPOINTS.AUTH.LOGIN}`;
     
     try {
@@ -192,7 +149,6 @@ export const auth = {
         throw new Error(data?.detail || data?.message || data?.error || ERROR_MESSAGES.SERVER_ERROR);
       }
 
-      // Store tokens and user data
       if (data.access && data.refresh) {
         this.setTokens(data.access, data.refresh);
         localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(data.user));
@@ -200,7 +156,6 @@ export const auth = {
 
       return { data, success: true };
     } catch (error) {
-      console.error('Login error:', error);
       return {
         error: error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR,
         success: false,
@@ -208,7 +163,6 @@ export const auth = {
     }
   },
 
-  // Logout user
   logout(): void {
     this.clearTokens();
     if (typeof window !== 'undefined') {
@@ -217,9 +171,7 @@ export const auth = {
   },
 };
 
-// Form validation utilities
 export const validation = {
-  // Email validation
   email(value: string): string | null {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!value) return 'Email is required';
@@ -227,21 +179,18 @@ export const validation = {
     return null;
   },
 
-  // Password validation
   password(value: string): string | null {
     if (!value) return 'Password is required';
     if (value.length < 8) return 'Password must be at least 8 characters long';
     return null;
   },
 
-  // Confirm password validation
   confirmPassword(password: string, confirmPassword: string): string | null {
     if (!confirmPassword) return 'Please confirm your password';
     if (password !== confirmPassword) return 'Passwords do not match';
     return null;
   },
 
-  // Required field validation
   required(value: string | number | null | undefined, fieldName: string): string | null {
     if (!value || (typeof value === 'string' && !value.trim())) {
       return `${fieldName} is required`;
@@ -249,7 +198,6 @@ export const validation = {
     return null;
   },
 
-  // Max length validation
   maxLength(value: string, max: number, fieldName: string): string | null {
     if (value && value.length > max) {
       return `${fieldName} must not exceed ${max} characters`;
@@ -258,9 +206,7 @@ export const validation = {
   },
 };
 
-// Date utilities
 export const dateUtils = {
-  // Format date for display
   formatDate(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', {
@@ -270,7 +216,6 @@ export const dateUtils = {
     });
   },
 
-  // Format datetime for display
   formatDateTime(dateString: string): string {
     const date = new Date(dateString);
     return date.toLocaleString('en-US', {
@@ -282,12 +227,10 @@ export const dateUtils = {
     });
   },
 
-  // Check if date is in the past
   isPast(dateString: string): boolean {
     return new Date(dateString) < new Date();
   },
 
-  // Check if date is today
   isToday(dateString: string): boolean {
     const date = new Date(dateString);
     const today = new Date();
@@ -299,20 +242,17 @@ export const dateUtils = {
   },
 };
 
-// String utilities
+
 export const stringUtils = {
-  // Capitalize first letter
   capitalize(str: string): string {
     return str.charAt(0).toUpperCase() + str.slice(1);
   },
 
-  // Truncate string
   truncate(str: string, length: number): string {
     if (str.length <= length) return str;
     return str.slice(0, length) + '...';
   },
 
-  // Slugify string
   slugify(str: string): string {
     return str
       .toLowerCase()
@@ -322,7 +262,6 @@ export const stringUtils = {
   },
 };
 
-// Debounce utility
 export const debounce = <T extends (...args: unknown[]) => unknown>(
   func: T,
   delay: number
@@ -344,7 +283,6 @@ export const debounce = <T extends (...args: unknown[]) => unknown>(
   return { call: debounced, cancel };
 };
 
-// Error handler utility
 export const handleApiError = (error: ApiError | string): string => {
   if (typeof error === 'string') return error;
   
@@ -358,7 +296,6 @@ export const handleApiError = (error: ApiError | string): string => {
   return ERROR_MESSAGES.SERVER_ERROR;
 };
 
-// Transform activity data for event-detail
 interface PosterImage {
   image: string;
 }
