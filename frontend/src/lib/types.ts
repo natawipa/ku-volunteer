@@ -1,7 +1,3 @@
-/** ===============================
- *  USER & AUTH TYPES
- *  =============================== */
-
 export interface User {
   id: number;
   email: string;
@@ -27,13 +23,11 @@ export interface RegisterFormData {
   last_name: string;
   role: string;
 
-  // Student fields
   student_id_external?: string;
   year?: number;
   faculty?: string;
   major?: string;
 
-  // Organizer fields
   organization_type?: string;
   organization_name?: string;
 }
@@ -43,10 +37,6 @@ export interface LoginResponse {
   refresh: string;
   user: User;
 }
-
-/** ===============================
- *  EVENT TYPES
- *  =============================== */
 
 export interface Activity {
   id: number;
@@ -63,7 +53,6 @@ export interface Activity {
   created_at: string;
   updated_at: string;
 
-  // Optional details
   max_participants?: number;
   current_participants: number;
   hours_awarded?: number;
@@ -83,19 +72,15 @@ export interface ActivityWithApplicationStatus extends Activity {
   user_application_status: ApplicationStatus | null;
 }
 
-/** ===============================
- *  APPLICATION TYPES
- *  =============================== */
-
 export type ApplicationStatus = 'pending' | 'approved' | 'rejected' | 'cancelled';
 export type ApplicationAction = 'approve' | 'reject';
 
 export interface ActivityApplication {
   id: number;
-  activity: number | null; // Activity ID (null if activity was deleted)
-  activity_id?: number; // serialized data
+  activity: number | null;
+  activity_id?: number;
   activity_title?: string;
-  activity_id_stored?: number; // Stored activity ID (persists after deletion)
+  activity_id_stored?: number;
 
   student?: number;
   studentid: number;
@@ -108,8 +93,8 @@ export interface ActivityApplication {
   decision_at?: string;
   decision_by?: number;
   decision_by_email?: string;
-  notes?: string; // Replaces review_note
-  review_note?: string; // Deprecated backend field
+  notes?: string;
+  review_note?: string;
   cancelled_at?: string;
   cancelled_by?: number;
 }
@@ -164,10 +149,6 @@ export interface DeletionRequestEvent {
   admin_note?: string;
 }
 
-/** ===============================
- *  UI / COMPONENT PROP TYPES
- *  =============================== */
-
 export interface EventCardProps {
   id: string | number;
   title: string;
@@ -204,10 +185,6 @@ export interface ModalProps {
   children: React.ReactNode;
 }
 
-/** ===============================
- *  API RESPONSE & ERROR TYPES
- *  =============================== */
-
 export interface ApiResponse<T = unknown> {
   data?: T;
   error?: string;
@@ -228,10 +205,6 @@ export interface ApiError {
   error?: string;
   errors?: Record<string, string[]>;
 }
-
-/** ===============================
- *  FORM HANDLING & VALIDATION
- *  =============================== */
 
 export interface ValidationError {
   field: string;
@@ -257,11 +230,6 @@ export interface CheckInRecord {
   activity_title: string;
   marked_absent_at?: string;
 }
-
-
-/** ===============================
- *  DOM EVENT TYPES
- *  =============================== */
 
 export type FormEvent = React.FormEvent<HTMLFormElement>;
 export type InputEvent = React.ChangeEvent<HTMLInputElement>;

@@ -32,70 +32,48 @@ export default function CheckIn({
   const [loadingCode, setLoadingCode] = useState(false);
   const [alreadyCheckedInToday, setAlreadyCheckedInToday] = useState(false);
 
-  // Check if current student already checked in
   const checkStudentCheckInStatus = useCallback(async () => {
     if (role !== USER_ROLES.STUDENT || !activityId) {
-      console.log('Skipping check-in status - not a student or no activity');
       return;
     }
 
     try {
-      console.log('Fetch current student check-in status for activity:', activityId);
       const result = await activitiesApi.getCheckInStatus(activityId);
-      
-      console.log('Check-in status response:', result);
-      
+            
       if (result.success && result.data) {
         const checkInRecord = result.data;
         const isPresent = checkInRecord.attendance_status === 'present';
-        
-        console.log('Check-in record:', { 
-          status: checkInRecord.attendance_status, 
-          checked_in_at: checkInRecord.checked_in_at
-        });
+
         setAlreadyCheckedInToday(isPresent);
       } else if (result.error && result.error.includes('already checked in')) {
-        console.log('already checked in');
         setAlreadyCheckedInToday(true);
       } else {
-        console.log('No check-in record found - student can check in');
         setAlreadyCheckedInToday(false);
       }
-    } catch (error) {
-      console.error('Error checking student check-in status:', error);
+    } catch {
       setAlreadyCheckedInToday(false);
     }
   }, [role, activityId]);
 
-  // Fetch check-in code when modal opens for ORGANIZER
   useEffect(() => {
-    console.log('CHECK-IN EFFECT:', { isOpen, activityId, role });
-    
     if (!isOpen) return;
 
-    // For ORGANIZER: fetch check-in code
     if (role === USER_ROLES.ORGANIZER) {
-      console.log('Fetching check-in code for organizer, activity:', activityId);
       setLoadingCode(true);
       activitiesApi.getCheckInCode(activityId || 0).then(result => {
-        console.log('API Response:', result);
         
         if (result.success && result.data) {
-          console.log('Code fetched successfully:', result.data.code);
           setFetchedCode(result.data.code);
         } else {
-          console.error('API Error:', result.error);
           setValidationError(result.error || 'Failed to fetch check-in code');
         }
         setLoadingCode(false);
-      }).catch(err => {
-        console.error('Fetch Exception:', err);
+      }).catch(() => {
         setValidationError('Failed to fetch check-in code');
         setLoadingCode(false);
       });
     }
 
-    // For STUDENT: check if already checked in today
     if (role === USER_ROLES.STUDENT) {
       checkStudentCheckInStatus();
     }
@@ -117,7 +95,6 @@ export default function CheckIn({
     }
   }, [isOpen, role, alreadyCheckedInToday]);
 
-  // Handle backdrop click
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === e.currentTarget) onClose();
   };
@@ -131,7 +108,6 @@ export default function CheckIn({
       const chars = sanitized.split('').slice(0, UI_CONSTANTS.CHECK_IN_CODE_LENGTH);
       const newCode = [...code];
       
-      // Validate each character in the pasted content
       for (let i = 0; i < chars.length; i++) {
         const charIndex = index + i;
         if (charIndex < UI_CONSTANTS.CHECK_IN_CODE_LENGTH && isValidCheckInChar(chars[i])) {
@@ -161,7 +137,6 @@ export default function CheckIn({
         }
       }
     } else {
-      // Clear current box
       const newCode = [...code];
       newCode[index] = '';
       setCode(newCode);
@@ -227,7 +202,6 @@ export default function CheckIn({
 
   const isCodeComplete = code.every(char => char !== '');
 
-  // Get description based on role
   const getDescription = () => {
     if (description) return description;
     
@@ -250,7 +224,6 @@ export default function CheckIn({
         className="max-w-md w-full"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* close Button */}
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-white hover:text-gray-300 z-10 text-2xl font-bold bg-black/30 rounded-full w-8 h-8 flex items-center justify-center transition-all hover:bg-black/50"
@@ -260,7 +233,6 @@ export default function CheckIn({
         </button>
         <div className="bg-white rounded-3xl shadow-xl p-6 border-2 border-pink-100">
           <section className="mb-4 p-4">
-            {/* brain hero*/}
             <div className={`flex justify-center transition-all -mt-5 duration-1000 ease-out ${
               isMounted ? '-translate-y-4 opacity-100' : '-translate-y-7 opacity-0'
             }`}>
@@ -285,7 +257,6 @@ export default function CheckIn({
               </div>
             )}
 
-            {/* student check-in Status Display */}
             {role === USER_ROLES.STUDENT && !isActivityStatusError(validationError) && (
               <div className="flex justify-center mb-6">
                 {alreadyCheckedInToday ? (
@@ -299,7 +270,6 @@ export default function CheckIn({
                   </div>
                 ) : (
                   <div className="w-full">
-                    {/* Input Boxes */}
                     <div className="flex justify-center gap-2 w-full mb-6">
                       {code.map((char, index) => (
                         <input
@@ -319,7 +289,6 @@ export default function CheckIn({
                       ))}
                     </div>
 
-                    {/* Description */}
                     <div className="text-center mb-6">
                       <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
                       <p className="text-gray-600 text-sm">
@@ -331,7 +300,6 @@ export default function CheckIn({
               </div>
             )}
 
-            {/* ORGANIZER: Display Check-in Code */}
             {role === USER_ROLES.ORGANIZER && !isActivityStatusError(validationError) && (
               <>
                 <div className="flex justify-center mb-6">
@@ -342,7 +310,6 @@ export default function CheckIn({
                   </div>
                 </div>
 
-                {/* check in description for ORGANIZER */}
                 <div className="text-center mb-6">
                   <h2 className="text-2xl font-bold text-gray-800 mb-2">Check-in Code</h2>
                   <p className="text-gray-600 text-sm">
@@ -353,7 +320,6 @@ export default function CheckIn({
             )}
           </section>
 
-          {/* submit button for student */}
           {role === USER_ROLES.STUDENT && !alreadyCheckedInToday && !isActivityStatusError(validationError) && (
             <button
               onClick={handleSubmit}
@@ -373,7 +339,6 @@ export default function CheckIn({
             </button>
           )}
 
-          {/* Close button when already checked in or activity status error */}
           {role === USER_ROLES.STUDENT && (alreadyCheckedInToday || isActivityStatusError(validationError)) && (
             <button
               onClick={onClose}
@@ -384,7 +349,6 @@ export default function CheckIn({
           )}
         </div>
 
-        {/* helper message */}
         <p className="text-center text-gray-500 text-sm mt-4">
           {role === USER_ROLES.ORGANIZER 
             ? "Share this code with students for check-in" 

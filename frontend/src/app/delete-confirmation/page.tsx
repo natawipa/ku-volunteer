@@ -23,8 +23,8 @@ function DeleteConfirmationContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  const [activityData, setActivityData] = useState<ActivityData | null>(null); // Changed from eventData
-  const [activityName, setActivityName] = useState(""); // Changed from eventName
+  const [activityData, setActivityData] = useState<ActivityData | null>(null);
+  const [activityName, setActivityName] = useState("");
   const [reason, setReason] = useState("");
   const { showModal } = useModal();
   const [errors, setErrors] = useState<{
@@ -33,18 +33,18 @@ function DeleteConfirmationContent() {
   }>({});
 
   useEffect(() => {
-    const activityDataParam = searchParams.get('activityData'); // CHANGED THIS LINE
+    const activityDataParam = searchParams.get('activityData');
     if (activityDataParam) {
       try {
         const parsedData: ActivityData = JSON.parse(decodeURIComponent(activityDataParam));
         setActivityData(parsedData);
-        setActivityName(parsedData.title); // Auto-fill activity title
-        console.log("Received activity data:", parsedData); // Debug log
+        setActivityName(parsedData.title);
+        console.log("Received activity data:", parsedData);
       } catch (error) {
         console.error("Error parsing activity data:", error);
       }
     } else {
-      console.log("No activityData found in URL"); // Debug log
+      console.log("No activityData found in URL");
     }
   }, [searchParams]);
 
@@ -79,7 +79,6 @@ function DeleteConfirmationContent() {
       console.log("Delete Request Data:", JSON.stringify(deleteRequestData, null, 2));
       
       showModal("Delete request submitted!") 
-     // router.push('/');
     }
   };
 
@@ -87,7 +86,6 @@ function DeleteConfirmationContent() {
     console.log("Cancelling delete - preserving activity data");
     
     if (activityData) {
-      // Return to edit with  activity data 
       router.push(`/new?savedActivityData=${encodeURIComponent(JSON.stringify(activityData))}`);
     } else {
       window.history.back();
@@ -97,20 +95,17 @@ function DeleteConfirmationContent() {
   return (
 
       <div className="relative pt-6 px-4">
-          {/* Header */}
           <HeroImage />
           <Navbar />
           <div className="relative">
             <Header showBigLogo={true} />
           </div>
         
-        {/* Delete Confirmation Form */}
         <div className="max-w-4xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-16">
           <h1 className="text-2xl font-semibold text-center mb-8">
             Delete Activity Confirmation
           </h1>
 
-          {/* Activity preview */}
           {activityData && (
             <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
               <h3 className="font-medium text-yellow-800 mb-2">Activity to be deleted:</h3>
@@ -123,7 +118,6 @@ function DeleteConfirmationContent() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Activity Field */}
             <div className="flex items-start gap-4">
               <label className="text-base font-medium pt-2 w-24 text-left">
                 Activity
@@ -142,7 +136,6 @@ function DeleteConfirmationContent() {
               </div>
             </div>
 
-            {/* Reason Field */}
             <div className="flex items-start gap-4">
               <label className="text-base font-medium pt-2 w-24 text-left">
                 Reason
@@ -176,7 +169,6 @@ function DeleteConfirmationContent() {
               </div>
             </div>
 
-            {/* Buttons */}
             <div className="flex justify-between items-center pt-8 border-t border-gray-200 mt-8">
               <button
                 type="button"

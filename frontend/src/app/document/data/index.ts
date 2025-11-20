@@ -1,5 +1,3 @@
-// Document metadata (used by the UI).
-
 const documents = [
   {
     id: 1,

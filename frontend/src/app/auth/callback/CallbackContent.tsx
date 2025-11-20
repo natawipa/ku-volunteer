@@ -18,16 +18,6 @@ export default function CallbackContent() {
     const lastName = searchParams.get('last_name');
     const userId = searchParams.get('user_id');
     
-    console.log('OAuth callback params:', { 
-      access: !!access, 
-      refresh: !!refresh, 
-      role,
-      email,
-      firstName,
-      lastName,
-      userId
-    });
-    
     if (access && refresh) {
       // Store tokens using auth utility
       auth.setTokens(access, refresh);
@@ -46,19 +36,14 @@ export default function CallbackContent() {
         };
         
         localStorage.setItem(STORAGE_KEYS.USER_DATA, JSON.stringify(userData));
-        console.log('Stored user data:', userData);
       }
       
-      // Redirect to unified home page for all users
-      console.log('OAuth redirecting to unified home page, role:', role);
       router.replace('/');
     } else {
-      console.error('OAuth callback missing required tokens');
       router.replace('/login?error=authentication_failed');
     }
   }, [searchParams, router]);
   
-  // Return loading state while processing
   return (
     <div className="min-h-screen bg-gradient-to-br from-mutegreen to-white flex items-center justify-center p-4 relative overflow-hidden">
       <div className="absolute top-2 left-2 w-15 h-15 bg-[url('/images/logokaset.png')] bg-contain bg-no-repeat z-10"></div>

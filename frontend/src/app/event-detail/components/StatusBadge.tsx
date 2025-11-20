@@ -9,7 +9,7 @@ type AllStatuses = ApplicationStatus | CheckInStatus | ActivityStatus;
 interface StatusBadgeProps {
   status: AllStatuses | string | null;
   onPleaseCheckInClick?: () => void;
-  isActivityStatus?: boolean; // New prop to distinguish activity vs application status
+  isActivityStatus?: boolean;
 }
 
 const STUDENT_STATUS_CONFIG = {
@@ -89,7 +89,6 @@ const ACTIVITY_STATUS_CONFIG = {
 export default function StatusBadge({ status, onPleaseCheckInClick, isActivityStatus = false }: StatusBadgeProps) {
   if (!status) return null;
 
-  // Choose config based on context
   const configMap = isActivityStatus ? ACTIVITY_STATUS_CONFIG : STUDENT_STATUS_CONFIG;
   const config = configMap[status as keyof typeof configMap] || STUDENT_STATUS_CONFIG[APPLICATION_STATUS.PENDING];
   
