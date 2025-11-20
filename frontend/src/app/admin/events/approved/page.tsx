@@ -19,7 +19,7 @@ export default function ApprovedEventsPage() {
         const res = await activitiesApi.getActivities();
         if (res.success) {
           if (Array.isArray(res.data)) {
-            setApproved(res.data.filter((a: Activity) => a && (a.status === 'open' || a.status === 'approved')));
+            setApproved(res.data.filter((a: Activity) => a && (a.status !== 'rejected' && a.status !== 'pending')));
           } else if (res.data === null) {
             setApproved([]);
           } else {
