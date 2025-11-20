@@ -65,6 +65,7 @@ export default function FormFields({
             placeholder="Enter location"
             value={location}
             onChange={(e) => onLocationChange(e.target.value)}
+            data-testid="activity-location-input"
           />
           {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
         </div>
@@ -78,6 +79,7 @@ export default function FormFields({
                 value={dateStart}
                 onChange={(e) => onDateStartChange(e.target.value)}
                 className="w-full border border-gray-400 rounded px-2 py-1 flex-1"
+                data-testid="start-date-input"
               />
               {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
           </div>
@@ -89,6 +91,7 @@ export default function FormFields({
               value={timeStart}
               onChange={(e) => onTimeStartChange(e.target.value)}
               className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+              data-testid="start-time-input"
             />
             {errors.timeStart && <p className="text-red-600 text-sm">{errors.timeStart}</p>}
           </div>
@@ -101,6 +104,7 @@ export default function FormFields({
               value={dateEnd}
               onChange={(e) => onDateEndChange(e.target.value)}
               className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+              data-testid="end-date-input"
             />
             {errors.dateEnd && <p className="text-red-600 text-sm">{errors.dateEnd}</p>}
           </div>
@@ -112,6 +116,7 @@ export default function FormFields({
                 value={timeEnd}
                 onChange={(e) => onTimeEndChange(e.target.value)}
                 className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+                data-testid="end-time-input"
               />
               {errors.timeEnd && <p className="text-red-600 text-sm">{errors.timeEnd}</p>}
             </div>
@@ -130,6 +135,7 @@ export default function FormFields({
             value={hour}
             onChange={(e) => onHourChange(e.target.value ? Number(e.target.value) : "")}
             placeholder="Enter hours reward"
+            data-testid="hours-awarded-input"
           />
           {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
         </div>
@@ -144,6 +150,7 @@ export default function FormFields({
             onChange={(e) => onMaxParticipantsChange(e.target.value ? Number(e.target.value) : "")}
             className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
             placeholder="Enter max participants"
+            data-testid="max-participants-input"
           />
           {errors.maxParticipants && <p className="text-red-600 text-sm">{errors.maxParticipants}</p>}
           </div>
@@ -168,6 +175,7 @@ export default function FormFields({
           onChange={(e) => onDescriptionChange(e.target.value)}
           className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
           placeholder="Write your event description..."
+          data-testid="activity-description-textarea"
         />
         {errors.description && <p className="text-red-600 text-sm">{errors.description}</p>}
       </div>

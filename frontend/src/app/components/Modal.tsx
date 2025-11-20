@@ -11,6 +11,7 @@ interface ModalConfig {
     onCancel?: () => void;
     time?: number;
     width?: string;
+    dataTestId?: string;
 }
 
 // Context for managing modal state globally
@@ -82,7 +83,8 @@ function ModalContent({
     time = 4000, 
     width = "500px", 
     icon,
-    onClose 
+    onClose,
+    dataTestId
 }: ModalConfig & { onClose: () => void }) {
     // Auto-dismiss after specified time if no decision needed
     useEffect(() => {
@@ -114,15 +116,16 @@ function ModalContent({
     // Success/Info Modal
     if (!needDecision) {
         return (
-            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-slideDown">
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-9999 animate-slideDown">
                 <div 
                     className="bg-[#E8F5E9] rounded-lg shadow-lg px-6 py-4 border border-[#A5D6A7] relative flex items-center justify-between gap-4" 
                     style={{ minWidth: width }}
+                    data-testid={dataTestId}
                 >
                     <p className="text-gray-900 font-medium text-base flex-1">{text}</p>
                     <button
                         onClick={handleClose}
-                        className="text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
+                        className="text-gray-700 hover:text-gray-900 transition-colors shrink-0"
                         aria-label="Close"
                     >
                         <X size={20} strokeWidth={2.5} />
@@ -134,7 +137,7 @@ function ModalContent({
 
     // Confirmation Modal (needs decision)
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div 
                 className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-10 py-10 relative" 
                 style={{ width: width }}

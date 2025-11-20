@@ -486,11 +486,20 @@ function ActivityFormContent() {
             setActivityId(result.data.id.toString());
           }
           
-          // Navigate with success message in URL
+          // Show success modal with test ID, then redirect to homepage with success message
           const successMsg = result.error
             ? `Activity created! Warning: ${result.error}`
             : 'Activity created successfully!';
-          router.push(`/?success=${encodeURIComponent(successMsg)}`);
+          
+          showModal(successMsg, {
+            dataTestId: "success-message",
+            time: 1000
+          });
+          
+          // Redirect immediately after showing modal
+          setTimeout(() => {
+            router.push(`/?success=${encodeURIComponent(successMsg)}`);
+          }, 100);
         } else {
           throw new Error(result.error || 'Failed to create activity');
         }
@@ -607,6 +616,7 @@ function ActivityFormContent() {
                 setTitle(e.target.value);
                 clearError("title");
               }}
+              data-testid="activity-title-input"
               className="text-2xl font-semibold border-b focus:outline-none w-full mr-4"
             />
             
@@ -615,7 +625,7 @@ function ActivityFormContent() {
               className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
                      text-sm sm:text-base text-red-600 border border-red-600 
                      rounded-lg hover:bg-red-50 focus:outline-none 
-                     focus:ring-2 focus:ring-red-300 cursor-pointer flex-shrink-0"
+                     focus:ring-2 focus:ring-red-300 cursor-pointer shrink-0"
               disabled={isSubmitting}
             >
               <Trash2 size={16} /> 
@@ -674,6 +684,7 @@ function ActivityFormContent() {
               onClick={handleCancel}
               className="text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400"
               disabled={isSubmitting}
+              data-testid="cancel-create-activity-button"
             >
               Cancel
             </button>
@@ -681,6 +692,7 @@ function ActivityFormContent() {
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
               onClick={handleSave}
               disabled={isSubmitting}
+              data-testid="create-activity-button"
             >
               {isSubmitting ? 'Creating...' : (activityId ? 'Update Activity' : 'Create Activity')}
             </button>
@@ -699,7 +711,7 @@ function ActivityFormContent() {
           >
             {/* Header with Icon */}
             <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <div className="shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -742,7 +754,7 @@ function ActivityFormContent() {
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting || !deletionReason.trim()}
-                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-2.5 bg-linear-to-r from-orange-600 to-orange-700 text-white rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 {isDeleting ? (
                   <span className="flex items-center gap-2">

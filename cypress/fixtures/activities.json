@@ -36,7 +36,7 @@
     "start_at": "2025-12-20T08:00:00.000Z",
     "end_at": "2025-12-22T18:00:00.000Z", 
     "max_participants": 15,
-    "hours_awarded": 24,
+    "hours_awarded": 10,
     "categories": ["rural", "infrastructure", "community"]
   }
 }
