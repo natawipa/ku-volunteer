@@ -28,7 +28,6 @@ export default function RejectionModal({
         className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full mx-4 transform transition-all duration-300 ease-out scale-100 animate-slideUp border border-gray-100"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header*/}
         <div className="flex items-start gap-4 mb-6">
           <div className="flex-shrink-0 w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
             <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -43,7 +42,6 @@ export default function RejectionModal({
           </div>
         </div>
 
-        {/* Textarea */}
         <div className="mb-6">
           <label className="block text-sm font-semibold text-gray-700 mb-2">
             Rejection Reason <span className="text-red-500">*</span>
@@ -61,7 +59,6 @@ export default function RejectionModal({
           </p>
         </div>
 
-        {/* Action Buttons */}
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
           <button
             onClick={onCancel}

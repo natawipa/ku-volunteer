@@ -11,15 +11,13 @@ import { EventCardData, formatDate, formatPostedTime, getCategoryBackground, cat
 
 export interface EventCardHorizontalProps {
   event: EventCardData;
-  // Layout customization
-  gradientBgClass?: string; // e.g., "bg-gradient-to-r from-green-400 to-blue-500"
+  gradientBgClass?: string;
   showShadow?: boolean;
-  imageWidth?: string; // e.g., "w-40", "w-32"
-  imageHeight?: string; // e.g., "h-28", "h-32"
+  imageWidth?: string;
+  imageHeight?: string;
   middleColorBorder?: string;
   endColorBorder?: string;
   
-  // Visibility toggles
   showCategory?: boolean;
   showDate?: boolean;
   showParticipants?: boolean;
@@ -28,14 +26,12 @@ export interface EventCardHorizontalProps {
   showBadge?: boolean;
   showGradientBorder?: boolean;
   
-  // Style customization
   cardPadding?: string;
   titleClassName?: string;
   infoTextClassName?: string;
   hoverScale?: boolean;
   hoverBgClass?: string;
   
-  // Behavior customization
   onClick?: (event: EventCardData) => void;
   requireAuth?: boolean;
 }
@@ -68,7 +64,6 @@ export default function EventCardHorizontal({
   const userRole = auth.getUserRole();
   const isOrganizer = userRole === USER_ROLES.ORGANIZER;
 
-  // Fetch pending applications count for organizers
   useEffect(() => {
     if (isOrganizer && showBadge && event.id) {
       const fetchPending = async () => {
@@ -87,13 +82,11 @@ export default function EventCardHorizontal({
   const handleClick = (e: React.MouseEvent) => {
     e.preventDefault();
     
-    // Custom onClick handler
     if (onClick) {
       onClick(event);
       return;
     }
 
-    // Default behavior
     if (requireAuth && !auth.isAuthenticated()) {
       router.push("/login");
       return;
@@ -129,7 +122,6 @@ export default function EventCardHorizontal({
     >
 
       <div className={cardClasses}>
-      {/* Image */}
       <div className={`flex-shrink-0 w-full ${imageWidth} ${imageHeight} rounded-lg overflow-hidden bg-gray-100`}>
         <Image
           src={event.imgSrc || "/default-event.jpg"}
@@ -141,20 +133,17 @@ export default function EventCardHorizontal({
         />
       </div>
 
-      {/* Pending Applications Badge (for organizers) */}
       {isOrganizer && showBadge && pendingCount > 0 && (
         <span className="absolute top-2 left-2 inline-flex items-center justify-center w-5 h-5 text-[10px] font-bold text-white bg-[#DC143C] rounded-full shadow-md z-20">
           {pendingCount}
         </span>
       )}
 
-      {/* Info */}
       <div className="relative z-10 flex-1 flex flex-col gap-2">
         <h3 className={titleClassName} title={event.title}>
-          {event.title}
+        {event.title.length > 100 ? `${event.title.substring(0, 100)}...` : event.title}
         </h3>
 
-        {/* Category */}
         {showCategory && event.category && (
           <div className="flex flex-wrap items-center gap-3 text-xs text-gray-700 mt-1">
             {Array.isArray(event.category)
@@ -174,7 +163,6 @@ export default function EventCardHorizontal({
           </div>
         )}
 
-        {/* Details */}
         <div className={`flex flex-wrap items-center gap-3 mt-1 ${infoTextClassName}`}>
           {showDate && (
             <span className="flex items-center">

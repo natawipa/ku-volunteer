@@ -51,7 +51,6 @@ const SearchResults = ({ events, onBack }: SearchResultsProps) => {
       <h2 className="font-semibold text-xl mb-4">Search Results ({events.length} events)</h2>
       <div className="space-y-4">
         {events.map((event, idx) => {
-          // Convert event to EventCardData
           const cardData: EventCardData = {
             id: event.id,
             title: event.title,

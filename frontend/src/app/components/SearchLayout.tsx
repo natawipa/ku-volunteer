@@ -5,7 +5,6 @@ import { ChevronDownIcon } from "@heroicons/react/20/solid";
 import SearchCard from "./SearchCard";
 import SearchResults from "./SearchResults";
 import type { Activity } from "../../lib/types";
-// Define Event type for transformed activities
 type Event = {
 	id: number;
 	title: string;
@@ -19,7 +18,6 @@ type Event = {
 	status: string;
 };
 
-// Transform Activity to EventCard format
 const transformActivityToEvent = (activity: Activity) => {
 	if (!activity) return null;
 	return {
@@ -32,7 +30,6 @@ const transformActivityToEvent = (activity: Activity) => {
 		category: activity.categories || [],
 		imgSrc: activity.cover_image_url ?? activity.cover_image ?? "/default-event.jpg",
 		capacity: activity.max_participants || 0,
-    // raw backend status to align with SearchCard DEFAULT_STATUS
     status: activity.status || "unknown",
 	};
 };
@@ -52,8 +49,8 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	const [searchStartDate, setSearchStartDate] = useState("");
 	const [searchEndDate, setSearchEndDate] = useState("");
 	const [endAfterChecked, setEndAfterChecked] = useState(false);
-  const [openOnlyChecked, setOpenOnlyChecked] = useState(false);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  	const [openOnlyChecked, setOpenOnlyChecked] = useState(false);
+  	const [userRole, setUserRole] = useState<string | null>(null);
 	const [isSearchApplied, setIsSearchApplied] = useState(false);
 	const [searchHistory, setSearchHistory] = useState<string[]>(() => {
 		if (typeof window !== "undefined") {
@@ -89,7 +86,6 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 		return () => document.removeEventListener("mousedown", handleClickOutside);
 	}, []);
 
-  // Detect user role (student/organizer/admin)
   useEffect(() => {
     try {
       const rawUser = localStorage.getItem('user');
@@ -117,14 +113,10 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
     } catch {}
   }, []);
 
-	// Sync local search state with parent isSearchActive
 	useEffect(() => {
 		setIsSearchActive(isSearchApplied);
 	}, [isSearchApplied, setIsSearchActive]);
 
-
-
-	// Filter events based on searchQuery and searchCategory
 	const filteredEvents = useMemo(() => {
 		const events: Event[] = Array.isArray(activities)
 			? activities.map(transformActivityToEvent).filter((e): e is Event => e !== null)
@@ -157,10 +149,8 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 				const filterEnd = new Date(searchEndDate + "T00:00:00");
 
 				if (endAfterChecked) {
-					// Show events that end after filterStart and start before filterEnd (overlap)
 					matchesDate = eventEnd >= filterStart && eventStart <= filterEnd;
 				} else {
-					// Show events that overlap and end before filterEnd
 					matchesDate = eventEnd <= filterEnd && eventStart <= filterEnd && eventEnd >= filterStart;
 				}
 			}
@@ -175,7 +165,6 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 		});
   }, [activities, searchQuery, searchSelectedCategory, searchSelectedStatus, searchStartDate, searchEndDate, endAfterChecked, openOnlyChecked]);
 
-	// Render events in search results layout (filtered)
 	const renderSearchResults = () => {
 		return (
 			<SearchResults
@@ -278,17 +267,17 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 							setQuery={setSearchQuery}
 							categoriesSelected={searchSelectedCategory}
 							setCategoriesSelected={setSearchSelectedCategory}
-					statusSelected={searchSelectedStatus}
-					setStatusSelected={setSearchSelectedStatus}
+							statusSelected={searchSelectedStatus}
+							setStatusSelected={setSearchSelectedStatus}
 							dateStart={searchStartDate}
 							setStartDate={setSearchStartDate}
 							dateEnd={searchEndDate}
 							setEndDate={setSearchEndDate}
 							endAfterChecked={endAfterChecked}
 							setEndAfterChecked={setEndAfterChecked}
-					showOpenEventCheckbox={userRole === USER_ROLES.STUDENT}
-					OpenEventChecked={openOnlyChecked}
-					setOpenEventChecked={setOpenOnlyChecked}
+							showOpenEventCheckbox={userRole === USER_ROLES.STUDENT}
+							OpenEventChecked={openOnlyChecked}
+							setOpenEventChecked={setOpenOnlyChecked}
 							history={searchHistory.map(q => ({ query: q, category: "All Categories", date: "" }))}
 							setHistory={(h) => setSearchHistory(h.map(item => item.query))}
 							onSelectHistory={(item) => {
@@ -319,7 +308,6 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 				)}
 			</div>
 
-			{/* Search Results Section */}
 			{isSearchApplied && renderSearchResults()}
 		</section>
 	);
