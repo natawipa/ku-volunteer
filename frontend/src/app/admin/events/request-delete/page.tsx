@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect } from 'react';
 import AdminLayout from '../../components/AdminLayout';
 import AdminDeletionRequestCard, { DeletionRequestEvent } from '../components/AdminDeletionRequestCard';
 import { activitiesApi } from '@/lib/activities';
+import type { Activity } from '@/lib/types';
 
 // Combined data structure (after merging)
 type MergedDeletionRequest = DeletionRequestEvent & {
@@ -29,11 +30,21 @@ export default function DeletionRequestListPage() {
         const reqRes = await activitiesApi.getDeletionRequests({ status: 'pending' });
         if (!reqRes.success || !Array.isArray(reqRes.data)) return;
 
-        const pendingRequests = reqRes.data as DeletionRequestEvent[];
+        // Filter out invalid requests
+        const pendingRequests = reqRes.data.filter((req: unknown): req is DeletionRequestEvent => 
+          req !== null && typeof req === 'object' && 
+          typeof (req as DeletionRequestEvent).id === 'number' && 
+          Boolean((req as DeletionRequestEvent).activity)
+        );
 
         // Fetch all activities
         const actRes = await activitiesApi.getActivities();
-        const activities = Array.isArray(actRes.data) ? actRes.data : [];
+        const rawActivities = Array.isArray(actRes.data) ? actRes.data : [];
+        // Filter out invalid activities
+        const activities = rawActivities.filter((act: unknown): act is Activity => 
+          act !== null && typeof act === 'object' && 
+          typeof (act as Activity).id === 'number'
+        );
 
         // Merge by foreign key
         const merged: MergedDeletionRequest[] = pendingRequests.map((req: DeletionRequestEvent) => {

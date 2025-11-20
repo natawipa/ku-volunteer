@@ -57,8 +57,8 @@ function AllEventsContent() {
               }
             }
           }
-        } catch {
-          console.error('Error fetching user data:');
+        } catch (error) {
+          console.error('Error fetching user data:', error);
         }
       }
     };
@@ -76,8 +76,9 @@ function AllEventsContent() {
         } else {
           setActivities([]);
         }
-      } catch {
+      } catch (error) {
         setActivities([]);
+        console.error('Error fetching activities:', error);
       } finally {
         setLoading(false);
       }
@@ -155,7 +156,7 @@ function AllEventsContent() {
 
   // Check for success message in URL
   useEffect(() => {
-    const successParam = searchParams.get('success');
+    const successParam = searchParams?.get('success');
     if (successParam) {
       showModal(decodeURIComponent(successParam));
       
