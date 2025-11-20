@@ -508,15 +508,15 @@ describe('ApprovedEventsPage', () => {
       });
 
       await waitFor(() => {
-        // Should only show open and approved events
+        // Should show all statuses except rejected and pending
         expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument(); // open
         expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument(); // approved
+        expect(screen.getByTestId('admin-event-preview-8')).toBeInTheDocument(); // draft
+        expect(screen.getByTestId('admin-event-preview-9')).toBeInTheDocument(); // cancelled
         
-        // Should NOT show other statuses
+        // Should NOT show rejected and pending
         expect(screen.queryByTestId('admin-event-preview-3')).not.toBeInTheDocument(); // pending
         expect(screen.queryByTestId('admin-event-preview-4')).not.toBeInTheDocument(); // rejected
-        expect(screen.queryByTestId('admin-event-preview-8')).not.toBeInTheDocument(); // draft
-        expect(screen.queryByTestId('admin-event-preview-9')).not.toBeInTheDocument(); // cancelled
       });
     });
 
@@ -537,11 +537,10 @@ describe('ApprovedEventsPage', () => {
       });
 
       await waitFor(() => {
-        // Should only show events with exact status matches
-        expect(screen.getByTestId('admin-event-preview-3')).toBeInTheDocument(); // correct 'open'
-        // Should not show uppercase or capitalized variations
-        expect(screen.queryByTestId('admin-event-preview-1')).not.toBeInTheDocument();
-        expect(screen.queryByTestId('admin-event-preview-2')).not.toBeInTheDocument();
+        // Should show all case variations (not rejected or pending)
+        expect(screen.getByTestId('admin-event-preview-1')).toBeInTheDocument(); // OPEN
+        expect(screen.getByTestId('admin-event-preview-2')).toBeInTheDocument(); // Approved
+        expect(screen.getByTestId('admin-event-preview-3')).toBeInTheDocument(); // open
       });
     });
   });
@@ -918,15 +917,16 @@ describe('ApprovedEventsPage', () => {
       });
 
       await waitFor(() => {
-        // Should only show events with valid 'open' or 'approved' status
+        // Should show all events except those with rejected/pending status
         expect(screen.getByText('Valid Open - open')).toBeInTheDocument();
         expect(screen.getByText('Valid Approved - approved')).toBeInTheDocument();
-        expect(screen.getByText('2 events')).toBeInTheDocument();
+        // Should also show events with empty, null, undefined status (not rejected/pending)
+        expect(screen.getByText('Empty Status -')).toBeInTheDocument();
+        expect(screen.getByText('Null Status -')).toBeInTheDocument();
+        expect(screen.getByText('Undefined Status -')).toBeInTheDocument();
         
-        // Should not show events with invalid status
-        expect(screen.queryByText('Empty Status')).not.toBeInTheDocument();
-        expect(screen.queryByText('Null Status')).not.toBeInTheDocument();
-        expect(screen.queryByText('Undefined Status')).not.toBeInTheDocument();
+        // Count should be 5 (all events shown)
+        expect(screen.getByText('5 events')).toBeInTheDocument();
       });
     });
 
