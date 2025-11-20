@@ -12,7 +12,6 @@ import Header from "../../components/Header";
 import Navbar from "../../components/Navbar";
 import HeroImage from "../../components/HeroImage";
 
-// Map of event type params to their display titles, gradient colors, and brain images
 const EVENT_TYPE_MAP: Record<
   string,
   { title: string; color: string; brain: string }
@@ -34,7 +33,6 @@ const EVENT_TYPE_MAP: Record<
   },
 };
 
-// Matches event type with backend categories
 const EVENT_TYPE_MATCHERS: Record<string, (cat: string) => boolean> = {
   "University Activities": (cat) => cat.includes("University Activities"),
   "Enhance Competencies": (cat) =>
@@ -48,7 +46,6 @@ const EVENT_TYPE_MATCHERS: Record<string, (cat: string) => boolean> = {
     cat.includes("Social Engagement Activities"),
 };
 
-// Main Component
 export default function EventTypePage() {
   const params = useParams();
   const eventTypeParam =
@@ -91,7 +88,6 @@ export default function EventTypePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch Activities
   useEffect(() => {
     if (eventTypeTitle === "Unknown") return;
 
@@ -123,7 +119,6 @@ export default function EventTypePage() {
     fetchEvents();
   }, [eventTypeTitle]);
 
-  // Render
   if (eventTypeTitle === "Unknown") {
     return (
       <div className="p-8 text-center text-xl text-gray-600">
@@ -134,13 +129,11 @@ export default function EventTypePage() {
 
   return (
     <div className="relative pt-6 px-4">
-      {/* Header */}
       <HeroImage />
       <Navbar />
       <Header showBigLogo={true} />
       
     <div className="w-full max-w-3xl mx-auto py-8 px-2 sm:px-0">
-      {/* Gradient Header */}
       <div className="relative mt-10">
       <div
         className={`relative rounded-lg shadow mb-8 flex items-center min-h-[110px] px-4 sm:px-8 py-4 w-full ${eventTypeConfig.color}`}
@@ -162,7 +155,6 @@ export default function EventTypePage() {
         </div>
       </div>
 
-      {/* Loading */}
       {loading && (
         <div className="flex justify-center items-center h-48">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600" />
@@ -170,7 +162,6 @@ export default function EventTypePage() {
         </div>
       )}
 
-      {/* Error */}
       {error && (
         <div className="bg-red-50 border border-red-200 rounded-lg p-6 max-w-md text-center mx-auto">
           <h3 className="text-red-800 font-semibold mb-2">
@@ -186,7 +177,6 @@ export default function EventTypePage() {
         </div>
       )}
 
-      {/* Empty */}
       {!loading && !error && events.length === 0 && (
         <div className="flex flex-col items-center justify-center min-h-[120px] w-full">
           <p className="text-gray-700 font-semibold text-lg">
@@ -195,7 +185,6 @@ export default function EventTypePage() {
         </div>
       )}
 
-      {/* Events List */}
       <div className="flex flex-col gap-6">
         {events.map((event) => (
           <EventCardHorizontal
@@ -210,7 +199,6 @@ export default function EventTypePage() {
         ))}
       </div>
 
-      {/* More Button */}
       {events.length > 0 && (
         <div className="flex justify-center mt-8">
           <button className="text-green-700 font-semibold flex items-center gap-2 hover:underline">

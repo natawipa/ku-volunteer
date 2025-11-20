@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Bell } from 'lucide-react';
 import { getNotifications, getUnreadCount, markNotificationAsRead, type Notification } from '@/lib/notifications';
 import { useRouter } from 'next/navigation';
-
+import { SquareCheck,SquareX,Trash,Megaphone,MapPinCheckInside,Pin,AlarmClock } from 'lucide-react';
 // Mark all notifications as read
 function markAllAsRead(notifications: Notification[]) {
   notifications.forEach(notif => {
@@ -18,6 +18,8 @@ export default function NotificationBell() {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, right: 0 });
+  const [refreshKey, setRefreshKey] = useState(0); // Trigger re-render for timestamps
+  void refreshKey; // Used to force re-renders via state change
   const dropdownRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const router = useRouter();
@@ -43,10 +45,18 @@ export default function NotificationBell() {
   useEffect(() => {
     fetchNotifications();
     
-    // Refresh every 60 seconds
-    const interval = setInterval(fetchNotifications, 60000);
+    // Refresh notifications every 60 seconds
+    const notifInterval = setInterval(fetchNotifications, 60000);
     
-    return () => clearInterval(interval);
+    // Update timestamps every 30 seconds
+    const timeInterval = setInterval(() => {
+      setRefreshKey(prev => prev + 1);
+    }, 30000);
+    
+    return () => {
+      clearInterval(notifInterval);
+      clearInterval(timeInterval);
+    };
   }, []);
 
   // Close dropdown when clicking outside
@@ -117,17 +127,21 @@ export default function NotificationBell() {
       case 'application_approved':
       case 'activity_approved':
       case 'deletion_approved':
-        return '✅';
+        return <SquareCheck />;
       case 'application_rejected':
       case 'activity_rejected':
       case 'deletion_rejected':
-        return '❌';
+        return <SquareX />;
       case 'activity_deleted':
-        return '🗑️';
+        return <Trash />;
       case 'pending_applications_reminder':
-        return '⏰';
+        return <AlarmClock />;
+      case 'activity_reminder':
+        return <Pin />;
+      case 'checkin_reminder':
+        return <MapPinCheckInside />;
       default:
-        return '📢';
+        return <Megaphone />;
     }
   };
 

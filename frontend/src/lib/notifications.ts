@@ -4,13 +4,12 @@
 import { activitiesApi } from './activities';
 import { auth } from './utils';
 import type { Activity, ActivityApplication } from './types';
-
 const READ_NOTIFICATIONS_KEY = 'readNotifications';
 const PENDING_APPS_TRACKER_KEY = 'pendingAppsTracker'; // Track pending counts over time
 
 export interface Notification {
   id: string;
-  type: 'application_approved' | 'application_rejected' | 'activity_deleted' | 'activity_approved' | 'activity_rejected' | 'deletion_approved' | 'deletion_rejected' | 'pending_applications_reminder';
+  type: 'application_approved' | 'application_rejected' | 'activity_deleted' | 'activity_approved' | 'activity_rejected' | 'deletion_approved' | 'deletion_rejected' | 'pending_applications_reminder' | 'checkin_reminder' | 'activity_reminder';
   title: string;
   message: string;
   timestamp: string;
@@ -218,6 +217,112 @@ async function getStudentNotifications(): Promise<Notification[]> {
         applicationId: app.id,
         isNew: true, // Always show as new since we just detected the deletion
       });
+    }
+
+    // Check for activity reminders and check-in prompts
+    const activeApprovedApps = approvedApps.filter(app => app.activity !== null);
+    
+    // Fetch full activity details for reminders and check-in status
+    for (const app of activeApprovedApps) {
+      if (!app.activity) continue;
+      
+      try {
+        const activityRes = await activitiesApi.getActivity(app.activity);
+        if (!activityRes.success || !activityRes.data) continue;
+        
+        const activity = activityRes.data as Activity;
+        const startDate = new Date(activity.start_at);
+        const endDate = new Date(activity.end_at);
+        const now = new Date();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const hasStarted = now >= startDate;
+        const hasEnded = now > endDate;
+        const isHappeningNow = hasStarted && !hasEnded;
+        
+        const hoursUntilStart = (startDate.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const startsWithin24Hours = hoursUntilStart > 0 && hoursUntilStart <= 24;
+        
+        if (startsWithin24Hours && !hasStarted) {
+          const notificationId = `activity-reminder-${app.id}`;
+          const hoursRounded = Math.ceil(hoursUntilStart);
+          
+          notifications.push({
+            id: notificationId,
+            type: 'activity_reminder',
+            title: 'Activity Starting Soon',
+            message: `"${activity.title}" starts in ${hoursRounded} hour${hoursRounded > 1 ? 's' : ''}!`,
+            timestamp: activity.start_at,
+            read: readIds.has(notificationId),
+            activityId: activity.id,
+            applicationId: app.id,
+            isNew: true,
+          });
+        }
+        
+        const minutesSinceStart = (now.getTime() - startDate.getTime()) / (1000 * 60);
+        const justStarted = isHappeningNow && minutesSinceStart >= 0 && minutesSinceStart < 10;
+        
+        if (justStarted) {
+          const notificationId = `activity-started-${app.id}`;
+          
+          notifications.push({
+            id: notificationId,
+            type: 'activity_reminder',
+            title: 'Activity Started!',
+            message: `"${activity.title}" has started! Get ready to check in.`,
+            timestamp: activity.start_at,
+            read: readIds.has(notificationId),
+            activityId: activity.id,
+            applicationId: app.id,
+            isNew: true,
+          });
+        }
+        
+        // NOTIFICATION 2: Check-in reminder (after 10 minutes)
+        const shouldShowCheckIn = isHappeningNow && minutesSinceStart >= 10;
+        
+        if (shouldShowCheckIn) {
+          const notificationId = `checkin-reminder-${app.id}`;
+          
+          try {
+            const checkInStatusRes = await activitiesApi.getCheckInStatus(app.activity);
+            
+            const hasCheckedIn = checkInStatusRes.success && checkInStatusRes.data && checkInStatusRes.data.id;
+            
+            // Only show notification if student hasn't checked in yet
+            if (!hasCheckedIn) {
+              notifications.push({
+                id: notificationId,
+                type: 'checkin_reminder',
+                title: 'Check-in Required',
+                message: `Don't forget to check in to "${activity.title}" today!`,
+                timestamp: activity.start_at,
+                read: readIds.has(notificationId),
+                activityId: activity.id,
+                applicationId: app.id,
+                isNew: true,
+              });
+            }
+          } catch {
+            // If check-in status check fails, show notification to be safe
+            notifications.push({
+              id: notificationId,
+              type: 'checkin_reminder',
+              title: 'Check-in Required',
+              message: `Don't forget to check in to "${activity.title}" today!`,
+              timestamp: activity.start_at,
+              read: readIds.has(notificationId),
+              activityId: activity.id,
+              applicationId: app.id,
+              isNew: true,
+            });
+          }
+        }
+      } catch (error) {
+        console.error(`Error fetching activity ${app.activity} for notifications:`, error);
+      }
     }
 
   } catch (error) {

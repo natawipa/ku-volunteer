@@ -18,7 +18,6 @@ export function useOrganizationRegistration() {
   });
 
   useEffect(() => {
-    // Get email and oauth session from URL parameters if coming from OAuth
     const emailParam = searchParams.get('email');
     const oauthSessionParam = searchParams.get('oauth_session');
     if (emailParam) {
@@ -34,23 +33,17 @@ export function useOrganizationRegistration() {
     setSubmitError(null);
     setSubmitSuccess(false);
 
-    console.log('Submitting:', data);
-
     try {
       let result;
       if (oauthSession) {
-        // Use OAuth registration endpoint
         result = await OrganizationRegistrationService.registerWithOAuth(data, oauthSession);
       } else {
-        // Use regular registration endpoint
         result = await OrganizationRegistrationService.register(data);
       }
 
       if (result.success) {
-        console.log('Registration successful:', result.data);
         setSubmitSuccess(true);
 
-        // If OAuth registration, backend already issued tokens and provided a callback URL
         if (oauthSession) {
           if (result.redirect_url) {
             window.location.href = result.redirect_url;
@@ -58,17 +51,14 @@ export function useOrganizationRegistration() {
             window.location.href = '/homepage/organization';
           }
         } else {
-                  // Simple redirect to login page after successful registration
         setTimeout(() => {
           window.location.href = '/login';
-        }, 1500); // Brief delay to show success message
+        }, 1500);
         }
       } else {
-        console.error('Registration failed:', result.message);
         setSubmitError(result.message || 'Registration failed');
       }
-    } catch (error) {
-      console.error('Unexpected error:', error);
+    } catch {
       setSubmitError('An unexpected error occurred');
     } finally {
       setIsSubmitting(false);

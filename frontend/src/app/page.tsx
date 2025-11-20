@@ -109,7 +109,6 @@ function SectionAllEvents({
   );
 }
 
-// Main Home Page Component
 function HomeContent() {
   const searchParams = useSearchParams();
   const { showModal } = useModal();
@@ -121,13 +120,10 @@ function HomeContent() {
   const [isSearchActive, setIsSearchActive] = useState(false);
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   
-  // Student-specific state
   const [userApplications, setUserApplications] = useState<ActivityApplication[]>([]);
   
-  // Organizer-specific state
   const [organizerProfileId, setOrganizerProfileId] = useState<number | null>(null);
 
-  // Check for success message in URL
   useEffect(() => {
     const successParam = searchParams.get('success');
     if (successParam) {
@@ -135,26 +131,22 @@ function HomeContent() {
         dataTestId: "success-message"
       });
       
-      // Clean up URL
       const url = new URL(window.location.href);
       url.searchParams.delete('success');
       window.history.replaceState({}, '', url.toString());
     }
   }, [searchParams, showModal]);
 
-  // Check Authentication on Mount
   useEffect(() => {
     setIsAuthenticated(auth.isAuthenticated());
     setUserRole(auth.getUserRole());
     
-    // Get organizer profile ID if organizer
     const fetchUserProfile = async () => {
       if (auth.getUserRole() === USER_ROLES.ORGANIZER) {
         try {
           const result = await apiService.getCurrentUser();
           if (result.success && result.data && result.data.organizer_profile) {
             setOrganizerProfileId(result.data.organizer_profile.id || null);
-            console.log('Organizer profile ID set to:', result.data.organizer_profile.id);
           } else {
             console.warn('No organizer profile found in user data:', result.data);
           }
@@ -167,12 +159,10 @@ function HomeContent() {
     fetchUserProfile();
   }, []);
 
-  // Fetch Activities and Student Applications
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Fetch all activities
         const response = await activitiesApi.getActivities();
 
         if (response.success && Array.isArray(response.data)) {
@@ -181,7 +171,6 @@ function HomeContent() {
           throw new Error(response.error || "Failed to fetch activities");
         }
         
-        // If student, fetch applications and approved activities
         if (auth.isAuthenticated() && auth.getUserRole() === USER_ROLES.STUDENT) {
           const applicationsResponse = await activitiesApi.getUserApplications();
           if (applicationsResponse.success && applicationsResponse.data) {
@@ -201,7 +190,6 @@ function HomeContent() {
     fetchData();
   }, []);
 
-  // Create filter configuration
   const filterConfig: EventFilterConfig = {
     activities,
     userRole,
@@ -210,7 +198,6 @@ function HomeContent() {
     organizerProfileId
   };
 
-  // Get filtered events using utility functions
   const myEvents = getMyEvents(filterConfig);
   const allEvents = getAllEvents(filterConfig);
   const eventTypeEvents = getOpeningEvents(activities);
@@ -221,7 +208,6 @@ function HomeContent() {
       (e) => Array.isArray(e.category) && e.category.some(type.match)
     ),
   }));
-    // Admin View
   if (isAuthenticated && userRole === USER_ROLES.ADMIN) {
     return (
       <AdminLayout>
@@ -230,18 +216,14 @@ function HomeContent() {
     );
   }
 
-// 🏠 Main Home Page Render
   return (
     <div className="relative pt-6 px-4">
-      {/* Background */}
       <HeroImage />
       <div className="relative">
-      {/* Header */}
       <Navbar isAuthenticated={isAuthenticated} userRole={userRole} />
       <Header showBigLogo={true} showSearch={true} activities={activities} 
               setIsSearchActive={setIsSearchActive} searchInputRef={searchInputRef}/>
 
-        {/* Main Content */}
         {!isSearchActive && (
           <>
             {loading && (
@@ -302,7 +284,6 @@ function HomeContent() {
   );
 }
 
-// Export with wrapper
 export default function Home() {
   return (
     <Suspense fallback={

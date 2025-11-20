@@ -34,7 +34,6 @@ export default function Header(props: HeaderProps){
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
 
-  // Check Authentication on Mount
   useEffect(() => {
     setIsAuthenticated(auth.isAuthenticated());
     setUserRole(auth.getUserRole());
@@ -52,7 +51,6 @@ export default function Header(props: HeaderProps){
     }
   };
 
-  // Determine if Search Bar Should be Shown
   const shouldShowSearch = showSearch && !loading && !error;
   const shouldShowBigLogo = showBigLogo && !loading && !error;
 
@@ -71,7 +69,6 @@ export default function Header(props: HeaderProps){
         </div>
       )}
       
-      {/* Search Layout */}
       {shouldShowSearch && (
         <div className="px-6 -mt-3 relative z-20">
           <SearchLayout

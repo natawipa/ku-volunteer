@@ -17,29 +17,28 @@ interface SearchCardProps {
   showOpenEventCheckbox?: boolean;
   showStatus?: boolean;
   categories?: string[];
-  query?: string;                   // Current search query
+  query?: string;
   setQuery?: (query: string) => void;
-  categoriesSelected?: string[];                // Selected category
-  statusSelected?: string[];                    // Selected status
+  categoriesSelected?: string[];
+  statusSelected?: string[];
   setStatusSelected?: (status: string[]) => void;
   setCategoriesSelected?: (category: string[]) => void;
   onSearchChange?: (val: string) => void;
   onCategoryChange?: (val: string) => void;
   onDateRangeChange?: (start: Date | null, end: Date | null) => void;
-  dateStart?: string;                    // Selected date (YYYY-MM-DD)
-  dateEnd?: string;                      // Selected end date (YYYY-MM-DD)
+  dateStart?: string;
+  dateEnd?: string;
   setStartDate?: (date: string) => void;
   setEndDate?: (date: string) => void;
-  endAfterChecked?: boolean;            // Whether "end after" is checked
+  endAfterChecked?: boolean;
   setEndAfterChecked?: (checked: boolean) => void;
-  OpenEventChecked?: boolean;        // Whether "only open events" is checked
+  OpenEventChecked?: boolean;
   setOpenEventChecked?: (checked: boolean) => void;
-  // Event handlers
-  onKeyDown?: (e: React.KeyboardEvent) => void; // Key down handler for input fields
-  onApply?: () => void;            // Called when search is applied
-  history?: HistoryItem[];         // optional controlled history (list of queries + meta)
-  setHistory?: (history: HistoryItem[]) => void; // optional setter when parent controls history
-  onSelectHistory?: (item: HistoryItem) => void; // notify parent when user selects a history entry
+  onKeyDown?: (e: React.KeyboardEvent) => void;
+  onApply?: () => void;
+  history?: HistoryItem[];
+  setHistory?: (history: HistoryItem[]) => void;
+  onSelectHistory?: (item: HistoryItem) => void;
 }
 
 const DEFAULT_CATEGORIES = [
@@ -130,9 +129,8 @@ export default function SearchCard({
     }
   }, []);
 
-  // Load local history on mount unless parent supplies history
   useEffect(() => {
-    if (Array.isArray(history)) return; // parent controls history
+    if (Array.isArray(history)) return;
     try {
       const raw = localStorage.getItem("ku_search_history") || localStorage.getItem("searchHistory") || "[]";
       const parsed = JSON.parse(raw);

@@ -7,7 +7,6 @@ export function useEventData(eventId: number | null) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // fetch event data
   useEffect(() => {
     const fetchEvent = async () => {
       if (eventId == null || Number.isNaN(eventId)) return;
@@ -21,8 +20,7 @@ export function useEventData(eventId: number | null) {
         } else {
           setError(response.error || 'Failed to fetch event details');
         }
-      } catch (err) {
-        console.error('Network error:', err);
+      } catch {
         setError('Network error occurred');
       } finally {
         setLoading(false);

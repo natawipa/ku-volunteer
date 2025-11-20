@@ -15,8 +15,8 @@ const statusColors: Record<string, string> = {
   rejected: 'bg-red-200 text-red-900',
   open: 'bg-green-200 text-green-900',
   approved: 'bg-green-200 text-green-900',
-  full: 'bg-orange-200 text-orange-900',
-  closed: 'bg-gray-300 text-gray-800'
+  full: 'bg-green-200 text-green-900',
+  closed: 'bg-green-200 text-green-900'
 };
 
 // Gradient background matching the big status boxes (pre-click) and user list cards style
@@ -25,9 +25,9 @@ const gradientClasses: Record<string, string> = {
   rejected: 'bg-gradient-to-r from-red-300/25 to-pink-300/25',
   open: 'bg-gradient-to-r from-blue-300/25 to-purple-300/25',
   approved: 'bg-gradient-to-r from-blue-300/25 to-purple-300/25',
-  full: 'bg-gradient-to-r from-orange-300/25 to-red-200/25',
-  closed: 'bg-gradient-to-r from-gray-300/25 to-gray-100/25',
-  default: 'bg-gradient-to-r from-green-200/25 to-gray-200/25'
+  full: 'bg-gradient-to-r from-blue-300/25 to-purple-300/25',
+  closed: 'bg-gradient-to-r from-blue-300/25 to-purple-300/25',
+  default: 'bg-gradient-to-r from-blue-300/25 to-purple-300/25'
 };
 
 const formatDate = (iso: string) => {
