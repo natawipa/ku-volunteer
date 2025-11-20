@@ -101,7 +101,7 @@ export default function NotificationsPage() {
   };
 
   const getLogo = () => {
-    return userRole === USER_ROLES.ORGANIZER ? "/logo-organizer.svg" : "/logo-kasetsart.svg";
+    return userRole === USER_ROLES.ORGANIZER ? "/logo_plain.svg": "/logo_plain.svg";
   };
 
   // Filter notifications
@@ -122,7 +122,7 @@ export default function NotificationsPage() {
             <Link href="/" className="p-2 hover:bg-white/50 rounded-lg transition-colors">
               <ArrowLeftIcon className="w-6 h-6 text-gray-700" />
             </Link>
-            <Image src={getLogo()} alt="Logo" width={48} height={48} className="object-cover" />
+            <Image src={getLogo()} alt="Logo" width={70} height={75} className="object-cover" />
           </div>
           <h1 className="text-2xl font-bold text-gray-800">Notifications</h1>
           <div className="w-14"></div> {/* Spacer for centering */}
