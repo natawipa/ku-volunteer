@@ -17,7 +17,7 @@ export default function ApprovedEventsPage() {
       setLoading(true);
       const res = await activitiesApi.getActivities();
       if (res.success && Array.isArray(res.data)) {
-  setApproved(res.data.filter((a: Activity) => a.status === 'open' || a.status === 'approved'));
+        setApproved(res.data.filter((a: Activity) => a.status !== 'rejected' && a.status !== 'pending'));
       } else {
         setError(res.error || 'Failed to load activities');
       }
