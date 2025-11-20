@@ -19,10 +19,10 @@ module.exports = defineConfig({
       API_URL: 'http://localhost:8000/api',
       ADMIN_EMAIL: 'admin@ku.ac.th',
       ADMIN_PASSWORD: 'admin123',
-      STUDENT_EMAIL: 'student@ku.ac.th', 
-      STUDENT_PASSWORD: 'student123',
-      ORGANIZER_EMAIL: 'organizer@ku.ac.th',
-      ORGANIZER_PASSWORD: 'organizer123'
+      STUDENT_EMAIL: 'student.test@ku.ac.th', 
+      STUDENT_PASSWORD: 'TestPassword-123',
+      ORGANIZER_EMAIL: 'organizer.test@ku.ac.th',
+      ORGANIZER_PASSWORD: 'TestPassword-123'
     },
 
     setupNodeEvents(on, config) {

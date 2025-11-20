@@ -90,7 +90,7 @@ const OrganizationRegisterContent: React.FC = () => {
                 options={ORGANIZATION_OPTIONS}
                 placeholder="Select Organization Type"
                 label="Select Organization Type"
-                data-testid="organization-input"
+                data-testid="organization-type"
                 error={errors.organize?.message}
               />
               <input type="hidden" {...register('organize')} />
@@ -107,7 +107,7 @@ const OrganizationRegisterContent: React.FC = () => {
             error={errors.organizationName?.message}
           />
 
-                    <FormField
+          <FormField
             id="email"
             label="Email"
             type="email"
@@ -129,7 +129,7 @@ const OrganizationRegisterContent: React.FC = () => {
             error={errors.password?.message}
           />
 
-                    <FormField
+          <FormField
             id="confirm"
             label="Confirm Password"
             type="password"

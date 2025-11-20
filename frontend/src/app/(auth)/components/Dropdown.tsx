@@ -69,7 +69,14 @@ export function Dropdown<T extends string>({
         )}
       </div>
       {error && (
-        <p className="mt-1 text-sm text-red-400">{error}</p>
+        <p 
+          id={dataTestId ? `${dataTestId}-error` : undefined}
+          className="mt-1 text-sm text-red-400" 
+          role="alert" 
+          data-testid={dataTestId ? `${dataTestId}-error` : undefined}
+        >
+          {error}
+        </p>
       )}
     </div>
   );

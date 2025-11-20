@@ -18,13 +18,13 @@
     "role": "organizer",
     "first_name": "Jane",
     "last_name": "Organizer",
-    "organization": "Kasetsart University",
+    "organization_type": "Kasetsart University",
     "organization_name": "Computer Engineering Department"
   },
   "admin": {
     "title": "Mr.",
-    "email": "admin.test@ku.ac.th",
-    "password": "AdminPassword-123",
+    "email": "admin@ku.th",
+    "password": "admin123",
     "role": "admin",
     "first_name": "Admin",
     "last_name": "User"
@@ -36,7 +36,7 @@
     "role": "organizer",
     "first_name": "External",
     "last_name": "Organizer",
-    "organization": "Red Cross Thailand",
-    "organization_name": "Bangkok Chapter"
+    "organization_type": "External Organization",
+    "organization_name": "Red Cross Thailand"
   }
 }
