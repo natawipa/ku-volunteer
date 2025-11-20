@@ -60,7 +60,7 @@ function ActivityFormContent() {
           return;
         }
         
-        if (role !== USER_ROLES.ORGANIZER && role !== USER_ROLES.ADMIN) {
+        if (role !== USER_ROLES.ORGANIZER) {
           router.push('/');
           return;
         }
@@ -533,11 +533,11 @@ function ActivityFormContent() {
     );
   }
 
-  if (!isAuthenticated || (userRole !== USER_ROLES.ORGANIZER && userRole !== USER_ROLES.ADMIN)) {
+  if (!isAuthenticated || userRole !== USER_ROLES.ORGANIZER) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <p className="text-lg">Access denied. Organizer or Admin role required.</p>
+          <p className="text-lg">Access denied. Organizer role required.</p>
           <button 
             onClick={() => router.push('/')}
             className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"

@@ -252,16 +252,6 @@ describe('New Event Page (Integration)', () => {
         expect(screen.getByTestId('form-fields')).toBeInTheDocument();
       });
     });
-
-    it('should allow admin to access the page', async () => {
-      (auth.getUserRole as jest.Mock).mockReturnValue(USER_ROLES.ADMIN);
-
-      render(<ActivityForm />);
-
-      await waitFor(() => {
-        expect(screen.getByTestId('form-fields')).toBeInTheDocument();
-      });
-    });
   });
 
   describe('Create New Event', () => {
