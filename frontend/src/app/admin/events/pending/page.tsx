@@ -17,18 +17,27 @@ export default function PendingEventsPage() {
   const [searchQuery, ] = useState('');
   const [searchSelectedCategory, ] = useState('All Categories');
 
-  // ...existing code...
-
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await activitiesApi.getActivities();
-      if (res.success && Array.isArray(res.data)) {
-        setPending(res.data.filter(a => a.status === 'pending'));
-      } else {
-        setError(res.error || 'Failed to load activities');
+      try {
+        const res = await activitiesApi.getActivities();
+        if (res.success) {
+          if (Array.isArray(res.data)) {
+            setPending(res.data.filter(a => a && a.status === 'pending'));
+          } else if (res.data === null) {
+            setPending([]);
+          } else {
+            setError('Invalid data format');
+          }
+        } else {
+          setError(res.error || 'Failed to load activities');
+        }
+      } catch {
+        setError('Failed to fetch activities');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
   }, []);
@@ -82,7 +91,7 @@ export default function PendingEventsPage() {
           {loading ? 'Counting…' : `${count} event${count === 1 ? '' : 's'}`}
         </span>
       </div>
-      {loading && <div className="flex items-center gap-3 text-gray-600 mb-6"><span className="animate-spin h-6 w-6 border-b-2 border-yellow-600 rounded-full" /> Loading...</div>}
+      {loading && <div className="flex items-center gap-3 text-gray-600 mb-6"><span className="animate-spin h-6 w-6 border-b-2 border-yellow-600 rounded-full" role="status" /> Loading...</div>}
       {error && <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded mb-6">{error}</div>}
       {!loading && !error && (
   count === 0 ? <p className="text-gray-600">No pending events{search || category !== 'All Categories' ? ' match your filters.' : '.'}</p> : (

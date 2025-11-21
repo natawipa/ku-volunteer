@@ -15,13 +15,24 @@ export default function ApprovedEventsPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await activitiesApi.getActivities();
-      if (res.success && Array.isArray(res.data)) {
-        setApproved(res.data.filter((a: Activity) => a.status !== 'rejected' && a.status !== 'pending'));
-      } else {
-        setError(res.error || 'Failed to load activities');
+      try {
+        const res = await activitiesApi.getActivities();
+        if (res.success) {
+          if (Array.isArray(res.data)) {
+            setApproved(res.data.filter((a: Activity) => a && (a.status !== 'rejected' && a.status !== 'pending')));
+          } else if (res.data === null) {
+            setApproved([]);
+          } else {
+            setError('Invalid data format');
+          }
+        } else {
+          setError(res.error || 'Failed to load activities');
+        }
+      } catch {
+        setError('Failed to load activities');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
   }, []);

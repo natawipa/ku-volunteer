@@ -19,13 +19,24 @@ export default function RejectedEventsPage() {
   useEffect(() => {
     const load = async () => {
       setLoading(true);
-      const res = await activitiesApi.getActivities();
-      if (res.success && Array.isArray(res.data)) {
-        setRejected(res.data.filter(a => a.status === 'rejected'));
-      } else {
-        setError(res.error || 'Failed to load activities');
+      try {
+        const res = await activitiesApi.getActivities();
+        if (res.success) {
+          if (Array.isArray(res.data)) {
+            setRejected(res.data.filter(a => a && a.status === 'rejected'));
+          } else if (res.data === null) {
+            setRejected([]);
+          } else {
+            setError('Invalid data format');
+          }
+        } else {
+          setError(res.error || 'Failed to load activities');
+        }
+      } catch {
+        setError('Network error');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     };
     load();
   }, []);

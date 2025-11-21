@@ -54,8 +54,13 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 	const [isSearchApplied, setIsSearchApplied] = useState(false);
 	const [searchHistory, setSearchHistory] = useState<string[]>(() => {
 		if (typeof window !== "undefined") {
-			const stored = localStorage.getItem("searchHistory");
-			return stored ? JSON.parse(stored) : [];
+			try {
+				const stored = localStorage.getItem("searchHistory");
+				return stored ? JSON.parse(stored) : [];
+			} catch (error) {
+				console.warn('Failed to load search history:', error);
+				return [];
+			}
 		}
 		return [];
 	});
@@ -63,7 +68,11 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 
 	useEffect(() => {
 		if (typeof window !== "undefined") {
-			localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+			try {
+				localStorage.setItem("searchHistory", JSON.stringify(searchHistory));
+			} catch (error) {
+				console.warn('Failed to save search history:', error);
+			}
 		}
 	}, [searchHistory]);
 
@@ -208,7 +217,8 @@ export default function SearchLayout({ activities, setIsSearchActive, isScrolled
 							{searchHistory.map((item, idx) => (
 								<div key={idx} className="flex items-center justify-between px-4 py-2 hover:bg-gray-100 cursor-pointer">
 									<span
-										onClick={() => {
+										onClick={(e) => {
+											e.stopPropagation();
 											setSearchQuery(item);
 											setIsSearchApplied(true);
 											setIsOpen(false);
