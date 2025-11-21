@@ -108,6 +108,11 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         if role == "student" and student_id_external:
             if StudentProfile.objects.filter(student_id_external=student_id_external).exists():
                 raise serializers.ValidationError({"student_id_external": "This student ID is already in use."})
+        
+        # Ensure email is unique to avoid IntegrityError on create
+        email = attrs.get('email')
+        if email and User.objects.filter(email=email).exists():
+            raise serializers.ValidationError({'email': 'A user with this email already exists.'})
 
         return attrs
 
@@ -120,7 +125,16 @@ class UserRegisterSerializer(serializers.ModelSerializer):
         organization_name = validated_data.pop("organization_name", None)
 
         password = validated_data.pop("password")
-        user = User.objects.create_user(password=password, **validated_data)
+        # Create the user and profile objects. Wrap in try/except to log unexpected errors
+        # so that E2E tests produce useful server-side traces for debugging.
+        try:
+            user = User.objects.create_user(password=password, **validated_data)
+        except Exception as e:
+            import traceback
+            print("[DEBUG] Exception while creating user:", e)
+            traceback.print_exc()
+            # Re-raise so the normal DRF error handling still applies (returns 500)
+            raise
 
         # Create student profile
         if validated_data.get("role") == "student" and student_id_external:

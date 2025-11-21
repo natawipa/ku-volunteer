@@ -10,7 +10,6 @@ import { ENV, API_ENDPOINTS } from "@/lib/constants";
 import type { DeletionRequestEvent } from "@/app/admin/events/components/AdminDeletionRequestCard";
 import Navbar from "@/app/components/Navbar";
 import HeroImage from "@/app/components/HeroImage";
-import RejectModal from "@/app/admin/components/RejectModal";
 
 interface ModerationResponse { detail: string }
 interface PageProps { params: Promise<{ id: string }> }
@@ -34,7 +33,6 @@ export default function Page({ params }: PageProps) {
   const [rejectChecked, setRejectChecked] = useState(false);
   const [activity, setActivity] = useState<Activity | null>(null);
   const [deletionRequest, setDeletionRequest] = useState<DeletionRequestEvent | null>(null);
-  const [showRejectModal, setShowRejectModal] = useState(false);
 
   // Fetch activity when eventId resolved
   useEffect(() => {
@@ -306,6 +304,8 @@ export default function Page({ params }: PageProps) {
               <label className="flex items-center gap-2 text-green-600">
                 <input
                   type="checkbox"
+                  id="approveCheck"
+                  data-testid="approve-deletion-click"
                   className="w-4 h-4"
                   checked={approveChecked}
                   onChange={() => { 
@@ -313,7 +313,6 @@ export default function Page({ params }: PageProps) {
                     if (!approveChecked) { 
                       setRejectChecked(false); 
                       setRejectReason(''); 
-                      setShowRejectModal(false);
                     } 
                   }}
                 />
@@ -322,31 +321,40 @@ export default function Page({ params }: PageProps) {
               <label className="flex items-center gap-2 text-red-600">
                 <input
                   type="checkbox"
+                  id="rejectCheck"
+                  data-testid="rejectCheck"
                   className="w-4 h-4"
                   checked={rejectChecked}
                   onChange={() => {
-                    if (!rejectChecked) {
-                      setShowRejectModal(true);
-                      setRejectChecked(true);
+                    const newRejectChecked = !rejectChecked;
+                    setRejectChecked(newRejectChecked);
+                    if (newRejectChecked) {
                       setApproveChecked(false);
                     } else {
-                      setRejectChecked(false);
                       setRejectReason('');
-                      setShowRejectModal(false);
                     }
                   }}
                 />
                 Reject Deletion
               </label>
-              {showRejectModal && (
-                <RejectModal 
-                  setShowRejectModal={setShowRejectModal}
-                  rejectReason={rejectReason}
-                  setRejectReason={setRejectReason}
-                  setRejectChecked={setRejectChecked}
-                  setMessage={setMessage}
-                />
-              )}
+              {rejectChecked && (
+                <div className="mt-3 ml-6 animate-slideDown">
+                  <textarea
+                    id="reject-reason-textarea"
+                    data-testid="reject-reason-textarea"
+                    className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Enter reason for rejection..."
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    autoFocus
+                  />
+                  {!rejectReason.trim() && (
+                    <p className="text-red-600 text-sm mt-1">
+                      Rejection reason is required
+                    </p>
+                  )}
+                </div>
+            )}
             </div>
 
             {/* Action Buttons */}

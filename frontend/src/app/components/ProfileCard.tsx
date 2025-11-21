@@ -53,6 +53,7 @@ export default function ProfileCard() {
     <div className="relative" ref={wrapperRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
+        data-testid="user-menu"
         className="flex text-[#215701] hover:text-[#00361C] transition-all duration-200 hover:cursor-pointer rounded-full justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#215701]/50"
       >
         <UserCircleIcon className="h-10 w-10" />
@@ -67,7 +68,10 @@ export default function ProfileCard() {
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white shadow-lg ring-1 ring-black/5 p-3">
           <p className="text-sm text-gray-500 mb-2">Signed in as</p>
-          <p className="font-semibold mb-3">{user?.email || 'Loading...'}</p>
+          <p className="font-semibold mb-1">{user?.email || 'Loading...'}</p>
+          <p className="text-sm text-gray-600 mb-3" data-testid="user-role">
+            {user?.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'Loading...'}
+          </p>
           <hr className="my-2" />
 
           <Link
@@ -81,6 +85,7 @@ export default function ProfileCard() {
 
           <button
             onClick={handleLogout}
+            data-testid="logout-button"
             className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-red-600 hover:bg-red-50 hover:cursor-pointer"
           >
             <LogOut className="h-4 w-4" />

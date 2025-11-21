@@ -80,7 +80,7 @@ export default function AdminContent() {
   }, []);
 
   return (
-    <>
+    <div data-testid="admin-dashboard">
       {/* Status Navigation */}
       <h2 className="font-bold mb-6 text-2xl pt-2 mt-10 lg:mt-16 md:mt-12">Status Events</h2>
       <Link href="/admin/events/pending">
@@ -176,6 +176,6 @@ export default function AdminContent() {
           </div>
         </div>
       </Link>
-    </>
+    </div>
   );
 }

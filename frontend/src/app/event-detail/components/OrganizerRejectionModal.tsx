@@ -23,6 +23,7 @@ export default function RejectionModal({
     <div 
       className="fixed inset-0 bg-black/30 flex items-center justify-center z-50 backdrop-blur-sm animate-fadeIn"
       onClick={onCancel}
+      data-testid="reject-confirmation-modal"
     >
       <div 
         className="bg-white rounded-2xl shadow-2xl p-8 max-w-lg w-full mx-4 transform transition-all duration-300 ease-out scale-100 animate-slideUp border border-gray-100"
@@ -53,10 +54,16 @@ export default function RejectionModal({
             placeholder="e.g., Your qualifications don't match the requirements for this activity..."
             disabled={isProcessing}
             autoFocus
+            data-testid="rejection-reason-textarea"
           />
           <p className="mt-2 text-xs text-gray-500">
-            {reason.trim().length} characters
+            {reason.trim().length}/500 characters
           </p>
+          {!reason.trim() && isProcessing && (
+            <p className="text-red-600 text-sm mt-1" data-testid="reason-error">
+              Rejection reason is required
+            </p>
+          )}
         </div>
 
         <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
@@ -71,6 +78,7 @@ export default function RejectionModal({
             onClick={onConfirm}
             disabled={isProcessing || !reason.trim()}
             className="px-6 py-2.5 bg-gradient-to-r from-red-600 to-red-700 text-white rounded-xl hover:from-red-700 hover:to-red-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+            data-testid="confirm-reject-button"
           >
             {isProcessing ? (
               <span className="flex items-center gap-2">
