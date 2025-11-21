@@ -2,12 +2,10 @@ name: 🧪 Django Tests
 
 on:
   push:
-    branches: [main]
-    paths:
-      - 'backend/**'
-      - '.github/workflows/django-tests.yml'
+    branches: [main, develop]
+    paths: ['backend/**']
   pull_request:
-    branches: [main]
+    branches: [main, develop]
 
 env:
   # Database Configuration
