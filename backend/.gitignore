@@ -54,6 +54,3 @@ pip-delete-this-directory.txt
 
 # Node
 node_modules/
-
-# Ignore sample env
-!.env.sample
