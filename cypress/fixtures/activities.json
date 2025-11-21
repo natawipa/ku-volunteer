@@ -38,5 +38,42 @@
     "max_participants": 15,
     "hours_awarded": 24,
     "categories": ["rural", "infrastructure", "community"]
+  },
+  "PendingActivity": {
+    "id": 16,
+    "organizer_profile_id": 4,
+    "organizer_email": "organizer.test@ku.ac.th",
+    "organizer_name": "Computer Engineering Department",
+    "categories": [
+      "University Activities",
+      "Development of Health and Well-being",
+      "Social Engagement Activities"
+    ],
+    "title": "Pending Activity 1",
+    "description": "This activity needs approval",
+    "start_at": "2025-12-01T12:00:00Z",
+    "end_at": "2025-12-02T15:00:00Z",
+    "location": "Test Location",
+    "status": "pending",
+    "current_participants": 0,
+    "max_participants": 50,
+    "hours_awarded": 5,
+    "cover_image": "http://localhost:8000/media/activities/cover.jpg",
+    "cover_image_url": "http://localhost:8000/media/activities/cover.jpg",
+    "created_at": "2025-11-20T10:31:10.398353+07:00",
+    "updated_at": "2025-11-20T10:31:10.398362+07:00"
+  },
+  "DeletionRequestActivity": {
+    "id": 1,
+    "activity": 16,
+    "activity_title": "Pending Activity 1",
+    "reason": "inappropriate things",
+    "status": "pending",
+    "requested_by": 30,
+    "requested_by_email": "organizer.test@ku.ac.th",
+    "requested_at": "2025-11-20T23:45:41.806296+07:00",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": ""
   }
 }

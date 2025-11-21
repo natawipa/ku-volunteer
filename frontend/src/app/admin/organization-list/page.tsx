@@ -146,8 +146,8 @@ export default function OrganizationList() {
               console.log(`🔗 Organization "${org.organizer_profile?.organization_name}" - User ID: ${org.id}, Profile ID: ${org.organizer_profile?.id}, Using: ${organizerId}`);
               
               return (
-              <div key={org.id} className="flex justify-between items-center border-b pb-2">
-                <p>{org.organizer_profile?.organization_name}</p>
+              <div key={org.id} className="flex justify-between items-center border-b pb-2" data-testid="organization-row">
+                <p data-testid="organization-name">{org.organizer_profile?.organization_name}</p>
                 <div className="flex gap-4">
                   <Link
                     href={`/admin/organization-event/${organizerId}`}
@@ -159,6 +159,7 @@ export default function OrganizationList() {
                     onClick={() => handleDeleteClick(org)}
                     disabled={deleting === org.id}
                     className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    data-testid="delete-organization"
                   >
                     {deleting === org.id ? 'Deleting...' : 'Delete'}
                   </button>
@@ -183,6 +184,7 @@ export default function OrganizationList() {
                             Cancel
                           </button>
                           <button
+                            data-testid="confirm-delete-organization"
                             onClick={handleDeleteConfirm}
                             disabled={deleting !== null}
                             className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"

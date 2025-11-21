@@ -119,14 +119,24 @@ export const activitiesApi = {
   },
 
    // Get Deletion Requests
-  async getDeletionRequests(params?: { status?: string }): Promise<ApiResponse<DeletionRequestEvent[]>> {
+  async getDeletionRequests(params?: { status?: string; activity?: number; }): Promise<ApiResponse<DeletionRequestEvent[]>> {
     try {
       let url = API_ENDPOINTS.ACTIVITIES.DELETION_REQUESTS;
+      const queryParams = new URLSearchParams();
+      
       if (params?.status) {
-        url += `?status=${encodeURIComponent(params.status)}`;
+        queryParams.append('status', params.status);
       }
-      const response = await httpClient.get<unknown>(url);
+      if (params?.activity) {
+        queryParams.append('activity', params.activity.toString());
+      }
+      
+      const queryString = queryParams.toString();
+      if (queryString) {
+        url += `?${queryString}`;
+      }
 
+      const response = await httpClient.get<unknown>(url);
       if (response.success && response.data) {
         const data = response.data as Record<string, unknown> | unknown[];
         const rawArray: Record<string, unknown>[] =
@@ -852,6 +862,17 @@ export const activitiesApi = {
   
   async getActivityCheckInRecords(activityId: string | number): Promise<ApiResponse<CheckInRecord[]>> {
     return httpClient.get<CheckInRecord[]>(API_ENDPOINTS.ACTIVITIES.CHECK_IN_LIST(activityId));
+  },
+
+  // Admin: Moderate activity (approve/reject)
+  async moderateActivity(
+    activityId: number, 
+    data: { action: 'approve' | 'reject'; reason?: string }
+  ): Promise<ApiResponse<Activity>> {
+    return httpClient.post<Activity>(
+      API_ENDPOINTS.ACTIVITIES.MODERATION_REVIEW(activityId),
+      data
+    );
   },
 
 };

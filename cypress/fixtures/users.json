@@ -11,6 +11,18 @@
     "faculty": "Engineering",
     "major": "Computer Engineering"
   },
+  "student2": {
+    "title": "Ms.",
+    "email": "student2.test@ku.ac.th",
+    "password": "TestPassword-123",
+    "role": "student",
+    "first_name": "Alice",
+    "last_name": "Student",
+    "student_id_external": "6610000002",
+    "year": 2,
+    "faculty": "Science",
+    "major": "Biology"
+  },
   "organizer": {
     "title": "Ms.",
     "email": "organizer.test@ku.ac.th", 
@@ -30,13 +42,13 @@
     "last_name": "User"
   },
   "externalOrganizer": {
-    "title": "Dr.",
+    "title": "Mr.",
     "email": "external.test@redcross.org",
     "password": "TestPassword-123", 
     "role": "organizer",
     "first_name": "External",
     "last_name": "Organizer",
-    "organization": "Red Cross Thailand",
-    "organization_name": "Bangkok Chapter"
+    "organization": "External Organization",
+    "organization_name": "Red Cross Thailand"
   }
 }

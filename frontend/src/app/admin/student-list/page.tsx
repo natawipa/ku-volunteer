@@ -85,7 +85,7 @@ export default function StudentList() {
     <div className="relative">
       {/* Background */}
       <HeroImage />
-      <div className="relative p-6">
+      <div className="relative p-6 z-20 pointer-events-auto">
       {/* Header */}
       <Navbar />
       <div className="relative">
@@ -126,15 +126,17 @@ export default function StudentList() {
             return fullName.includes(search.toLowerCase());
           })
           .slice().reverse().map((s) => (
-          <div key={s.id} className="flex justify-between items-center border-b pb-2">
-            <p className="flex-1">
+          <div key={s.id} className="flex justify-between items-center border-b pb-2 relative z-10" data-testid="student-row">
+            <p className="flex-1" data-testid="student-name">
               {s.title} {s.first_name} {s.last_name}
             </p>
             <div className="flex gap-4">
               <button 
+                data-testid="delete-user"
+                type="button"
                 onClick={() => handleDeleteClick(s)}
                 disabled={deleting === s.id}
-                className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-red-100 px-4 py-1 rounded-full hover:bg-red-200 transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed relative z-20"
               >
                 {deleting === s.id ? 'Deleting...' : 'delete'}
               </button>
@@ -146,7 +148,8 @@ export default function StudentList() {
       {/* Delete Confirmation Dialog */}
       {deleteConfirm.show && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full mx-4 " 
+                data-testid="confirm-delete-user-modal" id="confirm-delete-user-modal">
             <h3 className="text-lg font-semibold mb-4">Confirm Delete</h3>
             <p className="text-gray-600 mb-6">
               Are you sure you want to delete student ?
@@ -164,6 +167,7 @@ export default function StudentList() {
                 Cancel
               </button>
               <button
+                data-testid="confirm-delete-button"
                 onClick={handleDeleteConfirm}
                 disabled={deleting !== null}
                 className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 disabled:opacity-50"
