@@ -46,36 +46,6 @@ jest.mock('@/app/components/HeroImage', () => {
   };
 });
 
-jest.mock('@/app/admin/components/RejectModal', () => {
-  return function MockRejectModal({ 
-    setShowRejectModal, 
-    setRejectReason, 
-    setMessage 
-  }: { 
-    setShowRejectModal: (value: boolean) => void; 
-    setRejectReason: (value: string) => void; 
-    setMessage: (value: string) => void; 
-  }) {
-    return (
-      <div data-testid="reject-modal">
-        <input
-          data-testid="reject-reason-input"
-          onChange={(e) => setRejectReason(e.target.value)}
-          placeholder="Rejection reason"
-        />
-        <button 
-          onClick={() => {
-            setShowRejectModal(false);
-            setMessage('Rejection reason set');
-          }}
-        >
-          Set Reason
-        </button>
-      </div>
-    );
-  };
-});
-
 describe('Admin Delete Approval Page', () => {
   // Store original console methods
   const originalError = console.error;
@@ -282,7 +252,7 @@ describe('Admin Delete Approval Page', () => {
   });
 
   describe('Reject Deletion Flow', () => {
-    it('opens reject modal when reject is selected', async () => {
+    it('shows reject textarea when reject is selected', async () => {
       const user = userEvent.setup();
       
       render(<AdminDeleteApproval params={mockParams} />);
@@ -294,7 +264,8 @@ describe('Admin Delete Approval Page', () => {
       const rejectCheckbox = screen.getByLabelText('Reject Deletion');
       await user.click(rejectCheckbox);
       
-      expect(screen.getByTestId('reject-modal')).toBeInTheDocument();
+      expect(screen.getByTestId('reject-reason-textarea')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText('Enter reason for rejection...')).toBeInTheDocument();
     });
 
     it('successfully submits rejection with reason', async () => {
@@ -315,12 +286,44 @@ describe('Admin Delete Approval Page', () => {
       const rejectCheckbox = screen.getByLabelText('Reject Deletion');
       await user.click(rejectCheckbox);
       
-      const reasonInput = screen.getByTestId('reject-reason-input');
-      await user.type(reasonInput, 'Insufficient justification');
+      const reasonTextarea = screen.getByTestId('reject-reason-textarea');
+      await user.type(reasonTextarea, 'Insufficient justification');
       
-      const setReasonButton = screen.getByRole('button', { name: /set reason/i });
-      await user.click(setReasonButton);
+      const submitButton = screen.getByRole('button', { name: 'Reject Deletion' });
+      await user.click(submitButton);
       
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('/api/activities/deletion-requests/1/review/'),
+          expect.objectContaining({
+            method: 'POST',
+            body: JSON.stringify({ action: 'reject', note: 'Insufficient justification' }),
+          })
+        );
+      });
+    });
+
+    it('successfully submits rejection with reason', async () => {
+      const user = userEvent.setup();
+      
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        status: 200,
+        text: async () => JSON.stringify({ detail: 'Activity deletion rejected successfully' }),
+      });
+
+      render(<AdminDeleteApproval params={mockParams} />);
+      
+      await waitFor(() => {
+        expect(screen.getByLabelText('Reject Deletion')).toBeInTheDocument();
+      });
+
+      const rejectCheckbox = screen.getByLabelText('Reject Deletion');
+      await user.click(rejectCheckbox);
+      
+      const reasonTextarea = screen.getByTestId('reject-reason-textarea');
+      await user.type(reasonTextarea, 'Insufficient justification');
+            
       const submitButton = screen.getByRole('button', { name: 'Reject Deletion' });
       await user.click(submitButton);
       
@@ -409,7 +412,7 @@ describe('Admin Delete Approval Page', () => {
       render(<AdminDeleteApproval params={mockParams} />);
       
       await waitFor(() => {
-        const submitButton = screen.getByRole('button', { name: 'Submit' });
+        const submitButton = screen.getByRole('button', { name: /submit|approve deletion|reject deletion/i });
         const cancelButton = screen.getByRole('button', { name: 'Cancel' });
         
         expect(submitButton).toBeInTheDocument();
