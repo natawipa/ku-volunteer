@@ -9,15 +9,22 @@ describe('Organizer Features', () => {
       
       cy.fixture('activities').then((activities) => {
         const activity = activities.validActivity
+        const now = new Date()
+        const start = new Date(now)
+        start.setDate(start.getDate() + 1)
+        const end = new Date(start)
+        end.setDate(end.getDate() + 2)
+
+        const formatDate = (d) => d.toISOString().split('T')[0]
         
         cy.get('[data-testid="activity-title-input"]').type(activity.title)
         cy.get('[data-testid="activity-description-textarea"]').type(activity.description)
         cy.get('[data-testid="activity-location-input"]').type(activity.location)
         
         // Set dates
-        cy.get('[data-testid="start-date-input"]').type('2025-12-01')
+        cy.get('[data-testid="start-date-input"]').type(formatDate(start))
         cy.get('[data-testid="start-time-input"]').type('09:00')
-        cy.get('[data-testid="end-date-input"]').type('2025-12-01')
+        cy.get('[data-testid="end-date-input"]').type(formatDate(end))
         cy.get('[data-testid="end-time-input"]').type('16:00')
         
         cy.get('[data-testid="max-participants-input"]').type(activity.max_participants.toString())
