@@ -2,10 +2,10 @@ name: 🧪 Django Tests
 
 on:
   push:
-    branches: [main, develop]
+    branches: [main]
     paths: ['backend/**']
   pull_request:
-    branches: [main, develop]
+    branches: [main]
 
 env:
   # Database Configuration
