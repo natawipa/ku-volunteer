@@ -34,8 +34,7 @@ export function ApplicationManagement(eventId: number | null, isStudent: boolean
         setUserApplication(null);
         setApplicationStatus(null);
       }
-    } catch (error) {
-      console.error('Error checking user application:', error);
+    } catch {
       setUserApplication(null);
       setApplicationStatus(null);
     }
@@ -62,8 +61,7 @@ export function ApplicationManagement(eventId: number | null, isStudent: boolean
           showModal(`Application failed`);
         }
       }
-    } catch (error) {
-      console.error('Application error:', error);
+    } catch {
       showModal('An error occurred while submitting your application. Please try again.');
     } finally {
       setApplying(false);
@@ -86,13 +84,11 @@ export function ApplicationManagement(eventId: number | null, isStudent: boolean
       } else {
         showModal(`Cancellation failed`);
       }
-    } catch (error) {
-      console.error('Cancellation error:', error);
+    } catch {
       showModal('An error occurred while cancelling your application. Please try again.');
     }
   };
 
-  // polling with constant
   useEffect(() => {
     if (!isStudent) return;
     
@@ -100,7 +96,6 @@ export function ApplicationManagement(eventId: number | null, isStudent: boolean
     return () => clearInterval(interval);
   }, [isStudent, checkUserApplication]);
 
-  // Check on visibility change
   useEffect(() => {
     if (!isStudent) return;
     

@@ -49,12 +49,10 @@ export const ORGANIZATION_TYPE_OPTIONS = [
 ];
 
 export const validateImageFile = (file: File): { valid: boolean; error?: string } => {
-  // Validate file type
   if (!file.type.startsWith('image/')) {
     return { valid: false, error: 'Please select a valid image file' };
   }
   
-  // Validate file size (5MB)
   if (file.size > 5 * 1024 * 1024) {
     return { valid: false, error: 'Image size must be less than 5MB' };
   }

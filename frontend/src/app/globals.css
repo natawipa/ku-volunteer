@@ -38,7 +38,6 @@ body {
   font-family: var(--font-mitr);
 }
 
-/* Popup Modal Animations */
 @keyframes fadeIn {
   from {
     opacity: 0;

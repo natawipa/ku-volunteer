@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import React, { useRef, useState, useEffect, useMemo } from 'react';
+import React, { useRef, useState, useEffect, useMemo, Suspense } from 'react';
 import { activitiesApi } from "../../lib/activities";
 import type { Activity, ActivityApplication } from '../../lib/types';
 import { auth } from "@/lib/utils";
@@ -11,8 +11,13 @@ import HeroImage from '../components/HeroImage';
 import EventCardHorizontal from '../components/EventCard/EventCardHorizontal';
 import { getMyEvents, getAllEvents, type EventFilterConfig } from '../components/EventCard/utils';
 import { apiService } from '@/lib/api';
+import { useSearchParams } from "next/navigation";
+import { useModal } from "../components/Modal";
 
-const AllEventsPage: React.FC = () => {
+function AllEventsContent() {
+  const { showModal } = useModal();
+  const searchParams = useSearchParams();
+  
   const [activities, setActivities] = useState<Activity[]>([]); 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userRole, setUserRole] = useState<string | null>(null);
@@ -52,8 +57,8 @@ const AllEventsPage: React.FC = () => {
               }
             }
           }
-        } catch (error) {
-          console.error('Error fetching user data:', error);
+        } catch {
+          console.error('Error fetching user data:');
         }
       }
     };
@@ -71,8 +76,7 @@ const AllEventsPage: React.FC = () => {
         } else {
           setActivities([]);
         }
-      } catch (error) {
-        console.error('Error fetching activities:', error);
+      } catch {
         setActivities([]);
       } finally {
         setLoading(false);
@@ -149,6 +153,19 @@ const AllEventsPage: React.FC = () => {
     });
   }, [events, filter, searchTerm, dateStart, dateEnd, endAfterChecked, selectedStatus]);
 
+  // Check for success message in URL
+  useEffect(() => {
+    const successParam = searchParams.get('success');
+    if (successParam) {
+      showModal(decodeURIComponent(successParam));
+      
+      // Clean up URL
+      const url = new URL(window.location.href);
+      url.searchParams.delete('success');
+      window.history.replaceState({}, '', url.toString());
+    }
+  }, [searchParams, showModal]);
+
   const pageTitle = isAuthenticated ? "My Events" : "All Events";
 
   return (
@@ -180,6 +197,18 @@ const AllEventsPage: React.FC = () => {
       )}
     </div>
   );
-};
+}
 
-export default AllEventsPage;
+export default function AllEventsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-lg">Loading events...</p>
+        </div>
+      </div>
+    }>
+      <AllEventsContent />
+    </Suspense>
+  );
+}

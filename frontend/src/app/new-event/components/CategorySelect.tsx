@@ -33,10 +33,10 @@ export default function CategorySelect({ value, onChange }: CategorySelectProps)
   return (
     <div className="flex flex-col text-sm space-y-2 relative" ref={ref}>
 
-      {/* Selected categories display */}
       <div
         className="border border-gray-400 rounded-lg p-2 flex flex-wrap gap-2 cursor-pointer min-h-[48px] bg-white"
         onClick={() => setOpen(!open)}
+        data-testid="category-dropdown-toggle"
       >
         {value.length === 0 && (
           <span className="text-gray-400">Select up to 3 categories</span>
@@ -62,7 +62,6 @@ export default function CategorySelect({ value, onChange }: CategorySelectProps)
         ))}
       </div>
 
-      {/* Dropdown category selector */}
       {open && (
         <div className="absolute top-full left-0 mt-2 w-full border border-gray-400 rounded-lg bg-white shadow-md max-h-60 overflow-y-auto z-20">
           {categories.map((cat, idx) => (
@@ -76,6 +75,7 @@ export default function CategorySelect({ value, onChange }: CategorySelectProps)
                 onClick={() =>
                   cat.selectable ? toggleCategory(cat.label) : undefined
                 }
+                data-testid={`category-${cat.label.toLowerCase().replace(/\s+/g, '-')}`}
               >
                 {cat.label}
               </div>
@@ -90,6 +90,7 @@ export default function CategorySelect({ value, onChange }: CategorySelectProps)
                           : "hover:bg-green-200"
                       }`}
                       onClick={() => toggleCategory(child.label)}
+                      data-testid={`category-${child.label.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       {child.label}
                     </div>

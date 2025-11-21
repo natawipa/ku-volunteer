@@ -28,7 +28,6 @@ export default function ProfileCard() {
     fetchUserData();
   }, []);
 
-    // Close dropdown if clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
@@ -44,17 +43,14 @@ export default function ProfileCard() {
       setIsOpen(false);
       await apiService.logout();
       
-      // Always redirect to landing page with full reload
-      window.location.href = '/';  // This clears React state completely
-    } catch (error) {
-      console.error('Logout error:', error);
-      window.location.href = '/';  // Still redirect with full reload
+      window.location.href = '/';
+    } catch {
+      window.location.href = '/';
     }
   };
 
      return (
     <div className="relative" ref={wrapperRef}>
-      {/* Profile Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
         data-testid="user-menu"
@@ -63,14 +59,12 @@ export default function ProfileCard() {
         <UserCircleIcon className="h-10 w-10" />
       </button>
 
-      {/* Error Display (optional - you can remove this if you don't want visible errors) */}
       {formError && (
         <div className="absolute top-full right-0 mt-2 p-2 bg-red-100 text-red-700 text-sm rounded">
           {formError}
         </div>
       )}
 
-      {/* Dropdown Card */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-48 rounded-2xl bg-white shadow-lg ring-1 ring-black/5 p-3">
           <p className="text-sm text-gray-500 mb-2">Signed in as</p>
@@ -80,7 +74,6 @@ export default function ProfileCard() {
           </p>
           <hr className="my-2" />
 
-        {/* View Profile */}
           <Link
             href="/profile"
             onClick={() => setIsOpen(false)}
@@ -90,7 +83,6 @@ export default function ProfileCard() {
             <span>View Profile</span>
           </Link>
 
-        {/* Log Out */}
           <button
             onClick={handleLogout}
             data-testid="logout-button"

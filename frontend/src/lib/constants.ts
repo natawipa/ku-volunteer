@@ -1,11 +1,9 @@
-// Environment configuration
 export const ENV = {
   API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
   CLIENT_URL: process.env.NEXT_PUBLIC_CLIENT_URL || 'http://localhost:3000',
   NODE_ENV: process.env.NODE_ENV || 'development',
 } as const;
 
-// API endpoints
 export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/api/users/login/',
@@ -52,14 +50,12 @@ export const API_ENDPOINTS = {
   },
 } as const;
 
-// User roles
 export const USER_ROLES = {
   STUDENT: 'student',
   ORGANIZER: 'organizer',
   ADMIN: 'admin',
 } as const;
 
-// Activity statuses
 export const ACTIVITY_STATUS = {
   PENDING: 'pending',
   UPCOMING: 'upcoming',
@@ -72,14 +68,12 @@ export const ACTIVITY_STATUS = {
   CANCELLED: 'cancelled',
 } as const;
 
-// Local storage keys
 export const STORAGE_KEYS = {
   ACCESS_TOKEN: 'access_token',
   REFRESH_TOKEN: 'refresh_token',
   USER_DATA: 'user_data',
 } as const;
 
-// Route paths
 export const ROUTES = {
   HOME: '/',
   LOGIN: '/login',
@@ -97,20 +91,19 @@ export const ROUTES = {
   ALL_EVENTS: '/all-events',
 } as const;
 
-// UI constants
 export const UI_CONSTANTS = {
   DEBOUNCE_DELAY: 300,
   TOAST_DURATION: 5000,
   MODAL_TRANSITION_DURATION: 200,
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILE_SIZE: 5 * 1024 * 1024,
   SUPPORTED_IMAGE_TYPES: ['image/jpeg', 'image/png', 'image/webp'],
-  POLL_INTERVAL: 30000, // 30 seconds
-  CHECK_IN_POLL_INTERVAL: 10000, // 10 seconds
+  POLL_INTERVAL: 30000,
+  CHECK_IN_POLL_INTERVAL: 10000,
   CHECK_IN_CODE_LENGTH: 6,
 } as const;
 
 export const BUTTON_STYLES = {
-  PRIMARY: 'bg-[#96C693] text-white px-8 py-3 rounded-lg hover:bg-[#72A070] cursor-pointer transition-all text-center',
+  PRIMARY: 'bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 cursor-pointer transition-all text-center',
   SECONDARY: 'bg-white text-gray-600 border border-gray-600 px-6 py-3 rounded-lg hover:bg-gray-200 cursor-pointer transition-all',
   DISABLED: 'bg-gray-400 text-white px-8 py-3 rounded-lg cursor-not-allowed font-medium',
   DANGER: 'bg-red-600 text-white px-8 py-3 rounded-lg hover:bg-red-700 cursor-pointer transition-all',
@@ -132,7 +125,6 @@ export const APPLICATION_STATUS = {
   ABSENT: 'absent'
 } as const;
 
-// Error messages
 export const ERROR_MESSAGES = {
   NETWORK_ERROR: 'Network error. Please check your connection.',
   INVALID_CREDENTIALS: 'Invalid email or password.',

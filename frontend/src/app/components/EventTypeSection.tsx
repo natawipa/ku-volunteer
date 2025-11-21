@@ -10,7 +10,6 @@ interface EventTypeSectionProps {
   events: EventCardData[];
 }
 
-// Map event type titles to their respective routes
 const getEventTypeRoute = (title: string): string => {
   const routeMap: { [key: string]: string } = {
     "University Activities": "/event-type/university-activities",
@@ -21,7 +20,6 @@ const getEventTypeRoute = (title: string): string => {
 };
 
 export default function EventTypeSection({ title, events }: EventTypeSectionProps) {
-  // Get gradient and background image from category backgrounds
   const categoryBackgrounds: Record<string, { color: string; backgroundBrain: string }> = {
     "University Activities": {
       color: "bg-gradient-to-r from-[#A1E59E]/26 to-[#5992FF]/26",
@@ -39,16 +37,13 @@ export default function EventTypeSection({ title, events }: EventTypeSectionProp
   const bgConfig = categoryBackgrounds[title] || { color: "bg-gray-100", backgroundBrain: "" };
   const route = getEventTypeRoute(title);
   
-  // Get only the most recent event (first one in the array)
   const mostRecentEvent = events.length > 0 ? events[0] : null;
 
   return (
     <div className="mb-8">
       <Link href={route} className="block">
-        {/* Event preview - Show only the most recent event */}
         <div className="mt-8">
           <div className={`relative rounded-lg pt-2 pb-8 px-8 flex items-center overflow-hidden min-h-[260px] ${bgConfig.color}`}> 
-            {/* Brain background image */}
               {bgConfig.backgroundBrain && (
                       <Image
                         src={bgConfig.backgroundBrain}
@@ -69,7 +64,6 @@ export default function EventTypeSection({ title, events }: EventTypeSectionProp
                   </span>
                 )}
               </div>
-              {/* Transparent card, no image or empty state */}
               {mostRecentEvent ? (
                 <div className="bg-transparent shadow-none">
                   <EventCardHorizontal event={{ ...mostRecentEvent, imgSrc: mostRecentEvent.imgSrc }} gradientBgClass="bg-transparent" showShadow={false} showGradientBorder={false} />

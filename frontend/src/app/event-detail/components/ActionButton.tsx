@@ -38,20 +38,16 @@ export default function EventActionButton({
 
   const handleCheckInSubmit = async (code: string) => {
     setIsCheckingIn(true);
-    console.log('📡 Submitting check-in code:', code);
     
     try {
       const result = await activitiesApi.submitCheckIn(activityId || 0, code);
-      
-      console.log('Check-in API result:', result);
-      
+            
       if (result.success) {
         showModal('Check-in successful! Your attendance has been recorded.');
         if (onCheckInSuccess) onCheckInSuccess();
         setShowCheckInModal(false);
       } else {
         const errorMsg = result.error || 'Unknown error';
-        console.error('Check-in failed:', errorMsg);
         
         if (errorMsg.toLowerCase().includes('already')) {
           showModal('You have already checked in to this activity.');
@@ -62,15 +58,13 @@ export default function EventActionButton({
           showModal(`Check-in failed:\n${errorMsg}`);
         }
       }
-    } catch (error) {
-      console.error('Check-in exception:', error);
+    } catch {
       showModal('Check-in failed. Please try again.');
     } finally {
       setIsCheckingIn(false);
     }
   };
 
-  // ORGANIZER LOGIC
   if (role === USER_ROLES.ORGANIZER) {
     if (isWithinActivityDateRange(activityStartDate, activityEndDate)) {
       return (
@@ -104,7 +98,6 @@ export default function EventActionButton({
     );
   }
 
-  // STUDENT LOGIC
   if (applicationStatus === APPLICATION_STATUS.PENDING) {
     return (
       <button onClick={onCancel} disabled={applying} className="bg-yellow-600 text-white px-8 py-3 rounded-lg hover:bg-yellow-700 cursor-pointer transition-all duration-200 font-medium disabled:opacity-50 disabled:cursor-not-allowed">

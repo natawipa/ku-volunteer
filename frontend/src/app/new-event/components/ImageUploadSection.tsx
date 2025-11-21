@@ -11,8 +11,8 @@ interface PosterItem {
 interface ImageUploadSectionProps {
   cover: File | null;
   coverUrl?: string | null;
-  pictures: File[]; // new uploads (File objects)
-  existingPosters?: PosterItem[]; // posters already saved in backend
+  pictures: File[];
+  existingPosters?: PosterItem[];
   onCoverChange: (file: File | null) => void;
   onPicturesChange: (files: File[]) => void;
   onDeleteExistingPoster?: (posterId: number | string) => void;
@@ -36,7 +36,6 @@ export default function ImageUploadSection({
 
   return (
     <>
-      {/* Cover Image Upload */}
       <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mb-4">
         {cover ? (
           <Image
@@ -59,6 +58,7 @@ export default function ImageUploadSection({
             if (e.target.files?.[0]) onCoverChange(e.target.files[0]);
           }}
           className="absolute inset-0 opacity-0 cursor-pointer"
+          data-testid="cover-image-input"
         />
 
         {(cover || coverUrl) && (
@@ -73,16 +73,14 @@ export default function ImageUploadSection({
       </div>
       {coverError && <p className="text-red-600 text-sm">{coverError}</p>}
 
-      {/* Additional Pictures */}
       <div className="flex justify-between items-center mb-2">
         <p className="text-sm font-medium">Additional Pictures</p>
         <p className="text-xs text-gray-500">({totalPosters}/{MAX_POSTERS} posters)</p>
       </div>
       <div className="bg-mutegreen shadow rounded-xl p-6 space-y-6 py-7 mt-1">
         <div className="flex gap-4 overflow-x-auto">
-          {/* existing posters from backend (read-only thumbnails with delete) */}
           {existingPosters.map((p, i) => (
-            <div key={`existing-${p.id ?? i}`} className="relative flex-shrink-0 w-32 h-28">
+            <div key={`existing-${p.id ?? i}`} className="relative shrink-0 w-32 h-28">
               <Image src={p.url} alt={`poster-${i}`} width={128} height={112} className="object-cover w-full h-full rounded-lg" unoptimized />
               {onDeleteExistingPoster && p.id && (
                 <button
@@ -96,9 +94,8 @@ export default function ImageUploadSection({
             </div>
           ))}
 
-          {/* newly selected pictures (File objects) */}
           {pictures.map((pic, i) => (
-            <div key={`new-${i}`} className="relative flex-shrink-0 w-32 h-28">
+            <div key={`new-${i}`} className="relative shrink-0 w-32 h-28">
               <Image
                 src={URL.createObjectURL(pic)}
                 alt={`pic-${i}`}
@@ -118,9 +115,8 @@ export default function ImageUploadSection({
             </div>
           ))}
 
-          {/* Upload button */}
           {canAddMore ? (
-            <label className="flex-shrink-0 w-32 h-28 flex items-center justify-center bg-gray-300 rounded-lg cursor-pointer hover:bg-gray-400 transition-colors">
+            <label className="shrink-0 w-32 h-28 flex items-center justify-center bg-gray-300 rounded-lg cursor-pointer hover:bg-gray-400 transition-colors">
               <PlusCircle className="text-gray-500" size={28} />
               <input
                 type="file"
@@ -143,7 +139,7 @@ export default function ImageUploadSection({
               />
             </label>
           ) : (
-            <div className="flex-shrink-0 w-32 h-28 flex flex-col items-center justify-center bg-gray-200 rounded-lg cursor-not-allowed">
+            <div className="shrink-0 w-32 h-28 flex flex-col items-center justify-center bg-gray-200 rounded-lg cursor-not-allowed">
               <PlusCircle className="text-gray-400" size={28} />
               <span className="text-xs text-gray-400 mt-1">Max {MAX_POSTERS}</span>
             </div>

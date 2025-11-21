@@ -14,7 +14,6 @@ interface NavbarProps {
   userRole?: string | null;
 }
 
-// Navigation Link Component
 const NavLink = ({
   href,
   children,
@@ -30,7 +29,6 @@ const NavLink = ({
   </Link>
 );
 
-// Create Button
 const CreateButton = () => (
   <Link
     href="/new-event"
@@ -55,7 +53,6 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Check Authentication on Mount (if its not provided via props)
   useEffect(() => {
     if (propIsAuthenticated === undefined || propUserRole === undefined) {
       setLocalIsAuthenticated(auth.isAuthenticated());
@@ -63,7 +60,6 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
     }
   }, [propIsAuthenticated, propUserRole]);
 
-  // use the props if provided
   const isAuthenticated = propIsAuthenticated !== undefined ? propIsAuthenticated : localIsAuthenticated;
   const userRole = propUserRole !== undefined ? propUserRole : localUserRole;
 
@@ -89,7 +85,7 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
         </nav>
       );
 
-    if (userRole === USER_ROLES.STUDENT)
+    if (userRole === USER_ROLES.STUDENT || userRole === USER_ROLES.ADMIN)
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
@@ -98,7 +94,7 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
         </nav>
       );
 
-    if (userRole === USER_ROLES.ADMIN || userRole === USER_ROLES.ORGANIZER)
+    if (userRole === USER_ROLES.ORGANIZER)
       return (
         <nav className="flex items-center space-x-8">
           {commonLinks}
@@ -119,7 +115,6 @@ export default function Navbar({ isAuthenticated: propIsAuthenticated, userRole:
         style={{ width: '100vw', left: '50%', height: '80px', transform: 'translateX(-50%)', }}></div>
 
     <div className="relative flex justify-between items-center w-full z-10 px-6 py-2">
-      {/* Small Logo on the left */}
       <Link href="/" className="flex items-center">
         <Image 
           src="/logo_plain.svg"
