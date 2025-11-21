@@ -17,7 +17,7 @@ module.exports = defineConfig({
     // Environment variables
     env: {
       API_URL: 'http://localhost:8000/api',
-      ADMIN_EMAIL: 'admin.test@ku.th', 
+      ADMIN_EMAIL: 'admin@ku.th', 
       ADMIN_PASSWORD: 'admin123',
       STUDENT_EMAIL: 'student.test@ku.ac.th', 
       STUDENT_PASSWORD: 'TestPassword-123',

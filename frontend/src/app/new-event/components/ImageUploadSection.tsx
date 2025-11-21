@@ -2,6 +2,7 @@ import { PlusCircle, X } from "lucide-react";
 import Image from "next/image";
 import type { ChangeEvent } from 'react';
 import { useModal } from "../../components/Modal";
+import { useState, useEffect } from "react";
 
 interface PosterItem {
   id?: number | string;
@@ -33,9 +34,20 @@ export default function ImageUploadSection({
   const totalPosters = existingPosters.length + pictures.length;
   const canAddMore = totalPosters < MAX_POSTERS;
   const { showModal } = useModal();
+  const [showSuccessMessage, setShowSuccessMessage] = useState(false);
+
+  // Hide success message after 3 seconds
+  useEffect(() => {
+    if (showSuccessMessage) {
+      const timer = setTimeout(() => {
+        setShowSuccessMessage(false);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [showSuccessMessage]);
 
   return (
-    <>
+    <div data-testid="image-upload">
       <div className="relative w-full h-52 bg-gray-200 rounded-lg flex items-center justify-center overflow-hidden mb-4">
         {cover ? (
           <Image
@@ -133,9 +145,15 @@ export default function ImageUploadSection({
                     }
                     
                     onPicturesChange([...pictures, ...filesToAdd]);
+                    
+                    // Show success message
+                    if (filesToAdd.length > 0) {
+                      setShowSuccessMessage(true);
+                    }
                   }
                 }}
                 className="hidden"
+                data-testid="poster-image-input"
               />
             </label>
           ) : (
@@ -146,6 +164,15 @@ export default function ImageUploadSection({
           )}
         </div>
       </div>
-    </>
+      
+      {/* Success message for poster uploads */}
+      {showSuccessMessage && (
+        <div className="mt-3 p-3 bg-green-100 border border-green-300 rounded-lg">
+          <p className="text-green-800 text-sm font-medium" data-testid="success-message">
+            Poster images uploaded successfully!
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

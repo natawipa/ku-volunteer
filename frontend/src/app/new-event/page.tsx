@@ -300,13 +300,13 @@ function ActivityFormContent() {
       const startDateTime = new Date(`${dateStart}T${timeStart}`);
       const endDateTime = new Date(`${dateEnd}T${timeEnd}`);
 
-      if (endDateTime < now) {
-        newErrors.dateEnd = "End date can not be in the past";
-      } 
-      
       if (startDateTime < now) {
         newErrors.dateStart = "Start date can not be in the past";
       }
+
+      if (endDateTime < now) {
+        newErrors.dateEnd = "End date can not be in the past";
+      } 
 
       if (endDateTime < startDateTime) {
         newErrors.dateEnd = "End date and time must be after start date and time";
@@ -594,10 +594,10 @@ function ActivityFormContent() {
               disabled={isSubmitting}
             >
               <Trash2 size={16} /> 
-              <span className="hidden sm:inline">Delete Activity</span>
+              <span className="hidden sm:inline" data-testid="delete-activity-button">Delete Activity</span>
             </button>
           </div>
-          {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
+          {errors.title && <p className="text-red-600 text-sm" data-testid="title-error">{errors.title}</p>}
 
           <ImageUploadSection
             cover={cover}
@@ -689,6 +689,7 @@ function ActivityFormContent() {
                 placeholder="e.g., Event canceled due to unforeseen circumstances..."
                 disabled={isDeleting}
                 autoFocus
+                data-testid="deletion-reason-textarea"
               />
               <p className="mt-2 text-xs text-gray-500">
                 {deletionReason.trim().length} characters
