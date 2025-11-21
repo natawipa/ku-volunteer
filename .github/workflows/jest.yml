@@ -2,11 +2,9 @@ name: Jest Tests
 
 on:
   push:
-    branches: [main, develop]
-    paths: ['frontend/**']
+    branches: [main]
   pull_request:
-    branches: [main, develop]
-    paths: ['frontend/**']
+    branches: [main]
 
 jobs:
   jest-tests:
