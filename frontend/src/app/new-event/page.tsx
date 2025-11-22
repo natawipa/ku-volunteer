@@ -300,13 +300,13 @@ function ActivityFormContent() {
       const startDateTime = new Date(`${dateStart}T${timeStart}`);
       const endDateTime = new Date(`${dateEnd}T${timeEnd}`);
 
-      if (endDateTime < now) {
-        newErrors.dateEnd = "End date can not be in the past";
-      } 
-      
       if (startDateTime < now) {
         newErrors.dateStart = "Start date can not be in the past";
       }
+
+      if (endDateTime < now) {
+        newErrors.dateEnd = "End date can not be in the past";
+      } 
 
       if (endDateTime < startDateTime) {
         newErrors.dateEnd = "End date and time must be after start date and time";
@@ -396,11 +396,19 @@ function ActivityFormContent() {
           if (result.data.id) {
             setActivityId(result.data.id.toString());
           }
-
           const successMsg = result.error
             ? `Activity created! Warning: ${result.error}`
             : 'Activity created successfully!';
-          router.push(`/?success=${encodeURIComponent(successMsg)}`);
+          
+          showModal(successMsg, {
+            dataTestId: "success-message",
+            time: 1000
+          });
+          
+          // Redirect immediately after showing modal
+          setTimeout(() => {
+            router.push(`/?success=${encodeURIComponent(successMsg)}`);
+          }, 100);
         } else {
           throw new Error(result.error || 'Failed to create activity');
         }
@@ -573,24 +581,23 @@ function ActivityFormContent() {
                 setTitle(e.target.value);
                 clearError("title");
               }}
+              data-testid="activity-title-input"
               className="text-2xl font-semibold border-b focus:outline-none w-full mr-4"
             />
             
-            {isEditMode && activityId && (
-              <button 
-                onClick={handleDeleteClick}
-                className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
-                       text-sm sm:text-base text-red-600 border border-red-600 
-                       rounded-lg hover:bg-red-50 focus:outline-none 
-                       focus:ring-2 focus:ring-red-300 cursor-pointer flex-shrink-0"
-                disabled={isSubmitting}
-              >
-                <Trash2 size={16} /> 
-                <span className="hidden sm:inline">Delete Activity</span>
-              </button>
-            )}
+            <button 
+              onClick={handleDeleteClick}
+              className="flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2 h-10 
+                     text-sm sm:text-base text-red-600 border border-red-600 
+                     rounded-lg hover:bg-red-50 focus:outline-none 
+                     focus:ring-2 focus:ring-red-300 cursor-pointer shrink-0"
+              disabled={isSubmitting}
+            >
+              <Trash2 size={16} /> 
+              <span className="hidden sm:inline" data-testid="delete-activity-button">Delete Activity</span>
+            </button>
           </div>
-          {errors.title && <p className="text-red-600 text-sm">{errors.title}</p>}
+          {errors.title && <p className="text-red-600 text-sm" data-testid="title-error">{errors.title}</p>}
 
           <ImageUploadSection
             cover={cover}
@@ -633,6 +640,7 @@ function ActivityFormContent() {
               onClick={handleCancel}
               className="text-gray-600 hover:text-gray-900 cursor-pointer px-6 py-2 rounded-lg border border-gray-300 hover:border-gray-400"
               disabled={isSubmitting}
+              data-testid="cancel-create-activity-button"
             >
               Cancel
             </button>
@@ -640,6 +648,7 @@ function ActivityFormContent() {
               className="bg-green-600 text-white px-6 py-2 rounded-lg hover:bg-green-700 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
               onClick={handleSave}
               disabled={isSubmitting}
+              data-testid="create-activity-button"
             >
               {isSubmitting ? 'Creating...' : (activityId ? 'Update Activity' : 'Create Activity')}
             </button>
@@ -656,7 +665,7 @@ function ActivityFormContent() {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start gap-4 mb-6">
-              <div className="flex-shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+              <div className="shrink-0 w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                 <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
@@ -680,6 +689,7 @@ function ActivityFormContent() {
                 placeholder="e.g., Event canceled due to unforeseen circumstances..."
                 disabled={isDeleting}
                 autoFocus
+                data-testid="deletion-reason-textarea"
               />
               <p className="mt-2 text-xs text-gray-500">
                 {deletionReason.trim().length} characters
@@ -697,7 +707,7 @@ function ActivityFormContent() {
               <button
                 onClick={handleConfirmDelete}
                 disabled={isDeleting || !deletionReason.trim()}
-                className="px-6 py-2.5 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
+                className="px-6 py-2.5 bg-linear-to-r from-orange-600 to-orange-700 text-white rounded-xl hover:from-orange-700 hover:to-orange-800 transition-all font-medium disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transform hover:scale-105"
               >
                 {isDeleting ? (
                   <span className="flex items-center gap-2">

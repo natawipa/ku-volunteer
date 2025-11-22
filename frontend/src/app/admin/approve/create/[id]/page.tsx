@@ -7,7 +7,6 @@ import type { Activity } from '@/lib/types';
 import { API_ENDPOINTS, ENV } from '@/lib/constants';
 import HeroImage from "@/app/components/HeroImage";
 import Navbar from "@/app/components/Navbar";
-import RejectModal from "@/app/admin/components/RejectModal";
 import { useRouter } from 'next/navigation';
 
 interface ModerationResponse { detail: string }
@@ -30,7 +29,6 @@ export default function Page({ params }: PageProps) {
   const [rejectReason, setRejectReason] = useState('');
   const [approveChecked, setApproveChecked] = useState(false);
   const [rejectChecked, setRejectChecked] = useState(false);
-  const [showRejectModal, setShowRejectModal] = useState(false);
   const router = useRouter();
 
   // Fetch activity when eventId resolved
@@ -49,12 +47,6 @@ export default function Page({ params }: PageProps) {
     })();
     return () => { cancelled = true; };
   }, [eventId]);
-
-  if (eventId == null) {
-    return <p className="text-center mt-10 text-gray-600">Resolving activity...</p>;
-  }
-  if (loading) return <p className="text-center mt-10 text-gray-600">Loading activity...</p>;
-  if (!activity) return <p className="text-center mt-10">{error || 'Event not found'}</p>;
 
   // Helper to normalize image URLs
   function normalizeUrl(url: string) {
@@ -75,6 +67,21 @@ export default function Page({ params }: PageProps) {
       }
     }
 
+  if (eventId == null || loading) {
+    return (
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32" data-testid="admin-approve-activity-page">
+        <p className="text-center mt-10 text-gray-600">{eventId == null ? 'Resolving activity...' : 'Loading activity...'}</p>
+      </div>
+    );
+  }
+
+  if (!activity) {
+    return (
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
+        <p className="text-center mt-10 text-red-600">{error || 'Event not found'}</p>
+      </div>
+    );
+  }
   const status = activity.status || 'pending';
   const legacyEvent = {
     id: activity.id,
@@ -90,7 +97,7 @@ export default function Page({ params }: PageProps) {
     reason: activity.rejection_reason || '',
     // main image: prefer cover image, then first poster, then example
     image: (() => {
-      const raw = activity.cover_image_url || activity.cover_image || null;
+      const raw = activity?.cover_image_url || activity?.cover_image || null;
       if (raw && typeof raw === 'string') return normalizeUrl(raw);
       const posters = (activity as unknown as { poster_images?: { image?: string }[] })?.poster_images;
       if (Array.isArray(posters) && posters.length > 0) {
@@ -177,7 +184,6 @@ export default function Page({ params }: PageProps) {
 
   return (
     <div className="relative">
-      {/* Background */}
       <div className="relative p-6">
       <Navbar />
       <HeroImage />
@@ -186,9 +192,9 @@ export default function Page({ params }: PageProps) {
         {message && <div className="max-w-4xl mx-auto mb-4 bg-blue-50 border border-blue-200 text-blue-800 p-3 rounded">{message}</div>}
         {error && <div className="max-w-4xl mx-auto mb-4 bg-red-50 border border-red-200 text-red-700 p-3 rounded">{error}</div>}
 
-        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32">
+        <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-lg p-8 mt-20 lg:mt-32" data-testid="admin-approve-activity-page">
           <h1 className="text-3xl font-bold mb-4 text-center">{legacyEvent.title}</h1>
-          <Image src={legacyEvent.image} alt={legacyEvent.title} width={500} height={310} className="w-3/4 mx-auto object-cover" unoptimized onLoadingComplete={(result) => console.debug('Loaded main image:', legacyEvent.image, result)} />
+          <Image src={legacyEvent.image} alt={legacyEvent.title || 'Activity image'} width={500} height={310} className="w-3/4 mx-auto object-cover" unoptimized onLoadingComplete={(result) => console.debug('Loaded main image:', legacyEvent.image, result)} />
           <div className="max-w-4xl mx-auto p-6 space-y-6">
             <div className="bg-green-50 rounded-lg p-6 shadow">
               <div className="mb-4">
@@ -240,12 +246,12 @@ export default function Page({ params }: PageProps) {
                 id="approveCheck"
                 className="w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500"
                 checked={approveChecked}
+                data-testid="approve-activity-click"
                 onChange={() => { 
                   setApproveChecked(v => !v); 
                   if (!approveChecked) { 
                     setRejectChecked(false); 
                     setRejectReason(''); 
-                    setShowRejectModal(false);
                   } 
                 }}
                 disabled={status !== 'pending' || actionLoading}
@@ -258,27 +264,38 @@ export default function Page({ params }: PageProps) {
                 id="rejectCheck"
                 className="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500"
                 checked={rejectChecked}
+                data-testid="reject-activity-click"
                 onChange={() => { 
                   if (!rejectChecked) {
-                    setShowRejectModal(true);
                     setRejectChecked(true);
                     setApproveChecked(false);
                   } else {
                     setRejectChecked(false);
                     setRejectReason('');
-                    setShowRejectModal(false);
                   }
                 }}
                 disabled={status !== 'pending' || actionLoading}
               />
               <label htmlFor="rejectCheck" className="text-sm text-red-600">Reject Creation</label>
             </div>
-            {showRejectModal && (
-              <RejectModal 
-                setShowRejectModal={setShowRejectModal} rejectReason={rejectReason}
-                setRejectReason={setRejectReason} setRejectChecked={setRejectChecked}
-                setMessage={setMessage}
-              />
+
+              {rejectChecked && (
+                <div className="mt-3 ml-6 animate-slideDown">
+                  <textarea
+                    id="reject-reason-textarea"
+                    data-testid="reject-reason-textarea"
+                    className="w-full border border-gray-300 rounded-lg p-3 min-h-[100px] focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                    placeholder="Enter reason for rejection..."
+                    value={rejectReason}
+                    onChange={(e) => setRejectReason(e.target.value)}
+                    autoFocus
+                  />
+                  {!rejectReason.trim() && (
+                    <p className="text-red-600 text-sm mt-1">
+                      Rejection reason is required
+                    </p>
+                  )}
+                </div>
             )}
           </div>
           <div className="flex justify-between pt-4 border-t mt-6">
@@ -296,6 +313,8 @@ export default function Page({ params }: PageProps) {
                   ? "bg-red-600 hover:bg-red-700"
                   : "bg-gray-400 cursor-not-allowed"
               }`}
+              data-testid="submit-click"
+              id="SubmitButton"
               disabled={actionLoading || (!approveChecked && !rejectChecked)}
               onClick={() => {
                 if (rejectChecked) {

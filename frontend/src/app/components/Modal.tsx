@@ -10,7 +10,8 @@ interface ModalConfig {
     onConfirm?: () => void;
     onCancel?: () => void;
     time?: number;
-    width?: string;
+    width?: string | number;
+    dataTestId?: string;
 }
 
 const ModalContext = createContext<{
@@ -78,7 +79,9 @@ function ModalContent({
     onCancel, 
     time = 4000, 
     icon,
-    onClose 
+    onClose,
+    width,
+    dataTestId
 }: ModalConfig & { onClose: () => void }) {
     useEffect(() => {
         if (!needDecision) {
@@ -108,14 +111,16 @@ function ModalContent({
 
     if (!needDecision) {
         return (
-            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-[9999] animate-slideDown px-4 w-full max-w-lg">
+            <div className="fixed top-20 left-1/2 transform -translate-x-1/2 z-9999 animate-slideDown">
                 <div 
-                    className="bg-[#E8F5E9] rounded-lg shadow-lg px-4 sm:px-6 py-3 sm:py-4 border border-[#A5D6A7] relative flex items-center justify-between gap-3 sm:gap-4 w-full"
+                    className="bg-[#E8F5E9] rounded-lg shadow-lg px-6 py-4 border border-[#A5D6A7] relative flex items-center justify-between gap-4" 
+                    style={{ minWidth: width }}
+                    data-testid={dataTestId}
                 >
                     <p className="text-gray-900 font-medium text-sm sm:text-base flex-1 break-words">{text}</p>
                     <button
                         onClick={handleClose}
-                        className="text-gray-700 hover:text-gray-900 transition-colors flex-shrink-0"
+                        className="text-gray-700 hover:text-gray-900 transition-colors shrink-0"
                         aria-label="Close"
                     >
                         <X size={20} strokeWidth={2.5} />
@@ -126,7 +131,7 @@ function ModalContent({
     }
 
     return (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm px-4">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div 
                 className="bg-[#D4E7D7] rounded-3xl shadow-2xl px-6 sm:px-10 py-8 sm:py-10 relative w-full max-w-md sm:max-w-lg"
             >

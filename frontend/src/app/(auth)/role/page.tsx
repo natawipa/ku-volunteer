@@ -97,6 +97,7 @@ const RolePageContent: React.FC = () => {
               <div className="relative mb-4.5">
                 <button
                   type="button"
+                  data-testid="role-selector"
                   onClick={() => setIsRoleDropdownOpen(!isRoleDropdownOpen)}
                   className="w-full px-4 py-3 border border-gray-200 rounded-lg bg-white flex items-center justify-between text-sm text-gray-700"
                 >
@@ -112,6 +113,7 @@ const RolePageContent: React.FC = () => {
                       <button
                         key={roleOption}
                         type="button"
+                        data-testid={roleOption === 'student' ? 'role-student' : 'role-organization'}
                         onClick={() => {
                           setRole(roleOption);
                           setIsRoleDropdownOpen(false);
@@ -139,6 +141,7 @@ const RolePageContent: React.FC = () => {
 
               <button
                 type="submit"
+                data-testid="next-button"
                 className="w-30 justify-end bg-green-700 text-white py-3 rounded-lg font-medium hover:bg-green-800 transition-colors duration-200 focus:ring-4 focus:ring-green-200 focus:outline-none">
                 Next
               </button>
@@ -168,7 +171,3 @@ const RolePage: React.FC = () => {
 };
 
 export default RolePage;
-
-
-
-  

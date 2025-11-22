@@ -49,7 +49,7 @@ const FormFields = React.memo(function FormFields({
   errors
 }: FormFieldsProps) {
   return (
-    <>
+    <div data-testid="form-fields">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label className="block text-sm">Location</label>
@@ -59,8 +59,9 @@ const FormFields = React.memo(function FormFields({
             placeholder="Enter location"
             value={location || ''}
             onChange={(e) => onLocationChange(e.target.value)}
+            data-testid="activity-location-input"
           />
-          {errors.location && <p className="text-red-600 text-sm">{errors.location}</p>}
+          {errors.location && <p className="text-red-600 text-sm" data-testid="location-error">{errors.location}</p>}
         </div>
 
         <div className="grid grid-cols-4 gap-2">
@@ -71,8 +72,9 @@ const FormFields = React.memo(function FormFields({
                 value={dateStart}
                 onChange={(e) => onDateStartChange(e.target.value)}
                 className="w-full border border-gray-400 rounded px-2 py-1 flex-1"
+                data-testid="start-date-input"
               />
-              {errors.dateStart && <p className="text-red-600 text-sm">{errors.dateStart}</p>}
+              {errors.dateStart && <p className="text-red-600 text-sm" data-testid="start-date-error">{errors.dateStart}</p>}
           </div>
           
           <div>
@@ -82,8 +84,9 @@ const FormFields = React.memo(function FormFields({
               value={timeStart}
               onChange={(e) => onTimeStartChange(e.target.value)}
               className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+              data-testid="start-time-input"
             />
-            {errors.timeStart && <p className="text-red-600 text-sm">{errors.timeStart}</p>}
+            {errors.timeStart && <p className="text-red-600 text-sm" data-testid="start-time-error">{errors.timeStart}</p>}
           </div>
 
           <div>
@@ -93,8 +96,9 @@ const FormFields = React.memo(function FormFields({
               value={dateEnd}
               onChange={(e) => onDateEndChange(e.target.value)}
               className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+              data-testid="end-date-input"
             />
-            {errors.dateEnd && <p className="text-red-600 text-sm">{errors.dateEnd}</p>}
+            {errors.dateEnd && <p className="text-red-600 text-sm" data-testid="end-date-error">{errors.dateEnd}</p>}
           </div>
 
           <div>
@@ -104,8 +108,9 @@ const FormFields = React.memo(function FormFields({
                 value={timeEnd}
                 onChange={(e) => onTimeEndChange(e.target.value)}
                 className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
+                data-testid="end-time-input"
               />
-              {errors.timeEnd && <p className="text-red-600 text-sm">{errors.timeEnd}</p>}
+              {errors.timeEnd && <p className="text-red-600 text-sm" data-testid="end-time-error">{errors.timeEnd}</p>}
             </div>
           </div>
         </div>
@@ -121,8 +126,9 @@ const FormFields = React.memo(function FormFields({
             value={hour}
             onChange={(e) => onHourChange(e.target.value ? Number(e.target.value) : "")}
             placeholder="Enter hours reward"
+            data-testid="hours-awarded-input"
           />
-          {errors.hour && <p className="text-red-600 text-sm">{errors.hour}</p>}
+          {errors.hour && <p className="text-red-600 text-sm" data-testid="hours-error">{errors.hour}</p>}
         </div>
 
         <div>
@@ -134,8 +140,9 @@ const FormFields = React.memo(function FormFields({
             onChange={(e) => onMaxParticipantsChange(e.target.value ? Number(e.target.value) : "")}
             className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
             placeholder="Enter max participants"
+            data-testid="max-participants-input"
           />
-          {errors.maxParticipants && <p className="text-red-600 text-sm">{errors.maxParticipants}</p>}
+          {errors.maxParticipants && <p className="text-red-600 text-sm" data-testid="max-participants-error">{errors.maxParticipants}</p>}
           </div>
         </div>
 
@@ -145,7 +152,7 @@ const FormFields = React.memo(function FormFields({
             value={categories}
             onChange={onCategoriesChange}
           />
-          {errors.categories && <p className="text-red-600 text-sm">{errors.categories}</p>}
+          {errors.categories && <p className="text-red-600 text-sm" data-testid="categories-error">{errors.categories}</p>}
         </div>
 
       <div>
@@ -156,10 +163,11 @@ const FormFields = React.memo(function FormFields({
           onChange={(e) => onDescriptionChange(e.target.value)}
           className="w-full border border-gray-400 rounded px-2 py-2 text-sm"
           placeholder="Write your event description..."
+          data-testid="activity-description-textarea"
         />
-        {errors.description && <p className="text-red-600 text-sm">{errors.description}</p>}
+        {errors.description && <p className="text-red-600 text-sm" data-testid="description-error">{errors.description}</p>}
       </div>
-    </>
+    </div>
   );
 });
 

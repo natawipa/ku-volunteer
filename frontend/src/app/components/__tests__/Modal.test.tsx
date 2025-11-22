@@ -229,8 +229,7 @@ describe('Modal Component', () => {
       
       const modalDiv = screen.getByText('Test message').closest('div');
       expect(modalDiv).toHaveClass('bg-[#E8F5E9]');
-      expect(modalDiv?.parentElement).toHaveClass('fixed', 'top-20', 'z-[9999]');
-    });
+      expect(modalDiv?.parentElement).toHaveClass('fixed', 'top-20', 'left-1/2', 'transform', '-translate-x-1/2', 'z-9999', 'animate-slideDown');    });
   });
 
   describe('Confirmation Modal (needDecision: true)', () => {
@@ -398,8 +397,7 @@ describe('Modal Component', () => {
       
       const modalDiv = screen.getByText('Confirm message').closest('div');
       expect(modalDiv).toHaveClass('bg-[#D4E7D7]', 'rounded-3xl');
-      expect(modalDiv?.parentElement).toHaveClass('fixed', 'inset-0', 'z-[9999]');
-    });
+      expect(modalDiv?.parentElement).toHaveClass('fixed', 'inset-0', 'z-9999', 'flex', 'items-center', 'justify-center', 'bg-black/40', 'backdrop-blur-sm');    });
 
     it('should have backdrop with blur effect', async () => {
       render(

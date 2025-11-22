@@ -127,7 +127,9 @@ function HomeContent() {
   useEffect(() => {
     const successParam = searchParams.get('success');
     if (successParam) {
-      showModal(decodeURIComponent(successParam));
+      showModal(decodeURIComponent(successParam), {
+        dataTestId: "success-message"
+      });
       
       const url = new URL(window.location.href);
       url.searchParams.delete('success');

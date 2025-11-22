@@ -1,0 +1,79 @@
+{
+  "validActivity": {
+    "title": "Community Clean Up Day",
+    "description": "Join us for a community service day to clean up the local park. Bring gloves and water bottle!",
+    "location": "Chatuchak Park, Bangkok",
+    "start_at": "2025-12-01T09:00:00.000Z",
+    "end_at": "2025-12-01T16:00:00.000Z", 
+    "max_participants": 25,
+    "hours_awarded": 6,
+    "categories": ["environment", "community"]
+  },
+  "shortActivity": {
+    "title": "Blood Donation Drive",
+    "description": "Help save lives by donating blood at our monthly drive.",
+    "location": "KU Medical Center",
+    "start_at": "2025-11-25T08:00:00.000Z",
+    "end_at": "2025-11-25T12:00:00.000Z",
+    "max_participants": 50,
+    "hours_awarded": 2,
+    "categories": ["health", "community"]
+  },
+  "educationActivity": {
+    "title": "Math Tutoring for Kids",
+    "description": "Volunteer to teach basic math to underprivileged children in the community.",
+    "location": "Baan Khru Noi School",
+    "start_at": "2025-12-15T13:00:00.000Z", 
+    "end_at": "2025-12-15T17:00:00.000Z",
+    "max_participants": 8,
+    "hours_awarded": 4,
+    "categories": ["education", "children"]
+  },
+  "multiDayActivity": {
+    "title": "Rural Development Camp",
+    "description": "3-day volunteer camp to help build infrastructure in rural communities.",
+    "location": "Nakhon Nayok Province",
+    "start_at": "3025-12-20T08:00:00.000Z",
+    "end_at": "3025-12-22T18:00:00.000Z", 
+    "max_participants": 15,
+    "hours_awarded": 10,
+    "categories": ["rural", "infrastructure", "community"]
+  },
+  "PendingActivity": {
+    "id": 16,
+    "organizer_profile_id": 4,
+    "organizer_email": "organizer.test@ku.ac.th",
+    "organizer_name": "Computer Engineering Department",
+    "categories": [
+      "University Activities",
+      "Development of Health and Well-being",
+      "Social Engagement Activities"
+    ],
+    "title": "Pending Activity 1",
+    "description": "This activity needs approval",
+    "start_at": "3025-12-01T12:00:00Z",
+    "end_at": "3025-12-02T15:00:00Z",
+    "location": "Test Location",
+    "status": "pending",
+    "current_participants": 0,
+    "max_participants": 50,
+    "hours_awarded": 5,
+    "cover_image": "http://localhost:8000/media/activities/cover.jpg",
+    "cover_image_url": "http://localhost:8000/media/activities/cover.jpg",
+    "created_at": "3025-11-20T10:31:10.398353+07:00",
+    "updated_at": "3025-11-20T10:31:10.398362+07:00"
+  },
+  "DeletionRequestActivity": {
+    "id": 1,
+    "activity": 16,
+    "activity_title": "Pending Activity 1",
+    "reason": "inappropriate things",
+    "status": "pending",
+    "requested_by": 30,
+    "requested_by_email": "organizer.test@ku.ac.th",
+    "requested_at": "3025-11-20T23:45:41.806296+07:00",
+    "reviewed_by": null,
+    "reviewed_at": null,
+    "review_note": ""
+  }
+}

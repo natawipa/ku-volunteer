@@ -92,6 +92,7 @@ export default function EventActionButton({
       <Link 
         href={{ pathname: '/new-event', query: { edit: eventID?.toString(), activityData: encodeURIComponent(JSON.stringify(event)) }}}
         className={BUTTON_STYLES.PRIMARY}
+        data-testid="edit-event-button"
       >
         Edit Event
       </Link>
