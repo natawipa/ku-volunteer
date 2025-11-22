@@ -89,7 +89,7 @@ KU Volunteer is a web application for Kasetsart University students to discover,
 - **[INSTRUCTIONS.md](INSTRUCTIONS.md)** - Detailed setup, troubleshooting, and commands
 - **[API Documentation](http://localhost:8000/api/docs/)** - Available after starting the backend
 - **[User Documentation](https://docs.google.com/document/d/1mT6Xu9jrClPeGfwpMMHFyUPP6TRqxMiwI_RDF3Dx3Vg/edit?usp=sharing)** - Comprehensive guide for end-users
-- **[Developer Documentation](https://docs.google.com/document/d/1frED7RGdj4E18k61whuCNE-hhicmRII5QyD4uZLQa54/edit?usp=sharing)** - Technical guide for developers
+- **[Development Process Documentation](https://docs.google.com/document/d/1frED7RGdj4E18k61whuCNE-hhicmRII5QyD4uZLQa54/edit?usp=sharing)** - Sprint progress, development journey, and challenges encountered
 
 ---
 
