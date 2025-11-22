@@ -19,6 +19,7 @@ Complete setup guide, troubleshooting, and useful commands.
 ### Required Environment Variables
 
 Copy the template file:
+
 ```bash
 cp backend/.env.example backend/.env
 ```
@@ -32,11 +33,13 @@ python -c 'from django.core.management.utils import get_random_secret_key; print
 ```
 
 Or:
+
 ```bash
 openssl rand -base64 50
 ```
 
 Add to `.env`:
+
 ```
 SECRET_KEY=your_generated_key_here
 ```
@@ -44,6 +47,7 @@ SECRET_KEY=your_generated_key_here
 ### 2. Database Configuration (Required)
 
 Set secure passwords:
+
 ```
 DB_NAME=ku_volunteer_db
 DB_USER=ku_user
@@ -98,6 +102,7 @@ For password reset functionality:
    ```
 
 #### For Development (Console Output):
+
 ```
 EMAIL_BACKEND=django.core.mail.backends.console.EmailBackend
 ```
@@ -111,12 +116,14 @@ Emails will print to console logs instead of sending.
 ### Backend Setup
 
 1. **Create virtual environment**
+
    ```bash
    cd backend
    python -m venv .venv
    ```
 
 2. **Activate virtual environment**
+
    - macOS/Linux:
      ```bash
      source .venv/bin/activate
@@ -127,15 +134,18 @@ Emails will print to console logs instead of sending.
      ```
 
 3. **Install dependencies**
+
    ```bash
    pip install -r requirements.txt
    ```
 
 4. **Set up PostgreSQL locally**
+
    - Install PostgreSQL 16
    - Create database and user matching your `.env` settings
 
 5. **Run migrations**
+
    ```bash
    python manage.py migrate
    python manage.py seed_data
@@ -151,11 +161,13 @@ Backend will be available at http://localhost:8000
 ### Frontend Setup
 
 1. **Navigate to frontend directory**
+
    ```bash
    cd frontend
    ```
 
 2. **Install dependencies**
+
    ```bash
    npm install
    ```
@@ -176,6 +188,7 @@ Frontend will be available at http://localhost:3000
 **Error:** `relation "users_user" does not exist`
 
 **Solution:** Run migrations
+
 ```bash
 docker compose exec backend python manage.py migrate
 ```
@@ -187,6 +200,7 @@ docker compose exec backend python manage.py migrate
 **Error:** No users or activities after starting
 
 **Solution:** Seed the database
+
 ```bash
 docker compose exec backend python manage.py seed_data
 ```
@@ -197,7 +211,8 @@ docker compose exec backend python manage.py seed_data
 
 **Error:** `redirect_uri_mismatch`
 
-**Solution:** 
+**Solution:**
+
 - Verify Google Console has Authorized redirect URI: `http://localhost:8000/api/auth/google/callback/`
 - Check `.env` has correct `GOOGLE_REDIRECT_URL`
 
@@ -206,6 +221,7 @@ docker compose exec backend python manage.py seed_data
 ### 4. Docker Container Not Starting
 
 **Check logs:**
+
 ```bash
 docker compose logs -f backend
 docker compose logs -f frontend
@@ -213,11 +229,13 @@ docker compose logs -f db
 ```
 
 **Restart containers:**
+
 ```bash
 docker compose restart
 ```
 
 **Rebuild if needed:**
+
 ```bash
 docker compose down
 docker compose up -d --build
@@ -232,11 +250,13 @@ docker compose up -d --build
 **Solution:**
 
 Stop all containers:
+
 ```bash
 docker compose down
 ```
 
 Check what's using the port:
+
 - macOS/Linux:
   ```bash
   lsof -i :8000  # Backend
@@ -257,6 +277,7 @@ Kill the process or change ports in `docker-compose.yml`
 **Error:** Permission denied when running Docker commands
 
 **Solution:** Add your user to docker group
+
 ```bash
 sudo usermod -aG docker $USER
 newgrp docker
@@ -269,21 +290,25 @@ newgrp docker
 ### Container Management
 
 **Start all services:**
+
 ```bash
 docker compose up -d
 ```
 
 **Stop all services:**
+
 ```bash
 docker compose down
 ```
 
 **View running containers:**
+
 ```bash
 docker compose ps
 ```
 
 **Restart specific service:**
+
 ```bash
 docker compose restart backend
 docker compose restart frontend
@@ -294,17 +319,20 @@ docker compose restart frontend
 ### Rebuild & Update
 
 **Rebuild after code changes:**
+
 ```bash
 docker compose up -d --build
 ```
 
 **Rebuild specific service:**
+
 ```bash
 docker compose build backend
 docker compose up -d backend
 ```
 
 **Pull latest images:**
+
 ```bash
 docker compose pull
 ```
@@ -314,6 +342,7 @@ docker compose pull
 ### Database Management
 
 **Reset database completely:**
+
 ```bash
 # Stop and remove volumes
 docker compose down -v
@@ -325,16 +354,19 @@ docker compose exec backend python manage.py seed_data
 ```
 
 **Create database backup:**
+
 ```bash
 docker compose exec db pg_dump -U ku_user ku_volunteer_db > backup.sql
 ```
 
 **Restore database:**
+
 ```bash
 docker compose exec -T db psql -U ku_user ku_volunteer_db < backup.sql
 ```
 
 **Access PostgreSQL shell:**
+
 ```bash
 docker compose exec db psql -U ku_user -d ku_volunteer_db
 ```
@@ -344,11 +376,13 @@ docker compose exec db psql -U ku_user -d ku_volunteer_db
 ### Logs & Debugging
 
 **View all logs:**
+
 ```bash
 docker compose logs -f
 ```
 
 **View specific service logs:**
+
 ```bash
 docker compose logs -f backend
 docker compose logs -f frontend
@@ -356,6 +390,7 @@ docker compose logs -f db
 ```
 
 **View last 50 lines:**
+
 ```bash
 docker compose logs --tail=50 backend
 ```
@@ -365,26 +400,36 @@ docker compose logs --tail=50 backend
 ### Running Django Commands
 
 **Create superuser:**
+
 ```bash
 docker compose exec backend python manage.py createsuperuser
 ```
 
+**Default Admin Credentials (for testing):**
+
+- Email: `admin@ku.th`
+- Password: `admin123`
+
 **Run migrations:**
+
 ```bash
 docker compose exec backend python manage.py migrate
 ```
 
 **Collect static files:**
+
 ```bash
 docker compose exec backend python manage.py collectstatic --noinput
 ```
 
 **Django shell:**
+
 ```bash
 docker compose exec backend python manage.py shell
 ```
 
 **Custom management command:**
+
 ```bash
 docker compose exec backend python manage.py <your_command>
 ```
@@ -393,7 +438,37 @@ docker compose exec backend python manage.py <your_command>
 
 ## Testing
 
-### Run All Tests
+### Quick Start Testing Guide
+
+1. **Backend Tests (Django):**
+
+   ```bash
+   docker compose exec backend python manage.py test
+   ```
+
+2. **Frontend Tests (Jest):**
+
+   ```bash
+   cd frontend
+   npm test
+   ```
+
+3. **End-to-End Tests (Cypress):**
+
+   ```bash
+   # Clean database first
+   docker compose down -v
+   docker compose up -d
+   docker compose exec backend python manage.py migrate
+   docker compose exec backend python manage.py seed_data
+
+   # Run Cypress tests
+   npx cypress run
+   ```
+
+### Backend Testing (Django)
+
+#### Run All Tests
 
 ```bash
 docker compose exec backend python manage.py test
@@ -425,11 +500,162 @@ View coverage report at `backend/htmlcov/index.html`
 
 ---
 
+### Jest Testing
+
+**Navigate to frontend directory first:**
+
+```bash
+cd frontend
+```
+
+#### Run All Jest Tests
+
+```bash
+npm test
+```
+
+#### Run a Specific Test File
+
+```bash
+npx jest <path-to-test-file>
+```
+
+Example:
+
+```bash
+npx jest src/app/profile/__tests__/page.test.tsx
+```
+
+#### Run Tests in Watch Mode
+
+```bash
+npx jest --watch
+```
+
+#### Generate Test Coverage Report
+
+```bash
+npx jest --coverage
+```
+
+#### Check Jest Configuration
+
+```bash
+# Verify Jest setup
+npm run test -- --showConfig
+
+# Run tests with verbose output
+npm test -- --verbose
+```
+
+---
+
+### Cypress Testing
+
+**Navigate to root directory first:**
+
+```bash
+cd /path/to/ku-volunteer  # Ensure you're in the project root
+```
+
+#### Prerequisites
+
+Before running Cypress tests, ensure:
+
+1. **Database should be clean:**
+   ```bash
+   # Stop containers and remove volumes to clean database
+   docker compose down -v
+   docker compose up -d
+   docker compose exec backend python manage.py migrate
+   docker compose exec backend python manage.py createsuperuser
+   ```
+   **Default Admin Credentials:**
+   - Email: `admin@ku.th`
+   - Password: `admin123`
+2. **Backend and frontend are running:**
+   ```bash
+   docker compose up -d
+   ```
+
+#### Run All Cypress Tests (Headless Mode)
+
+```bash
+npx cypress run
+```
+
+#### Run Cypress Test Runner (Interactive Mode)
+
+```bash
+npx cypress open
+```
+
+#### Run Cypress Tests with Specific Browser
+
+```bash
+# Run in Chrome
+npx cypress run --browser chrome
+
+# Run in Firefox
+npx cypress run --browser firefox
+
+# Run in Edge
+npx cypress run --browser edge
+```
+
+#### Test Authentication (`auth.cy.js`)
+
+**What it tests:**
+
+- User registration (student and organizer)
+- Form validation for registration
+- Password strength requirements
+- User login with email/password
+- Login validation and error handling
+- User logout functionality
+
+**Important Notes:**
+
+- Tests may fail if user profiles already exist in the database
+- Uses fixture data from `cypress/fixtures/users.json`
+- **Run tests in order: auth.cy.js → organizer.cy.js → admin.cy.js**
+
+#### Running Specific Test Files
+
+```bash
+# Run only authentication tests
+npx cypress run --spec "cypress/e2e/auth.cy.js"
+
+# Run only organizer tests
+npx cypress run --spec "cypress/e2e/organizer.cy.js"
+
+# Run only admin tests
+npx cypress run --spec "cypress/e2e/admin.cy.js"
+```
+
+#### Troubleshooting Cypress Tests
+
+1. **Test failures due to existing data:**
+   - Clear database and reseed test data
+   - Check fixture data matches expected format
+2. **Element not found errors:**
+   - Verify `data-testid` attributes exist in components
+   - Check if UI components are properly loaded
+3. **API mocking issues:**
+   - Verify intercept URLs match actual API endpoints
+   - Check response format matches expected structure
+4. **Timing issues:**
+   - Increase timeout values for slow operations
+   - Add proper wait conditions for API calls
+
+---
+
 ## Monitoring & Metrics
 
 ### Prometheus
 
 Access metrics at:
+
 - Prometheus UI: http://localhost:9090
 - Django metrics: http://localhost:8000/metrics
 - PostgreSQL metrics: http://localhost:9187/metrics
@@ -443,14 +669,16 @@ Access metrics at:
 ### Add Custom Prometheus Target
 
 Edit `prometheus.yml`:
+
 ```yaml
 scrape_configs:
-  - job_name: 'my-service'
+  - job_name: "my-service"
     static_configs:
-      - targets: ['my-service:8080']
+      - targets: ["my-service:8080"]
 ```
 
 Restart Prometheus:
+
 ```bash
 docker compose restart prometheus
 ```
