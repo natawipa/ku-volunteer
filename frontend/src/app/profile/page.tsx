@@ -62,6 +62,13 @@ export default function Profile() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
+    if (!isEditing) {
+      setImagePreview(null);
+      setImageError(false);
+    }
+  }, [isEditing]);
+
+  useEffect(() => {
     async function fetchUser() {
       const res = await apiService.getCurrentUser();
       if (res.success && res.data) {
@@ -147,6 +154,14 @@ export default function Profile() {
       return;
     }
 
+    // Clear any previous errors
+    setFormErrors((prev) => {
+      const copy = { ...prev };
+      delete copy.profile_image;
+      return copy;
+    });
+
+    // Show preview while uploading
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(file);
@@ -155,9 +170,13 @@ export default function Profile() {
       const res = await apiService.uploadProfileImage(user.id, file);
       if (res.success && res.data) {
         setUser(res.data);
-        setImagePreview(apiService.getProfileImageUrl(res.data.profile_image));
+        // Clear the local preview and rely on the uploaded image
+        setImagePreview(null);
+        setImageError(false);
       } else {
         setFormErrors({ profile_image: res.error || "Upload failed" });
+        // Reset preview on error
+        setImagePreview(null);
       }
     }
   };
@@ -360,14 +379,18 @@ export default function Profile() {
               <Image
                 src={
                   imagePreview || 
-                  (imageError ? "/avatar.jpg" : apiService.getProfileImageUrl(user?.profile_image))
+                  (imageError ? "/profile.svg" : apiService.getProfileImageUrl(user?.profile_image))
                 }
                 alt="profile"
                 width={80}
                 height={80}
                 className="w-[80px] h-[80px] rounded-full object-cover border-4 border-white shadow"
                 unoptimized
-                onError={() => setImageError(true)}
+                onError={() => {
+                  setImageError(true);
+                  setImagePreview(null);
+                }}
+                onLoad={() => setImageError(false)}
               />
 
               {isEditing && (
@@ -420,8 +443,8 @@ export default function Profile() {
       </div>
 
       <div className="rounded-lg p-1 px-5 -mt-4">
-        <div className={`rounded-md p-6 px-1 py-1 ${!isEditing ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen p-[2px]' : ''}`}>
-        <div className={`rounded-md p-6 px-3 ${
+        <div className="rounded-xl p-6 px-1 py-1">
+        <div className={`rounded-xl p-6 px-3 ${
           isEditing 
             ? 'bg-gradient-to-r from-mutegreen/50 to-mutegreen' 
             : 'bg-white'
@@ -438,7 +461,7 @@ export default function Profile() {
                   name="title"
                   value={String(formData.title || "")}
                   onChange={(e) => handleChange("title", e.target.value)}
-                  className="w-full p-2 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700"
+                  className="w-full p-3 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700 shadow-sm"
                 >
                   <option value="">Select title</option>
                   {TITLE_OPTIONS.map((opt) => (
@@ -460,7 +483,7 @@ export default function Profile() {
                   value={formData.email || ""}
                   onChange={(e) => handleChange("email", e.target.value)}
                   placeholder="Email"
-                  className="w-full p-2 rounded-lg bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700"
+                  className="w-full p-3 rounded-full bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C] text-gray-700 shadow-sm"
                 />
                 {formErrors['email'] && (
                   <p className="text-sm text-red-600 mt-1">{formErrors['email']}</p>
@@ -488,7 +511,7 @@ export default function Profile() {
                       value={String(getNestedValue(formData, field.key) ?? "")}
                       onChange={(e) => handleChange(field.key, e.target.value)}
                       disabled={disabled}
-                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700 ${disabled
+                      className={`w-full p-3 rounded-full disabled:bg-gray-100 text-gray-700 shadow-sm ${disabled
                         ? 'bg-gray-100'
                         : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
                       }`}>
@@ -503,7 +526,7 @@ export default function Profile() {
                       value={String(getNestedValue(formData, field.key) ?? "")}
                       onChange={(e) => handleChange(field.key, e.target.value)}
                       disabled={disabled}
-                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700 
+                      className={`w-full p-3 rounded-full disabled:bg-gray-100 text-gray-700 shadow-sm
                         ${disabled
                         ? 'bg-gray-100'
                         : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
@@ -520,7 +543,7 @@ export default function Profile() {
                       value={getNestedValue(formData, field.key) || ""}
                       onChange={(e) => handleChange(field.key, e.target.value)}
                       disabled={disabled}
-                      className={`w-full p-2 rounded-lg disabled:bg-gray-100 text-gray-700
+                      className={`w-full p-3 rounded-full disabled:bg-gray-100 text-gray-700 shadow-sm
                         ${disabled
                         ? 'bg-gray-100'
                         : 'bg-white border border-gray-200 focus:outline-none focus:ring-2 focus:ring-[#00361C]'
