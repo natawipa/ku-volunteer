@@ -10,19 +10,8 @@ from users.views import google_login
 from django.conf import settings
 from django.conf.urls.static import static
 from django_prometheus import exports as prometheus_exports
-from drf_yasg.views import get_schema_view
-from drf_yasg import openapi
-from rest_framework import permissions
 import sentry_sdk
-schema_view = get_schema_view(
-   openapi.Info(
-      title="KU Volunteer API",
-      default_version='v1',
-      description="API documentation for KU Volunteer",
-   ),
-   public=True,
-   permission_classes=(permissions.AllowAny,),
-)
+
 def trigger_error(request):
     # Capture a message to test Sentry connection
     sentry_sdk.capture_message("Sentry test triggered from Django", level="info")
