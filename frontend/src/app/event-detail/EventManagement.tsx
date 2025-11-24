@@ -85,27 +85,9 @@ export function ApplicantsList({
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-200">
             <div className="grid grid-cols-12 gap-4 font-semibold text-gray-700 text-sm">
-              <div className="col-span-1">Select</div>
               <div className="col-span-2">Student ID</div>
               <div className="col-span-5 ml-9">Name</div>
-              <div className="col-span-4 text-center">Actions</div>
-            </div>
-          </div>
-
-          <div className="px-6 py-3 border-b border-gray-200 bg-gray-50">
-            <div className="flex gap-3">
-              <button 
-                className="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-all disabled:opacity-50"
-                data-testid="bulk-approve-button"
-              >
-                Bulk Approve
-              </button>
-              <button 
-                className="px-4 py-2 bg-red-600 text-white text-sm rounded-lg hover:bg-red-700 transition-all disabled:opacity-50"
-                data-testid="bulk-reject-button"
-              >
-                Bulk Reject
-              </button>
+              <div className="col-span-5 text-center">Actions</div>
             </div>
           </div>
 
@@ -119,30 +101,19 @@ export function ApplicantsList({
                   }`}
                 >
                   <div className="grid grid-cols-12 gap-8 items-center">
-                    <div className="col-span-1">
-                      <input 
-                        type="checkbox" 
-                        className="rounded border-gray-300 text-green-600 focus:ring-green-500" 
-                        data-testid="select-application"
-                      />
-                    </div>
-                    
                     <div className="col-span-2">
-                      <p className="font-medium text-gray-900" data-testid="student-id">
+                      <p className="font-medium text-gray-900">
                         {application.student_id_external || (application.student ?? application.studentid) || '-'}
                       </p>
                     </div>
 
                     <div className="col-span-5 ml-9">
-                      <p className="font-medium text-gray-800" data-testid="student-name">
+                      <p className="font-medium text-gray-800">
                         {application.student_name || `Student ${application.student_id_external || (application.student ?? application.studentid)}`}
                       </p>
-                      {application.student_email && (
-                        <p className="text-sm text-gray-600" data-testid="student-email">{application.student_email}</p>
-                      )}
                     </div>
 
-                    <div className="col-span-4 flex justify-center gap-3">
+                    <div className="col-span-5 flex justify-center gap-3">
                       <button 
                         onClick={() => onApprove(application.id)}
                         disabled={isProcessing}
@@ -151,7 +122,6 @@ export function ApplicantsList({
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
                             : 'bg-[#79BE7C] text-white hover:bg-[#5A915C] hover:shadow-md transform hover:scale-105'
                         }`}
-                        data-testid="approve-button"
                       >
                         {isProcessing ? 'Processing...' : 'Approve'}
                       </button>
@@ -163,18 +133,8 @@ export function ApplicantsList({
                             ? 'bg-gray-200 text-gray-400 cursor-not-allowed' 
                             : 'bg-[#D2616E] text-white hover:bg-[#C02437] hover:shadow-md transform hover:scale-105'
                         }`}
-                        data-testid="reject-button"
                       >
                         {isProcessing ? 'Processing...' : 'Reject'}
-                      </button>
-                      <button 
-                        className="flex-1 max-w-[100px] py-2 px-4 rounded-lg text-sm font-medium bg-blue-600 text-white hover:bg-blue-700 transition-all"
-                        data-testid="view-application-button"
-                        onClick={() => {
-                          // This would open application details modal
-                        }}
-                      >
-                        View
                       </button>
                     </div>
                   </div>
@@ -190,29 +150,6 @@ export function ApplicantsList({
           </div>
         </div>
       )}
-
-      {/* Application Details Modal (hidden by default) */}
-      <div className="hidden" data-testid="application-details-modal">
-        <div data-testid="student-name">John Student</div>
-        <div data-testid="student-email">john@ku.ac.th</div>
-        <div data-testid="student-id">6610000001</div>
-      </div>
-
-      {/* Bulk Action Confirmation Modals (hidden by default) */}
-      <button className="hidden" data-testid="confirm-bulk-approve-button">
-        Confirm Bulk Approve
-      </button>
-      <button className="hidden" data-testid="confirm-bulk-reject-button">
-        Confirm Bulk Reject
-      </button>
-      <div className="hidden" data-testid="bulk-reject-modal">
-        <textarea data-testid="bulk-rejection-reason-textarea" placeholder="Reason for bulk rejection"></textarea>
-      </div>
-
-      {/* Capacity warning (conditionally shown) */}
-      <div className="hidden" data-testid="capacity-warning">
-        Activity is at maximum capacity
-      </div>
     </div>
   );
 }

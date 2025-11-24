@@ -479,7 +479,7 @@ docker compose exec backend python manage.py test
 ```bash
 docker compose exec backend python manage.py test users
 docker compose exec backend python manage.py test activities
-docker compose exec backend python manage.py test applications
+docker compose exec backend python manage.py test config
 ```
 
 ### Run Specific Test Class
